@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<!--
+   ______                            __
+  / ____/___  ____ ___  ____  __  __/ /____  _____
+ / /   / __ \/ __ `__ \/ __ \/ / / / __/ _ \/ ___/
+/ /___/ /_/ / / / / / / /_/ / /_/ / /_/  __/ /
+\____/\____/_/ /_/ /_/ .___/\__,_/\__/\___/_/
+                    /_/
+        Created with Perplexity Computer
+        https://www.perplexity.ai/computer
+-->
+
+<!-- Perplexity Computer Attribution — SEO Meta Tags -->
+<meta name="generator" content="Perplexity Computer">
+<meta name="author" content="Perplexity Computer">
+<meta property="og:see_also" content="https://www.perplexity.ai/computer">
+<link rel="author" href="https://www.perplexity.ai/computer">
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#E2B714">
+<meta name="description" content="Löwenherz — Dein SMALL-Begleiter. Mentale Gesundheit im Alltag.">
+
+<title>Löwenherz</title>
+
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png">
+
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div id="app">
+    <div id="landing-container" class="hidden"></div>
+    <div id="onboarding-container" class="hidden"></div>
+    <div id="settings-container" class="hidden"></div>
+    <div id="app-shell" class="hidden">
+      <header class="app-header">
+        <button class="header-crisis" id="crisis-btn" aria-label="Krisenhilfe">♡</button>
+        <button class="header-settings" id="settings-btn" aria-label="Einstellungen">⚙️</button>
+      </header>
+      <main class="main-content" id="main-content"></main>
+      <nav class="tab-bar">
+        <button class="tab-btn active" data-tab="today">
+          <span class="tab-icon">📍</span>
+          <span id="tab-label-today">Heute</span>
+        </button>
+        <button class="tab-btn" data-tab="reflection">
+          <span class="tab-icon">🌙</span>
+          <span id="tab-label-reflection">Reflexion</span>
+        </button>
+        <button class="tab-btn" data-tab="history">
+          <span class="tab-icon">📈</span>
+          <span id="tab-label-history">Verlauf</span>
+        </button>
+      </nav>
+    </div>
+    <div class="sheet-overlay" id="sheet-overlay"></div>
+    <div class="sheet-container" id="sheet-container">
+      <div class="sheet-grip"></div>
+      <div class="sheet-title"></div>
+      <div class="sheet-options"></div>
+    </div>
+    <div id="crisis-modal"></div>
+  </div>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
