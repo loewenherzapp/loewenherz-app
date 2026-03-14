@@ -1,8 +1,8 @@
 // ============================================================
-// Löwenherz PWA — Service Worker (Cache-First)
+// L\u00f6wenherz PWA \u2014 Service Worker (Cache-First)
 // ============================================================
 
-const CACHE_NAME = 'loewenherz-v1';
+const CACHE_NAME = 'loewenherz-v2';
 
 const URLS_TO_CACHE = [
   './',
@@ -26,6 +26,7 @@ const URLS_TO_CACHE = [
   './assets/icons/icon-512.png'
 ];
 
+// Install \u2014 cache all app files
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -35,6 +36,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
+// Activate \u2014 clean old caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
@@ -46,13 +48,16 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
+// Fetch \u2014 cache first, network fallback
 self.addEventListener('fetch', (event) => {
+  // Only handle GET requests
   if (event.request.method !== 'GET') return;
 
   event.respondWith(
     caches.match(event.request).then((cached) => {
       if (cached) return cached;
       return fetch(event.request).then((response) => {
+        // Only cache successful same-origin responses
         if (response && response.status === 200 && response.type === 'basic') {
           const responseToCache = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
@@ -61,6 +66,7 @@ self.addEventListener('fetch', (event) => {
         }
         return response;
       }).catch(() => {
+        // Offline fallback \u2014 return index.html for navigation requests
         if (event.request.mode === 'navigate') {
           return caches.match('./index.html');
         }
