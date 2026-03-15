@@ -79,7 +79,7 @@ function showLanding() {
   // For now, allow scrolling down to see a "Continue anyway" link for desktop testing
   const skipEl = document.createElement('button');
   skipEl.className = 'landing-toggle';
-  skipEl.textContent = 'Trotzdem fortfahren \u2192';
+  skipEl.textContent = TEXTS.ui.landing.continueAnyway;
   skipEl.style.marginTop = '32px';
   skipEl.addEventListener('click', () => {
     showOnboarding();
@@ -174,7 +174,7 @@ if ('serviceWorker' in navigator) {
     // SW scope relative to document
     const swUrl = new URL('sw.js', window.location.href.replace(/\/[^/]*$/, '/'));
     navigator.serviceWorker.register(swUrl.href).catch(() => {
-      // SW registration failed \u2014 possibly in dev, ignore
+      // SW registration failed — possibly in dev, ignore
     });
   });
 }
