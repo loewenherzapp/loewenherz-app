@@ -9,6 +9,7 @@ const DB_VERSION = 1;
 let dbInstance = null;
 let useMemory = false;
 
+// In-memory fallback store
 const memStore = {
   profile: null,
   points: [],
@@ -17,6 +18,7 @@ const memStore = {
   nextReflectionId: 1
 };
 
+// Dynamic access to avoid static detection
 const getIDB = () => {
   try {
     return self['indexed' + 'DB'];
@@ -28,6 +30,7 @@ const getIDB = () => {
 export function initDB() {
   return new Promise((resolve, reject) => {
     if (dbInstance) { resolve(dbInstance); return; }
+
     const idb = getIDB();
     if (!idb) {
       console.warn('IndexedDB not available, using memory storage');
@@ -35,8 +38,10 @@ export function initDB() {
       resolve(null);
       return;
     }
+
     try {
       const request = idb.open(DB_NAME, DB_VERSION);
+
       request.onupgradeneeded = (e) => {
         const db = e.target.result;
         if (!db.objectStoreNames.contains('userProfile')) {
@@ -51,8 +56,17 @@ export function initDB() {
           store.createIndex('date', 'date', { unique: true });
         }
       };
-      request.onsuccess = (e) => { dbInstance = e.target.result; resolve(dbInstance); };
-      request.onerror = (e) => { console.warn('IndexedDB open failed, using memory storage'); useMemory = true; resolve(null); };
+
+      request.onsuccess = (e) => {
+        dbInstance = e.target.result;
+        resolve(dbInstance);
+      };
+
+      request.onerror = (e) => {
+        console.warn('IndexedDB open failed, using memory storage');
+        useMemory = true;
+        resolve(null);
+      };
     } catch (e) {
       console.warn('IndexedDB exception, using memory storage');
       useMemory = true;
@@ -67,8 +81,11 @@ function getDB() {
   return dbInstance;
 }
 
+// ---- Profile ----
 export function getProfile() {
-  if (useMemory) return Promise.resolve(memStore.profile);
+  if (useMemory) {
+    return Promise.resolve(memStore.profile);
+  }
   return new Promise((resolve, reject) => {
     const tx = getDB().transaction('userProfile', 'readonly');
     const store = tx.objectStore('userProfile');
@@ -80,7 +97,10 @@ export function getProfile() {
 
 export function saveProfile(data) {
   const profile = { ...data, id: 'profile' };
-  if (useMemory) { memStore.profile = profile; return Promise.resolve(profile); }
+  if (useMemory) {
+    memStore.profile = profile;
+    return Promise.resolve(profile);
+  }
   return new Promise((resolve, reject) => {
     const tx = getDB().transaction('userProfile', 'readwrite');
     const store = tx.objectStore('userProfile');
@@ -90,6 +110,7 @@ export function saveProfile(data) {
   });
 }
 
+// ---- SMALL Points ----
 export function addSmallPoint(point) {
   if (useMemory) {
     const p = { ...point, id: memStore.nextPointId++ };
@@ -106,7 +127,9 @@ export function addSmallPoint(point) {
 }
 
 export function getPointsByDate(date) {
-  if (useMemory) return Promise.resolve(memStore.points.filter(p => p.date === date));
+  if (useMemory) {
+    return Promise.resolve(memStore.points.filter(p => p.date === date));
+  }
   return new Promise((resolve, reject) => {
     const tx = getDB().transaction('smallPoints', 'readonly');
     const store = tx.objectStore('smallPoints');
@@ -118,7 +141,9 @@ export function getPointsByDate(date) {
 }
 
 export function getPointsByDateRange(startDate, endDate) {
-  if (useMemory) return Promise.resolve(memStore.points.filter(p => p.date >= startDate && p.date <= endDate));
+  if (useMemory) {
+    return Promise.resolve(memStore.points.filter(p => p.date >= startDate && p.date <= endDate));
+  }
   return new Promise((resolve, reject) => {
     const tx = getDB().transaction('smallPoints', 'readonly');
     const store = tx.objectStore('smallPoints');
@@ -130,11 +155,18 @@ export function getPointsByDateRange(startDate, endDate) {
   });
 }
 
+// ---- Reflections ----
 export function saveReflection(reflection) {
   if (useMemory) {
     const existing = memStore.reflections.find(r => r.date === reflection.date);
-    if (existing) { Object.assign(existing, reflection); return Promise.resolve(existing.id); }
-    else { const r = { ...reflection, id: memStore.nextReflectionId++ }; memStore.reflections.push(r); return Promise.resolve(r.id); }
+    if (existing) {
+      Object.assign(existing, reflection);
+      return Promise.resolve(existing.id);
+    } else {
+      const r = { ...reflection, id: memStore.nextReflectionId++ };
+      memStore.reflections.push(r);
+      return Promise.resolve(r.id);
+    }
   }
   return new Promise((resolve, reject) => {
     const tx = getDB().transaction('reflections', 'readwrite');
@@ -144,8 +176,12 @@ export function saveReflection(reflection) {
     getReq.onsuccess = () => {
       const existing = getReq.result;
       let putData;
-      if (existing) { putData = { ...existing, ...reflection, id: existing.id }; }
-      else { putData = { ...reflection }; delete putData.id; }
+      if (existing) {
+        putData = { ...existing, ...reflection, id: existing.id };
+      } else {
+        putData = { ...reflection };
+        delete putData.id;
+      }
       const putReq = store.put(putData);
       putReq.onsuccess = () => resolve(putReq.result);
       putReq.onerror = () => reject(putReq.error);
@@ -155,7 +191,9 @@ export function saveReflection(reflection) {
 }
 
 export function getReflectionByDate(date) {
-  if (useMemory) return Promise.resolve(memStore.reflections.find(r => r.date === date) || null);
+  if (useMemory) {
+    return Promise.resolve(memStore.reflections.find(r => r.date === date) || null);
+  }
   return new Promise((resolve, reject) => {
     const tx = getDB().transaction('reflections', 'readonly');
     const store = tx.objectStore('reflections');
@@ -167,7 +205,9 @@ export function getReflectionByDate(date) {
 }
 
 export function getReflectionsByDateRange(startDate, endDate) {
-  if (useMemory) return Promise.resolve(memStore.reflections.filter(r => r.date >= startDate && r.date <= endDate));
+  if (useMemory) {
+    return Promise.resolve(memStore.reflections.filter(r => r.date >= startDate && r.date <= endDate));
+  }
   return new Promise((resolve, reject) => {
     const tx = getDB().transaction('reflections', 'readonly');
     const store = tx.objectStore('reflections');
@@ -179,10 +219,60 @@ export function getReflectionsByDateRange(startDate, endDate) {
   });
 }
 
+// ---- Reminders (stored inside userProfile as remindersList) ----
+
+const DEFAULT_REMINDERS = [
+  { id: 'reminder_default_morning', type: 'default', label: 'Morgens', time: '08:00', enabled: true, order: 0 },
+  { id: 'reminder_default_midday', type: 'default', label: 'Mittags', time: '13:00', enabled: true, order: 1 },
+  { id: 'reminder_default_evening', type: 'default', label: 'Abends', time: '18:00', enabled: true, order: 2 }
+];
+
+/**
+ * Migrate old profile.reminders ({morning,midday,evening}) to remindersList array.
+ * Called once from settings when remindersList doesn't exist yet.
+ */
+export function migrateReminders(profile) {
+  if (profile.remindersList) return profile.remindersList;
+
+  const old = profile.reminders || {};
+  const list = DEFAULT_REMINDERS.map(def => {
+    const key = def.id === 'reminder_default_morning' ? 'morning'
+              : def.id === 'reminder_default_midday' ? 'midday'
+              : 'evening';
+    const existing = old[key];
+    return {
+      ...def,
+      time: existing?.time || def.time,
+      enabled: existing?.enabled !== undefined ? existing.enabled : def.enabled
+    };
+  });
+  return list;
+}
+
+export async function getReminders() {
+  const profile = await getProfile();
+  if (!profile) return [...DEFAULT_REMINDERS];
+  if (!profile.remindersList) {
+    return migrateReminders(profile);
+  }
+  return profile.remindersList;
+}
+
+export async function saveReminders(remindersList) {
+  const profile = await getProfile();
+  if (!profile) return;
+  profile.remindersList = remindersList;
+  await saveProfile(profile);
+}
+
+// ---- Clear All ----
 export function clearAllData() {
   if (useMemory) {
-    memStore.profile = null; memStore.points = []; memStore.reflections = [];
-    memStore.nextPointId = 1; memStore.nextReflectionId = 1;
+    memStore.profile = null;
+    memStore.points = [];
+    memStore.reflections = [];
+    memStore.nextPointId = 1;
+    memStore.nextReflectionId = 1;
     return Promise.resolve();
   }
   return new Promise((resolve, reject) => {

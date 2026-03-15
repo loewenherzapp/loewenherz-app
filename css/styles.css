@@ -1191,6 +1191,86 @@ a:active {
   border-radius: var(--radius-card);
 }
 
+/* ---- Custom Reminders in Settings ---- */
+
+.reminder-slot-managed {
+  margin-bottom: 8px;
+}
+
+.reminder-slot-managed:last-child {
+  margin-bottom: 0;
+}
+
+.reminder-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.reminder-custom-label {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 6px 10px;
+  color: var(--text-primary);
+  font-size: 14px;
+  width: 100px;
+  min-height: 36px;
+}
+
+.reminder-custom-label::placeholder {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.reminder-custom-label:focus {
+  border-color: var(--accent-gold);
+  outline: none;
+}
+
+.reminder-delete-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 20px;
+  line-height: 1;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.reminder-delete-btn:active {
+  color: var(--crisis-red);
+  background: rgba(220, 38, 38, 0.12);
+}
+
+.btn-add-reminder {
+  width: 100%;
+  padding: 14px;
+  margin-top: 12px;
+  background: transparent;
+  border: 2px dashed var(--accent-gold);
+  border-radius: var(--radius-btn);
+  color: var(--accent-gold);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-add-reminder:active:not(.disabled) {
+  background: rgba(226, 183, 20, 0.1);
+}
+
+.btn-add-reminder.disabled {
+  border-color: var(--inactive);
+  color: var(--text-secondary);
+  cursor: default;
+  opacity: 0.6;
+}
+
 /* ---- Crisis Modal ---- */
 .crisis-overlay {
   position: fixed;

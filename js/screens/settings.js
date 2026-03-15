@@ -3,11 +3,90 @@
 // ============================================================
 
 import { TEXTS } from '../../content/de.js';
-import { getProfile, saveProfile, clearAllData } from '../db.js';
+import { getProfile, saveProfile, clearAllData, getReminders, saveReminders, migrateReminders } from '../db.js';
 import { openCrisis } from '../components/crisis-modal.js';
+
+const MAX_REMINDERS = 8;
+
+/**
+ * Generate next custom reminder ID based on existing ones.
+ */
+function nextCustomId(reminders) {
+  let max = 0;
+  for (const r of reminders) {
+    if (r.type === 'custom') {
+      const num = parseInt(r.id.replace('reminder_custom_', ''), 10);
+      if (num > max) max = num;
+    }
+  }
+  return `reminder_custom_${max + 1}`;
+}
+
+/**
+ * Get the next full hour as HH:MM string.
+ */
+function nextFullHour() {
+  const now = new Date();
+  let h = now.getHours() + 1;
+  if (h > 23) h = 8;
+  return `${String(h).padStart(2, '0')}:00`;
+}
+
+/**
+ * Sort reminders by time (earliest first).
+ */
+function sortByTime(reminders) {
+  return [...reminders].sort((a, b) => a.time.localeCompare(b.time));
+}
+
+/**
+ * Render a single reminder slot HTML.
+ */
+function renderReminderSlot(r, t) {
+  const isCustom = r.type === 'custom';
+  const labelValue = isCustom ? (r.label || '') : r.label;
+
+  let html = `<div class="reminder-slot reminder-slot-managed" data-reminder-id="${r.id}">`;
+  html += `<div class="reminder-left">`;
+
+  if (isCustom) {
+    html += `<input type="text" class="reminder-custom-label" data-field="label" maxlength="30" placeholder="${t.customLabelPlaceholder}" value="${labelValue}">`;
+  } else {
+    html += `<span class="reminder-label">${labelValue}</span>`;
+  }
+
+  html += `<input type="time" class="reminder-time" data-field="time" value="${r.time}">`;
+  html += `</div>`;
+
+  html += `<div class="reminder-right">`;
+  html += `<label class="toggle">`;
+  html += `<input type="checkbox" data-field="toggle" ${r.enabled ? 'checked' : ''}>`;
+  html += `<span class="toggle-slider"></span>`;
+  html += `</label>`;
+
+  if (isCustom) {
+    html += `<button class="reminder-delete-btn" data-field="delete" aria-label="Löschen">×</button>`;
+  }
+
+  html += `</div>`;
+  html += `</div>`;
+  return html;
+}
 
 export async function renderSettings(container, profile, onBack, onDataDeleted) {
   const t = TEXTS.ui.settings;
+
+  // Migrate reminders if needed (first time opening settings after update)
+  let reminders = await getReminders();
+  if (!profile.remindersList) {
+    reminders = migrateReminders(profile);
+    profile.remindersList = reminders;
+    await saveProfile(profile);
+  }
+
+  const sorted = sortByTime(reminders);
+  const customCount = reminders.filter(r => r.type === 'custom').length;
+  const atMax = reminders.length >= MAX_REMINDERS;
 
   container.innerHTML = `
     <header class="app-header">
@@ -29,37 +108,13 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
       <!-- Reminders -->
       <div class="settings-section">
         <div class="settings-label">${t.remindersLabel}</div>
-        <div class="settings-card">
-          <div class="reminder-slot" style="margin-bottom:8px;">
-            <div class="reminder-left">
-              <span class="reminder-label">${t.morning}</span>
-              <input type="time" class="reminder-time" id="set-rem-morning-time" value="${profile.reminders?.morning?.time || '08:00'}">
-            </div>
-            <label class="toggle">
-              <input type="checkbox" id="set-rem-morning-toggle" ${profile.reminders?.morning?.enabled ? 'checked' : ''}>
-              <span class="toggle-slider"></span>
-            </label>
+        <div class="settings-card" id="reminders-card">
+          <div id="reminders-list">
+            ${sorted.map(r => renderReminderSlot(r, t)).join('')}
           </div>
-          <div class="reminder-slot" style="margin-bottom:8px;">
-            <div class="reminder-left">
-              <span class="reminder-label">${t.midday}</span>
-              <input type="time" class="reminder-time" id="set-rem-midday-time" value="${profile.reminders?.midday?.time || '13:00'}">
-            </div>
-            <label class="toggle">
-              <input type="checkbox" id="set-rem-midday-toggle" ${profile.reminders?.midday?.enabled ? 'checked' : ''}>
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-          <div class="reminder-slot">
-            <div class="reminder-left">
-              <span class="reminder-label">${t.evening}</span>
-              <input type="time" class="reminder-time" id="set-rem-evening-time" value="${profile.reminders?.evening?.time || '18:00'}">
-            </div>
-            <label class="toggle">
-              <input type="checkbox" id="set-rem-evening-toggle" ${profile.reminders?.evening?.enabled ? 'checked' : ''}>
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
+          <button class="btn-add-reminder ${atMax ? 'disabled' : ''}" id="btn-add-reminder" ${atMax ? 'disabled' : ''}>
+            ${atMax ? t.maxReached : t.addReminder}
+          </button>
           <p class="settings-hint">${t.pushHint}</p>
         </div>
       </div>
@@ -135,10 +190,12 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
     </div>
   `;
 
+  // ---- Event Bindings ----
+
   // Back button
   document.getElementById('settings-back').addEventListener('click', onBack);
 
-  // Crisis header in settings
+  // Crisis header
   document.getElementById('settings-crisis-header').addEventListener('click', openCrisis);
 
   // Auto-save name
@@ -151,29 +208,84 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
     }, 500);
   });
 
-  // Auto-save reminders
-  function bindReminder(id, path) {
-    const timeEl = document.getElementById(`set-rem-${id}-time`);
-    const toggleEl = document.getElementById(`set-rem-${id}-toggle`);
+  // ---- Reminder slot event delegation ----
+  const remindersCard = document.getElementById('reminders-card');
 
-    timeEl.addEventListener('change', async () => {
-      if (!profile.reminders) profile.reminders = {};
-      if (!profile.reminders[path]) profile.reminders[path] = {};
-      profile.reminders[path].time = timeEl.value;
-      await saveProfile(profile);
-    });
+  remindersCard.addEventListener('change', async (e) => {
+    const slot = e.target.closest('.reminder-slot-managed');
+    if (!slot) return;
+    const id = slot.dataset.reminderId;
+    const field = e.target.dataset.field;
+    if (!id || !field) return;
 
-    toggleEl.addEventListener('change', async () => {
-      if (!profile.reminders) profile.reminders = {};
-      if (!profile.reminders[path]) profile.reminders[path] = {};
-      profile.reminders[path].enabled = toggleEl.checked;
-      await saveProfile(profile);
-    });
-  }
+    const idx = reminders.findIndex(r => r.id === id);
+    if (idx === -1) return;
 
-  bindReminder('morning', 'morning');
-  bindReminder('midday', 'midday');
-  bindReminder('evening', 'evening');
+    if (field === 'time') {
+      reminders[idx].time = e.target.value;
+      await saveReminders(reminders);
+      // Re-sort and re-render
+      reRenderList();
+    } else if (field === 'toggle') {
+      reminders[idx].enabled = e.target.checked;
+      await saveReminders(reminders);
+    }
+  });
+
+  remindersCard.addEventListener('input', async (e) => {
+    const slot = e.target.closest('.reminder-slot-managed');
+    if (!slot) return;
+    const id = slot.dataset.reminderId;
+    const field = e.target.dataset.field;
+    if (!id || !field) return;
+
+    if (field === 'label') {
+      const idx = reminders.findIndex(r => r.id === id);
+      if (idx === -1) return;
+      reminders[idx].label = e.target.value;
+      // Debounced save
+      clearTimeout(remindersCard._labelTimeout);
+      remindersCard._labelTimeout = setTimeout(async () => {
+        await saveReminders(reminders);
+      }, 500);
+    }
+  });
+
+  remindersCard.addEventListener('click', async (e) => {
+    const deleteBtn = e.target.closest('[data-field="delete"]');
+    if (!deleteBtn) return;
+    const slot = deleteBtn.closest('.reminder-slot-managed');
+    if (!slot) return;
+    const id = slot.dataset.reminderId;
+
+    const idx = reminders.findIndex(r => r.id === id);
+    if (idx === -1) return;
+    if (reminders[idx].type === 'default') return; // safety check
+
+    reminders.splice(idx, 1);
+    await saveReminders(reminders);
+    reRenderList();
+    updateAddButton();
+  });
+
+  // Add reminder button
+  document.getElementById('btn-add-reminder').addEventListener('click', async () => {
+    if (reminders.length >= MAX_REMINDERS) return;
+
+    const newReminder = {
+      id: nextCustomId(reminders),
+      type: 'custom',
+      label: '',
+      time: nextFullHour(),
+      enabled: true,
+      order: reminders.length
+    };
+
+    reminders.push(newReminder);
+    await saveReminders(reminders);
+    reRenderList();
+    updateAddButton();
+  });
 
   // Reflection time
   document.getElementById('set-reflection-time').addEventListener('change', async (e) => {
@@ -202,6 +314,21 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
   document.getElementById('settings-delete').addEventListener('click', () => {
     showDeleteConfirm(t, onDataDeleted);
   });
+
+  // ---- Helper: re-render reminder list ----
+  function reRenderList() {
+    const listEl = document.getElementById('reminders-list');
+    const sorted = sortByTime(reminders);
+    listEl.innerHTML = sorted.map(r => renderReminderSlot(r, t)).join('');
+  }
+
+  function updateAddButton() {
+    const btn = document.getElementById('btn-add-reminder');
+    const atMax = reminders.length >= MAX_REMINDERS;
+    btn.disabled = atMax;
+    btn.textContent = atMax ? t.maxReached : t.addReminder;
+    btn.classList.toggle('disabled', atMax);
+  }
 }
 
 function showLegalPopup(title, text) {
