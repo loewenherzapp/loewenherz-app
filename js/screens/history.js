@@ -123,6 +123,7 @@ export async function renderHistory(container, profile) {
     const endStr = formatDate(sunday);
 
     const points = await getPointsByDateRange(startStr, endStr);
+    const reflections = await getReflectionsByDateRange(startStr, endStr);
 
     const weekEl = document.createElement('div');
     weekEl.className = 'history-week';
@@ -137,9 +138,9 @@ export async function renderHistory(container, profile) {
 
     weeksContainer.appendChild(weekEl);
 
-    // Render dots
+    // Render dots (pass pre-fetched data — avoids duplicate IDB queries on Safari)
     const dotsEl = weekEl.querySelector('.history-dots');
-    await renderHistoryWeekDots(dotsEl, monday, (dateStr) => showDayDetail(dateStr));
+    renderHistoryWeekDots(dotsEl, monday, points, reflections, (dateStr) => showDayDetail(dateStr));
 
     // Render balance
     const balanceEl = weekEl.querySelector('.balance-bars');

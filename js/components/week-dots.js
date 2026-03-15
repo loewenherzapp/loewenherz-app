@@ -2,8 +2,6 @@
 // Week Dots Component
 // ============================================================
 
-import { getPointsByDateRange, getReflectionsByDateRange } from '../db.js';
-
 const DAY_LABELS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
 
 /**
@@ -60,25 +58,20 @@ function groupReflectionsByDate(items) {
 
 /**
  * Render week dots into a container for the dashboard (current week).
- * Uses a single range query for efficiency and reliability.
+ * Caller provides pre-fetched data to avoid duplicate IDB queries
+ * (Safari/iOS can return inconsistent results from separate transactions).
  * @param {HTMLElement} container
+ * @param {Array} points - pre-fetched points for this week
+ * @param {Array} reflections - pre-fetched reflections for this week
  * @param {Function} onDayClick - callback(dateStr) when a dot with data is tapped
  */
-export async function renderWeekDots(container, onDayClick) {
+export function renderWeekDots(container, points, reflections, onDayClick) {
   const today = new Date();
   const todayStr = formatDate(today);
   const monday = getMonday(today);
-  const sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 6);
 
-  const startStr = formatDate(monday);
-  const endStr = formatDate(sunday);
-
-  // Single range query — much more reliable than 7 individual queries
-  const allPoints = await getPointsByDateRange(startStr, endStr);
-  const allReflections = await getReflectionsByDateRange(startStr, endStr);
-  const pointsByDay = groupByDate(allPoints);
-  const reflectionsByDay = groupReflectionsByDate(allReflections);
+  const pointsByDay = groupByDate(points);
+  const reflectionsByDay = groupReflectionsByDate(reflections);
 
   container.innerHTML = '';
 
@@ -128,22 +121,19 @@ export async function renderWeekDots(container, onDayClick) {
 
 /**
  * Render week dots for history view (any week).
- * Uses a single range query for efficiency and reliability.
+ * Caller provides pre-fetched data to avoid duplicate IDB queries.
+ * @param {HTMLElement} container
+ * @param {Date} mondayDate - Monday of the week to render
+ * @param {Array} points - pre-fetched points for this week
+ * @param {Array} reflections - pre-fetched reflections for this week
+ * @param {Function} onDayClick - callback(dateStr) when a dot with data is tapped
  */
-export async function renderHistoryWeekDots(container, mondayDate, onDayClick) {
+export function renderHistoryWeekDots(container, mondayDate, points, reflections, onDayClick) {
   const today = new Date();
   const todayStr = formatDate(today);
-  const sunday = new Date(mondayDate);
-  sunday.setDate(mondayDate.getDate() + 6);
 
-  const startStr = formatDate(mondayDate);
-  const endStr = formatDate(sunday);
-
-  // Single range query per week
-  const allPoints = await getPointsByDateRange(startStr, endStr);
-  const allReflections = await getReflectionsByDateRange(startStr, endStr);
-  const pointsByDay = groupByDate(allPoints);
-  const reflectionsByDay = groupReflectionsByDate(allReflections);
+  const pointsByDay = groupByDate(points);
+  const reflectionsByDay = groupReflectionsByDate(reflections);
 
   container.innerHTML = '';
 

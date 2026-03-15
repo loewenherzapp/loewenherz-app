@@ -3,7 +3,7 @@
 // ============================================================
 
 import { TEXTS } from '../../content/de.js';
-import { getPointsByDate, addSmallPoint, getPointsByDateRange } from '../db.js';
+import { getPointsByDate, addSmallPoint, getPointsByDateRange, getReflectionsByDateRange } from '../db.js';
 import { openSheet } from '../components/bottom-sheet.js';
 import { renderWeekDots, formatDate, getMonday } from '../components/week-dots.js';
 import { renderBalanceBars } from '../components/balance-bar.js';
@@ -27,6 +27,7 @@ export async function renderDashboard(container, profile) {
   const weekStart = formatDate(monday);
   const weekEnd = formatDate(sundayDate);
   const weekPoints = await getPointsByDateRange(weekStart, weekEnd);
+  const weekReflections = await getReflectionsByDateRange(weekStart, weekEnd);
 
   // Count per letter today
   const letterCounts = {};
@@ -122,9 +123,9 @@ export async function renderDashboard(container, profile) {
     bottomRow.appendChild(createSmallButton(l, DISPLAY_LETTERS[i + 3], i + 3));
   });
 
-  // Render week dots
+  // Render week dots (pass pre-fetched data — avoids duplicate IDB queries on Safari)
   const weekDotsEl = document.getElementById('dashboard-week-dots');
-  await renderWeekDots(weekDotsEl, (dateStr) => {
+  renderWeekDots(weekDotsEl, weekPoints, weekReflections, (dateStr) => {
     showDayDetail(dateStr);
   });
 
