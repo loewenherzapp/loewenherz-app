@@ -219,49 +219,136 @@ export function getReflectionsByDateRange(startDate, endDate) {
   });
 }
 
-// ---- Reminders (stored inside userProfile as remindersList) ----
+// ---- Reminders v2: 8 fixed alarm slots ----
 
-const DEFAULT_REMINDERS = [
-  { id: 'reminder_default_morning', type: 'default', label: 'Morgens', time: '08:00', enabled: true, order: 0 },
-  { id: 'reminder_default_midday', type: 'default', label: 'Mittags', time: '13:00', enabled: true, order: 1 },
-  { id: 'reminder_default_evening', type: 'default', label: 'Abends', time: '18:00', enabled: true, order: 2 }
+const DEFAULT_REMINDERS_V2 = [
+  { id: 1, time: '08:00', enabled: true },
+  { id: 2, time: '13:00', enabled: true },
+  { id: 3, time: '18:00', enabled: true },
+  { id: 4, time: '09:00', enabled: false },
+  { id: 5, time: '10:00', enabled: false },
+  { id: 6, time: '12:00', enabled: false },
+  { id: 7, time: '15:00', enabled: false },
+  { id: 8, time: '20:00', enabled: false }
 ];
 
+const DEFAULT_MORNING_RITUAL = { time: '07:00', enabled: true };
+const DEFAULT_EVENING_REFLECTION = { time: '21:00', enabled: true };
+
 /**
- * Migrate old profile.reminders ({morning,midday,evening}) to remindersList array.
- * Called once from settings when remindersList doesn't exist yet.
+ * Migrate from v1 data (remindersList array with type/label or old reminders object)
+ * to v2 (8 fixed slots). Called once when remindersV2 doesn't exist.
  */
-export function migrateReminders(profile) {
-  if (profile.remindersList) return profile.remindersList;
+export function migrateRemindersToV2(profile) {
+  const v2 = DEFAULT_REMINDERS_V2.map(d => ({ ...d }));
 
-  const old = profile.reminders || {};
-  const list = DEFAULT_REMINDERS.map(def => {
-    const key = def.id === 'reminder_default_morning' ? 'morning'
-              : def.id === 'reminder_default_midday' ? 'midday'
-              : 'evening';
-    const existing = old[key];
-    return {
-      ...def,
-      time: existing?.time || def.time,
-      enabled: existing?.enabled !== undefined ? existing.enabled : def.enabled
-    };
-  });
-  return list;
-}
+  // Try to pull data from v1 remindersList (Feature-Prompt 5 format)
+  const oldList = profile.remindersList;
+  if (oldList && Array.isArray(oldList)) {
+    // Separate defaults and customs
+    const defaults = oldList.filter(r => r.type === 'default');
+    const customs = oldList.filter(r => r.type === 'custom');
 
-export async function getReminders() {
-  const profile = await getProfile();
-  if (!profile) return [...DEFAULT_REMINDERS];
-  if (!profile.remindersList) {
-    return migrateReminders(profile);
+    // Map old defaults to slots 1-3
+    const keyMap = { 'reminder_default_morning': 1, 'reminder_default_midday': 2, 'reminder_default_evening': 3 };
+    for (const d of defaults) {
+      const slotId = keyMap[d.id];
+      if (slotId) {
+        const slot = v2.find(s => s.id === slotId);
+        if (slot) {
+          slot.time = d.time || slot.time;
+          slot.enabled = d.enabled !== undefined ? d.enabled : slot.enabled;
+        }
+      }
+    }
+
+    // Map customs (up to 5) to slots 4-8, sorted by time (earliest first)
+    const sortedCustoms = [...customs].sort((a, b) => (a.time || '').localeCompare(b.time || '')).slice(0, 5);
+    for (let i = 0; i < sortedCustoms.length; i++) {
+      const slot = v2.find(s => s.id === i + 4);
+      if (slot) {
+        slot.time = sortedCustoms[i].time || slot.time;
+        slot.enabled = sortedCustoms[i].enabled !== undefined ? sortedCustoms[i].enabled : slot.enabled;
+      }
+    }
+  } else if (profile.reminders && typeof profile.reminders === 'object') {
+    // Even older format: profile.reminders = { morning: {...}, midday: {...}, evening: {...} }
+    const old = profile.reminders;
+    if (old.morning) { v2[0].time = old.morning.time || v2[0].time; v2[0].enabled = old.morning.enabled !== undefined ? old.morning.enabled : v2[0].enabled; }
+    if (old.midday) { v2[1].time = old.midday.time || v2[1].time; v2[1].enabled = old.midday.enabled !== undefined ? old.midday.enabled : v2[1].enabled; }
+    if (old.evening) { v2[2].time = old.evening.time || v2[2].time; v2[2].enabled = old.evening.enabled !== undefined ? old.evening.enabled : v2[2].enabled; }
   }
-  return profile.remindersList;
+
+  return v2;
 }
 
-export async function saveReminders(remindersList) {
+/**
+ * Full migration: sets remindersV2, morningRitual, eveningReflection and cleans old keys.
+ */
+export async function migrateToV2(profile) {
+  if (profile.remindersV2) return profile; // already migrated
+
+  profile.remindersV2 = migrateRemindersToV2(profile);
+
+  // morningRitual: new, no old data to migrate
+  if (!profile.morningRitual) {
+    profile.morningRitual = { ...DEFAULT_MORNING_RITUAL };
+  }
+
+  // eveningReflection: migrate from old reflectionTime/reflectionEnabled
+  if (!profile.eveningReflection) {
+    profile.eveningReflection = {
+      time: profile.reflectionTime || DEFAULT_EVENING_REFLECTION.time,
+      enabled: profile.reflectionEnabled !== undefined ? profile.reflectionEnabled : DEFAULT_EVENING_REFLECTION.enabled
+    };
+  }
+
+  // Clean up old keys
+  delete profile.remindersList;
+  delete profile.reminders;
+  delete profile.reflectionTime;
+  delete profile.reflectionEnabled;
+
+  await saveProfile(profile);
+  return profile;
+}
+
+export async function getRemindersV2() {
+  const profile = await getProfile();
+  if (!profile || !profile.remindersV2) return DEFAULT_REMINDERS_V2.map(d => ({ ...d }));
+  return profile.remindersV2;
+}
+
+export async function saveRemindersV2(reminders) {
   const profile = await getProfile();
   if (!profile) return;
-  profile.remindersList = remindersList;
+  profile.remindersV2 = reminders;
+  await saveProfile(profile);
+}
+
+export async function getMorningRitual() {
+  const profile = await getProfile();
+  if (!profile || !profile.morningRitual) return { ...DEFAULT_MORNING_RITUAL };
+  return profile.morningRitual;
+}
+
+export async function saveMorningRitual(data) {
+  const profile = await getProfile();
+  if (!profile) return;
+  profile.morningRitual = data;
+  await saveProfile(profile);
+}
+
+export async function getEveningReflection() {
+  const profile = await getProfile();
+  if (!profile || !profile.eveningReflection) return { ...DEFAULT_EVENING_REFLECTION };
+  return profile.eveningReflection;
+}
+
+export async function saveEveningReflection(data) {
+  const profile = await getProfile();
+  if (!profile) return;
+  profile.eveningReflection = data;
   await saveProfile(profile);
 }
 

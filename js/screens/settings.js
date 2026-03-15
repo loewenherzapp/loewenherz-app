@@ -1,36 +1,10 @@
 // ============================================================
-// Settings Screen
+// Settings Screen — v2 (8 fixed alarm slots, morning ritual, evening reflection)
 // ============================================================
 
 import { TEXTS } from '../../content/de.js';
-import { getProfile, saveProfile, clearAllData, getReminders, saveReminders, migrateReminders } from '../db.js';
+import { getProfile, saveProfile, clearAllData, migrateToV2, saveRemindersV2, saveMorningRitual, saveEveningReflection } from '../db.js';
 import { openCrisis } from '../components/crisis-modal.js';
-
-const MAX_REMINDERS = 8;
-
-/**
- * Generate next custom reminder ID based on existing ones.
- */
-function nextCustomId(reminders) {
-  let max = 0;
-  for (const r of reminders) {
-    if (r.type === 'custom') {
-      const num = parseInt(r.id.replace('reminder_custom_', ''), 10);
-      if (num > max) max = num;
-    }
-  }
-  return `reminder_custom_${max + 1}`;
-}
-
-/**
- * Get the next full hour as HH:MM string.
- */
-function nextFullHour() {
-  const now = new Date();
-  let h = now.getHours() + 1;
-  if (h > 23) h = 8;
-  return `${String(h).padStart(2, '0')}:00`;
-}
 
 /**
  * Sort reminders by time (earliest first).
@@ -40,53 +14,50 @@ function sortByTime(reminders) {
 }
 
 /**
- * Render a single reminder slot HTML.
+ * Render a single alarm slot: time + toggle. Identical for all 8.
  */
-function renderReminderSlot(r, t) {
-  const isCustom = r.type === 'custom';
-  const labelValue = isCustom ? (r.label || '') : r.label;
+function renderAlarmSlot(r) {
+  return `<div class="reminder-slot reminder-slot-managed" data-slot-id="${r.id}">
+    <div class="reminder-left">
+      <input type="time" class="reminder-time" data-field="time" value="${r.time}">
+    </div>
+    <div class="reminder-right">
+      <label class="toggle">
+        <input type="checkbox" data-field="toggle" ${r.enabled ? 'checked' : ''}>
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+  </div>`;
+}
 
-  let html = `<div class="reminder-slot reminder-slot-managed" data-reminder-id="${r.id}">`;
-  html += `<div class="reminder-left">`;
-
-  if (isCustom) {
-    html += `<input type="text" class="reminder-custom-label" data-field="label" maxlength="30" placeholder="${t.customLabelPlaceholder}" value="${labelValue}">`;
-  } else {
-    html += `<span class="reminder-label">${labelValue}</span>`;
-  }
-
-  html += `<input type="time" class="reminder-time" data-field="time" value="${r.time}">`;
-  html += `</div>`;
-
-  html += `<div class="reminder-right">`;
-  html += `<label class="toggle">`;
-  html += `<input type="checkbox" data-field="toggle" ${r.enabled ? 'checked' : ''}>`;
-  html += `<span class="toggle-slider"></span>`;
-  html += `</label>`;
-
-  if (isCustom) {
-    html += `<button class="reminder-delete-btn" data-field="delete" aria-label="Löschen">×</button>`;
-  }
-
-  html += `</div>`;
-  html += `</div>`;
-  return html;
+/**
+ * Render a single-line section (Morgenritual or Abendreflexion): time + toggle + description.
+ */
+function renderRitualSlot(data, sectionId) {
+  return `<div class="reminder-slot" id="${sectionId}-slot">
+    <div class="reminder-left">
+      <input type="time" class="reminder-time" data-field="time" value="${data.time}">
+    </div>
+    <div class="reminder-right">
+      <label class="toggle">
+        <input type="checkbox" data-field="toggle" ${data.enabled ? 'checked' : ''}>
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+  </div>`;
 }
 
 export async function renderSettings(container, profile, onBack, onDataDeleted) {
   const t = TEXTS.ui.settings;
 
-  // Migrate reminders if needed (first time opening settings after update)
-  let reminders = await getReminders();
-  if (!profile.remindersList) {
-    reminders = migrateReminders(profile);
-    profile.remindersList = reminders;
-    await saveProfile(profile);
-  }
+  // Run v2 migration if needed
+  profile = await migrateToV2(profile);
+
+  const reminders = profile.remindersV2;
+  const morningRitual = profile.morningRitual;
+  const eveningReflection = profile.eveningReflection;
 
   const sorted = sortByTime(reminders);
-  const customCount = reminders.filter(r => r.type === 'custom').length;
-  const atMax = reminders.length >= MAX_REMINDERS;
 
   container.innerHTML = `
     <header class="app-header">
@@ -105,34 +76,32 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
         </div>
       </div>
 
-      <!-- Reminders -->
+      <!-- Erinnerungen (8 fixed alarm slots) -->
       <div class="settings-section">
         <div class="settings-label">${t.remindersLabel}</div>
         <div class="settings-card" id="reminders-card">
           <div id="reminders-list">
-            ${sorted.map(r => renderReminderSlot(r, t)).join('')}
+            ${sorted.map(r => renderAlarmSlot(r)).join('')}
           </div>
-          <button class="btn-add-reminder ${atMax ? 'disabled' : ''}" id="btn-add-reminder" ${atMax ? 'disabled' : ''}>
-            ${atMax ? t.maxReached : t.addReminder}
-          </button>
           <p class="settings-hint">${t.pushHint}</p>
         </div>
       </div>
 
-      <!-- Reflection Time -->
+      <!-- Morgenritual -->
+      <div class="settings-section">
+        <div class="settings-label">${t.morningRitualLabel}</div>
+        <div class="settings-card" id="morning-ritual-card">
+          ${renderRitualSlot(morningRitual, 'morning-ritual')}
+          <p class="settings-hint">${t.morningRitualHint}</p>
+        </div>
+      </div>
+
+      <!-- Abendreflexion -->
       <div class="settings-section">
         <div class="settings-label">${t.reflectionTimeLabel}</div>
-        <div class="settings-card">
-          <div class="reminder-slot">
-            <div class="reminder-left">
-              <span class="reminder-label">${t.reflectionTimeLabel}</span>
-              <input type="time" class="reminder-time" id="set-reflection-time" value="${profile.reflectionTime || '21:00'}">
-            </div>
-            <label class="toggle">
-              <input type="checkbox" id="set-reflection-toggle" ${profile.reflectionEnabled !== false ? 'checked' : ''}>
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
+        <div class="settings-card" id="evening-reflection-card">
+          ${renderRitualSlot(eveningReflection, 'evening-reflection')}
+          <p class="settings-hint">${t.eveningReflectionHint}</p>
         </div>
       </div>
 
@@ -208,93 +177,111 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
     }, 500);
   });
 
-  // ---- Reminder slot event delegation ----
+  // ---- Alarm slots: event delegation on #reminders-card ----
   const remindersCard = document.getElementById('reminders-card');
+  let timeDebounceTimers = {};
 
   remindersCard.addEventListener('change', async (e) => {
     const slot = e.target.closest('.reminder-slot-managed');
     if (!slot) return;
-    const id = slot.dataset.reminderId;
+    const id = parseInt(slot.dataset.slotId, 10);
     const field = e.target.dataset.field;
     if (!id || !field) return;
 
-    const idx = reminders.findIndex(r => r.id === id);
-    if (idx === -1) return;
+    const reminder = reminders.find(r => r.id === id);
+    if (!reminder) return;
 
-    if (field === 'time') {
-      reminders[idx].time = e.target.value;
-      await saveReminders(reminders);
-      // Re-sort and re-render
-      reRenderList();
-    } else if (field === 'toggle') {
-      reminders[idx].enabled = e.target.checked;
-      await saveReminders(reminders);
+    if (field === 'toggle') {
+      reminder.enabled = e.target.checked;
+      await saveRemindersV2(reminders);
     }
   });
 
-  remindersCard.addEventListener('input', async (e) => {
+  // Time picker: debounce 1.5s on change (iOS closes picker on change)
+  remindersCard.addEventListener('change', (e) => {
+    if (e.target.dataset.field !== 'time') return;
     const slot = e.target.closest('.reminder-slot-managed');
     if (!slot) return;
-    const id = slot.dataset.reminderId;
-    const field = e.target.dataset.field;
-    if (!id || !field) return;
+    const id = parseInt(slot.dataset.slotId, 10);
 
-    if (field === 'label') {
-      const idx = reminders.findIndex(r => r.id === id);
-      if (idx === -1) return;
-      reminders[idx].label = e.target.value;
-      // Debounced save
-      clearTimeout(remindersCard._labelTimeout);
-      remindersCard._labelTimeout = setTimeout(async () => {
-        await saveReminders(reminders);
-      }, 500);
+    clearTimeout(timeDebounceTimers[id]);
+    timeDebounceTimers[id] = setTimeout(async () => {
+      const reminder = reminders.find(r => r.id === id);
+      if (!reminder) return;
+      reminder.time = e.target.value;
+      await saveRemindersV2(reminders);
+      reRenderList();
+    }, 1500);
+  });
+
+  // Also save on blur (reliable on desktop/Android)
+  remindersCard.addEventListener('focusout', (e) => {
+    if (e.target.dataset.field !== 'time') return;
+    const slot = e.target.closest('.reminder-slot-managed');
+    if (!slot) return;
+    const id = parseInt(slot.dataset.slotId, 10);
+
+    // Cancel the debounce timer if blur fires first
+    clearTimeout(timeDebounceTimers[id]);
+
+    const reminder = reminders.find(r => r.id === id);
+    if (!reminder || reminder.time === e.target.value) return;
+
+    reminder.time = e.target.value;
+    saveRemindersV2(reminders);
+    reRenderList();
+  });
+
+  // ---- Morning Ritual ----
+  const morningCard = document.getElementById('morning-ritual-card');
+  let morningTimeTimer;
+
+  morningCard.addEventListener('change', async (e) => {
+    const field = e.target.dataset.field;
+    if (field === 'toggle') {
+      morningRitual.enabled = e.target.checked;
+      await saveMorningRitual(morningRitual);
+    } else if (field === 'time') {
+      clearTimeout(morningTimeTimer);
+      morningTimeTimer = setTimeout(async () => {
+        morningRitual.time = e.target.value;
+        await saveMorningRitual(morningRitual);
+      }, 1500);
     }
   });
 
-  remindersCard.addEventListener('click', async (e) => {
-    const deleteBtn = e.target.closest('[data-field="delete"]');
-    if (!deleteBtn) return;
-    const slot = deleteBtn.closest('.reminder-slot-managed');
-    if (!slot) return;
-    const id = slot.dataset.reminderId;
-
-    const idx = reminders.findIndex(r => r.id === id);
-    if (idx === -1) return;
-    if (reminders[idx].type === 'default') return; // safety check
-
-    reminders.splice(idx, 1);
-    await saveReminders(reminders);
-    reRenderList();
-    updateAddButton();
+  morningCard.addEventListener('focusout', (e) => {
+    if (e.target.dataset.field !== 'time') return;
+    clearTimeout(morningTimeTimer);
+    if (morningRitual.time === e.target.value) return;
+    morningRitual.time = e.target.value;
+    saveMorningRitual(morningRitual);
   });
 
-  // Add reminder button
-  document.getElementById('btn-add-reminder').addEventListener('click', async () => {
-    if (reminders.length >= MAX_REMINDERS) return;
+  // ---- Evening Reflection ----
+  const eveningCard = document.getElementById('evening-reflection-card');
+  let eveningTimeTimer;
 
-    const newReminder = {
-      id: nextCustomId(reminders),
-      type: 'custom',
-      label: '',
-      time: nextFullHour(),
-      enabled: true,
-      order: reminders.length
-    };
-
-    reminders.push(newReminder);
-    await saveReminders(reminders);
-    reRenderList();
-    updateAddButton();
+  eveningCard.addEventListener('change', async (e) => {
+    const field = e.target.dataset.field;
+    if (field === 'toggle') {
+      eveningReflection.enabled = e.target.checked;
+      await saveEveningReflection(eveningReflection);
+    } else if (field === 'time') {
+      clearTimeout(eveningTimeTimer);
+      eveningTimeTimer = setTimeout(async () => {
+        eveningReflection.time = e.target.value;
+        await saveEveningReflection(eveningReflection);
+      }, 1500);
+    }
   });
 
-  // Reflection time
-  document.getElementById('set-reflection-time').addEventListener('change', async (e) => {
-    profile.reflectionTime = e.target.value;
-    await saveProfile(profile);
-  });
-  document.getElementById('set-reflection-toggle').addEventListener('change', async (e) => {
-    profile.reflectionEnabled = e.target.checked;
-    await saveProfile(profile);
+  eveningCard.addEventListener('focusout', (e) => {
+    if (e.target.dataset.field !== 'time') return;
+    clearTimeout(eveningTimeTimer);
+    if (eveningReflection.time === e.target.value) return;
+    eveningReflection.time = e.target.value;
+    saveEveningReflection(eveningReflection);
   });
 
   // Crisis
@@ -315,19 +302,11 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
     showDeleteConfirm(t, onDataDeleted);
   });
 
-  // ---- Helper: re-render reminder list ----
+  // ---- Helper: re-render alarm list (sorted) ----
   function reRenderList() {
     const listEl = document.getElementById('reminders-list');
     const sorted = sortByTime(reminders);
-    listEl.innerHTML = sorted.map(r => renderReminderSlot(r, t)).join('');
-  }
-
-  function updateAddButton() {
-    const btn = document.getElementById('btn-add-reminder');
-    const atMax = reminders.length >= MAX_REMINDERS;
-    btn.disabled = atMax;
-    btn.textContent = atMax ? t.maxReached : t.addReminder;
-    btn.classList.toggle('disabled', atMax);
+    listEl.innerHTML = sorted.map(r => renderAlarmSlot(r)).join('');
   }
 }
 
