@@ -30,6 +30,7 @@
   --transition-fast: 150ms ease;
   --transition-sheet: 200ms ease-out;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
 }
 
 /* ---- Reset ---- */
@@ -88,6 +89,7 @@ a:active {
   justify-content: space-between;
   align-items: center;
   padding: 12px 20px;
+  padding-top: calc(12px + var(--safe-top));
   position: sticky;
   top: 0;
   z-index: 100;
@@ -95,35 +97,41 @@ a:active {
 }
 
 .header-crisis {
-  font-size: 22px;
+  font-size: 24px;
   color: var(--crisis-red);
   background: none;
   border: none;
   cursor: pointer;
-  min-width: 44px;
-  min-height: 44px;
+  min-width: 48px;
+  min-height: 48px;
+  padding: 12px;
+  margin: -4px;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   z-index: 2;
   touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .header-settings {
-  font-size: 20px;
+  font-size: 22px;
   color: var(--text-secondary);
   background: none;
   border: none;
   cursor: pointer;
-  min-width: 44px;
-  min-height: 44px;
+  min-width: 48px;
+  min-height: 48px;
+  padding: 12px;
+  margin: -4px;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   z-index: 2;
   touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* ---- Tab Bar ---- */
@@ -205,6 +213,7 @@ a:active {
 /* ---- Landing Page ---- */
 .landing-screen {
   padding: 40px 24px;
+  padding-top: calc(40px + var(--safe-top));
   text-align: center;
   min-height: 100dvh;
   display: flex;
@@ -276,6 +285,7 @@ a:active {
 /* ---- Onboarding ---- */
 .onboarding-screen {
   padding: 40px 24px;
+  padding-top: calc(40px + var(--safe-top));
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
@@ -581,13 +591,18 @@ a:active {
 }
 
 .week-dot.active {
-  background: var(--accent-amber);
-  box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+  background: var(--accent-gold);
+  box-shadow: 0 0 10px rgba(226, 183, 20, 0.5);
 }
 
 .week-dot.today {
   outline: 2px solid var(--accent-gold);
   outline-offset: 2px;
+}
+
+.week-dot.today.active {
+  background: var(--accent-gold);
+  box-shadow: 0 0 10px rgba(226, 183, 20, 0.5);
 }
 
 .week-dot.mood-drowned { background: var(--mood-drowned); box-shadow: 0 0 8px rgba(30, 64, 175, 0.4); }
@@ -974,13 +989,18 @@ a:active {
 }
 
 .history-dot.active {
-  background: var(--accent-amber);
-  box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+  background: var(--accent-gold);
+  box-shadow: 0 0 10px rgba(226, 183, 20, 0.5);
 }
 
 .history-dot.today {
   outline: 2px solid var(--accent-gold);
   outline-offset: 2px;
+}
+
+.history-dot.today.active {
+  background: var(--accent-gold);
+  box-shadow: 0 0 10px rgba(226, 183, 20, 0.5);
 }
 
 .history-dot.future {
@@ -1066,6 +1086,7 @@ a:active {
 /* ---- Settings ---- */
 .settings-screen {
   padding: 0 20px 20px;
+  padding-top: var(--safe-top);
 }
 
 .settings-back {
