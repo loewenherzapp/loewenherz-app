@@ -32,12 +32,12 @@ export const TEXTS = {
       "Quatschi empfiehlt: Lieber absagen. Sicher ist sicher.",
       "Quatschi meint, du solltest dir Sorgen machen. Worum ist ihm egal.",
       "Quatschi rät: Erstmal googeln. Dann nochmal googeln.",
-      "Quatschi heute: „Wird bestimmt schlimm." Quelle: Bauchgefühl.",
-      "Quatschi sagt: „Guck mal, wie locker die das machen." Spoiler: Keiner macht das locker.",
+      "Quatschi heute: ›Wird bestimmt schlimm.‹ Quelle: Bauchgefühl.",
+      "Quatschi sagt: ›Guck mal, wie locker die das machen.‹ Spoiler: Keiner macht das locker.",
       "Quatschi vergleicht dich gerade mit allen. Datenbasis: Instagram.",
-      "Quatschi im Laborkittel: „Ich bin ja nur vorsichtig."",
+      "Quatschi im Laborkittel: ›Ich bin ja nur vorsichtig.‹",
       "Quatschis Trefferquote heute: wie immer.",
-      "Quatschi am Herd: „Ist der wirklich aus?" — Induktion seit drei Jahren.",
+      "Quatschi am Herd: ›Ist der wirklich aus?‹ — Induktion seit drei Jahren.",
       "Quatschis nächster Zug steht bereit. Einsteigen optional.",
       "Quatschi dreht Runden auf dem Laufband. Null Strecke.",
       "Quatschi: viel Meinung, wenig Daten."
@@ -91,10 +91,10 @@ export const TEXTS = {
     ],
 
     inactiveShort: [
-      "„Siehst du? Funktioniert doch nicht." — Netter Versuch, Quatschi.",
+      "›Siehst du? Funktioniert doch nicht.‹ — Netter Versuch, Quatschi.",
       "{name}, Quatschi sagt, du hast aufgegeben. Stimmt das?",
       "Pause gemacht? Quatschi feiert schon, {name}.",
-      "Quatschi flüstert: „Bringt eh nichts." Du weißt, was das ist.",
+      "Quatschi flüstert: ›Bringt eh nichts.‹ Du weißt, was das ist.",
       "Radio Bullshit meldet: Projekt gescheitert. Quelle: Quatschi."
     ],
 
@@ -382,15 +382,15 @@ export const TEXTS = {
       title: "Löwenherz installieren",
       subtitle: "Damit alles funktioniert, füge Löwenherz zu deinem Homescreen hinzu:",
       step1: "Tippe auf das Teilen-Symbol",
-      step2: "Scrolle zu „Zum Home-Bildschirm\"",
-      step3: "Tippe „Hinzufügen\"",
+      step2: "Scrolle zu ›Zum Home-Bildschirm‹",
+      step3: "Tippe ›Hinzufügen‹",
       step4: "Öffne Löwenherz von deinem Homescreen",
       androidToggle: "Ich nutze Android →",
       iosToggle: "← iOS",
       continueAnyway: "Trotzdem fortfahren →",
       androidStep1: "Tippe auf das Menü (⋮) oben rechts",
-      androidStep2: "Wähle „Zum Startbildschirm hinzufügen\"",
-      androidStep3: "Tippe „Hinzufügen\""
+      androidStep2: "Wähle ›Zum Startbildschirm hinzufügen‹",
+      androidStep3: "Tippe ›Hinzufügen‹"
     }
   }
 };
