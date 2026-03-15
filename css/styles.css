@@ -16,9 +16,9 @@
   --text-secondary: #A8A29E;
   --nudge-amber: #92400E;
   --crisis-red: #DC2626;
-  --mood-drowned: #1E40AF;
-  --mood-tough: #6B7280;
-  --mood-okay: #9CA3AF;
+  --mood-drowned: #3B6EB5;
+  --mood-tough: #7B8BA3;
+  --mood-okay: #C4A94D;
   --mood-good: #D97706;
   --mood-lion: #E2B714;
   --inactive: #44403C;
@@ -605,9 +605,9 @@ a:active {
   box-shadow: 0 0 10px rgba(226, 183, 20, 0.5);
 }
 
-.week-dot.mood-drowned { background: var(--mood-drowned); box-shadow: 0 0 8px rgba(30, 64, 175, 0.4); }
-.week-dot.mood-tough { background: var(--mood-tough); box-shadow: 0 0 8px rgba(107, 114, 128, 0.4); }
-.week-dot.mood-okay { background: var(--mood-okay); box-shadow: 0 0 8px rgba(156, 163, 175, 0.4); }
+.week-dot.mood-drowned { background: var(--mood-drowned); box-shadow: 0 0 8px rgba(59, 110, 181, 0.4); }
+.week-dot.mood-tough { background: var(--mood-tough); box-shadow: 0 0 8px rgba(123, 139, 163, 0.4); }
+.week-dot.mood-okay { background: var(--mood-okay); box-shadow: 0 0 8px rgba(196, 169, 77, 0.4); }
 .week-dot.mood-good { background: var(--mood-good); box-shadow: 0 0 8px rgba(217, 119, 6, 0.4); }
 .week-dot.mood-lion { background: var(--mood-lion); box-shadow: 0 0 8px rgba(226, 183, 20, 0.4); }
 
@@ -1007,9 +1007,9 @@ a:active {
   opacity: 0.2;
 }
 
-.history-dot.mood-drowned { background: var(--mood-drowned); box-shadow: 0 0 8px rgba(30, 64, 175, 0.4); }
-.history-dot.mood-tough { background: var(--mood-tough); box-shadow: 0 0 8px rgba(107, 114, 128, 0.4); }
-.history-dot.mood-okay { background: var(--mood-okay); box-shadow: 0 0 8px rgba(156, 163, 175, 0.4); }
+.history-dot.mood-drowned { background: var(--mood-drowned); box-shadow: 0 0 8px rgba(59, 110, 181, 0.4); }
+.history-dot.mood-tough { background: var(--mood-tough); box-shadow: 0 0 8px rgba(123, 139, 163, 0.4); }
+.history-dot.mood-okay { background: var(--mood-okay); box-shadow: 0 0 8px rgba(196, 169, 77, 0.4); }
 .history-dot.mood-good { background: var(--mood-good); box-shadow: 0 0 8px rgba(217, 119, 6, 0.4); }
 .history-dot.mood-lion { background: var(--mood-lion); box-shadow: 0 0 8px rgba(226, 183, 20, 0.4); }
 

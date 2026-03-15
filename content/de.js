@@ -334,8 +334,12 @@ export const TEXTS = {
     history: {
       title: "Dein Weg, {name}",
       thisWeek: "Diese Woche",
+      lastWeek: "Letzte Woche",
+      weeksAgo2: "Vor 2 Wochen",
+      weeksAgo3: "Vor 3 Wochen",
       weekLabel: "KW {n}",
-      balance: "Balance"
+      balance: "Balance",
+      noData: "Noch keine Daten."
     },
     settings: {
       title: "Einstellungen",

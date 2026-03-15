@@ -2,7 +2,7 @@
 // Week Dots Component
 // ============================================================
 
-import { getPointsByDate, getReflectionByDate } from '../db.js';
+import { getPointsByDateRange, getReflectionsByDateRange } from '../db.js';
 
 const DAY_LABELS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
 
@@ -39,7 +39,28 @@ export function getWeekNumber(d) {
 }
 
 /**
+ * Build lookup maps from a range query: { "YYYY-MM-DD": [...items] }
+ */
+function groupByDate(items) {
+  const map = {};
+  for (const item of items) {
+    if (!map[item.date]) map[item.date] = [];
+    map[item.date].push(item);
+  }
+  return map;
+}
+
+function groupReflectionsByDate(items) {
+  const map = {};
+  for (const item of items) {
+    map[item.date] = item;
+  }
+  return map;
+}
+
+/**
  * Render week dots into a container for the dashboard (current week).
+ * Uses a single range query for efficiency and reliability.
  * @param {HTMLElement} container
  * @param {Function} onDayClick - callback(dateStr) when a dot with data is tapped
  */
@@ -47,6 +68,17 @@ export async function renderWeekDots(container, onDayClick) {
   const today = new Date();
   const todayStr = formatDate(today);
   const monday = getMonday(today);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+
+  const startStr = formatDate(monday);
+  const endStr = formatDate(sunday);
+
+  // Single range query — much more reliable than 7 individual queries
+  const allPoints = await getPointsByDateRange(startStr, endStr);
+  const allReflections = await getReflectionsByDateRange(startStr, endStr);
+  const pointsByDay = groupByDate(allPoints);
+  const reflectionsByDay = groupReflectionsByDate(allReflections);
 
   container.innerHTML = '';
 
@@ -66,22 +98,17 @@ export async function renderWeekDots(container, onDayClick) {
       dot.classList.add('today');
     }
 
-    // Check if future
-    if (dayDate > today && dateStr !== todayStr) {
-      // Don't style future differently on dashboard — just inactive
-    }
-
-    // Check for points and reflections
-    const points = await getPointsByDate(dateStr);
-    const reflection = await getReflectionByDate(dateStr);
-    const hasPoints = points.length > 0;
+    // Check for points and reflections via lookup
+    const dayPoints = pointsByDay[dateStr] || [];
+    const reflection = reflectionsByDay[dateStr] || null;
+    const hasPoints = dayPoints.length > 0;
 
     if (hasPoints) {
       dot.classList.add('active');
     }
 
     if (reflection) {
-      dot.classList.add(`mood-${reflection.mood}`);
+      dot.classList.add('mood-' + reflection.mood);
     }
 
     if (hasPoints || reflection) {
@@ -101,10 +128,22 @@ export async function renderWeekDots(container, onDayClick) {
 
 /**
  * Render week dots for history view (any week).
+ * Uses a single range query for efficiency and reliability.
  */
 export async function renderHistoryWeekDots(container, mondayDate, onDayClick) {
   const today = new Date();
   const todayStr = formatDate(today);
+  const sunday = new Date(mondayDate);
+  sunday.setDate(mondayDate.getDate() + 6);
+
+  const startStr = formatDate(mondayDate);
+  const endStr = formatDate(sunday);
+
+  // Single range query per week
+  const allPoints = await getPointsByDateRange(startStr, endStr);
+  const allReflections = await getReflectionsByDateRange(startStr, endStr);
+  const pointsByDay = groupByDate(allPoints);
+  const reflectionsByDay = groupReflectionsByDate(allReflections);
 
   container.innerHTML = '';
 
@@ -128,16 +167,16 @@ export async function renderHistoryWeekDots(container, mondayDate, onDayClick) {
       dot.classList.add('future');
     }
 
-    const points = await getPointsByDate(dateStr);
-    const reflection = await getReflectionByDate(dateStr);
-    const hasPoints = points.length > 0;
+    const dayPoints = pointsByDay[dateStr] || [];
+    const reflection = reflectionsByDay[dateStr] || null;
+    const hasPoints = dayPoints.length > 0;
 
     if (hasPoints) {
       dot.classList.add('active');
     }
 
     if (reflection) {
-      dot.classList.add(`mood-${reflection.mood}`);
+      dot.classList.add('mood-' + reflection.mood);
     }
 
     if (hasPoints || reflection) {
