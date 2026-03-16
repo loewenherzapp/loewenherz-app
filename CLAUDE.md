@@ -1,11 +1,24 @@
 # Löwenherz — Projektanweisungen für Claude
 
+## Chat-Abkürzungen
+
+| Kürzel | Bedeutung |
+|--------|-----------|
+| **r** auf [Datei/Thema] | Reflexion aus 4 passenden Perspektiven auf das genannte Objekt |
+
 ## Autonomie
 
 - **Committen & Pushen: JA** — Eigenständig committen und `git push origin main` ohne nachzufragen. Commit-Messages auf Deutsch, kurz, prägnant.
 - **SW-Cache-Version: IMMER hochzählen** nach jeder Änderung an gecachten Dateien (`sw.js` → `CACHE_NAME`).
 - **Neue Dateien im SW registrieren** — Wenn eine neue JS/CSS/Asset-Datei entsteht, in die `urlsToCache`-Liste in `sw.js` aufnehmen.
 - **Testen im Preview** — Nach Code-Änderungen eigenständig den Preview-Server starten und per `preview_eval` verifizieren. Nicht fragen ob getestet werden soll.
+
+## Deployment-Checkliste (vor iPhone-Test)
+
+1. `git status` — Keine uncommitteten Änderungen?
+2. `git push origin main` — Gepusht?
+3. ~30s warten (Vercel-Build)
+4. Erst DANN auf iPhone testen
 
 ## Projekt-Steckbrief
 
@@ -54,6 +67,7 @@ index.html                    ← Single Entry Point
 - **Template-Strings** für HTML-Generierung in `container.innerHTML`
 - **Keine neuen Dependencies** — alles vanilla
 - **Funktions-Architektur**: Jede Screen-Datei exportiert eine `render*`-Funktion die `(container, profile)` bekommt
+- **Try/Catch in async Callbacks** — Unbehandelte Promise-Rejections sind auf iOS Safari lautlos. Alle async Callbacks die nicht awaited werden (z.B. in Event-Listenern) MÜSSEN in try/catch gewrappt werden.
 
 ### CSS
 - **Custom Properties** im `:root` für alle Farben, Radien, Transitions
@@ -85,6 +99,7 @@ index.html                    ← Single Entry Point
 - **Kein Modal für Feedback**: Toasts/Inline-Elemente statt Modals
 - **Haptic Feedback**: `navigator.vibrate(50)` bei Taps
 - **Dezent**: Halbtransparente Hintergründe, subtile Schatten, keine grellen Farben
+- **Keine subtilen Animationen** — iOS Safari rendert CSS-Transitions auf dynamischen Elementen unzuverlässig. Lieber sofort sichtbar + Fade-out beim Entfernen. Einfachheit > Eleganz.
 
 ## iOS-Safari Fallstricke (gelernt durch Schmerz)
 
@@ -108,6 +123,17 @@ index.html                    ← Single Entry Point
 2. Per `preview_eval` die App durchklicken (Onboarding überspringen, Dashboard testen)
 3. Console-Errors prüfen (`preview_console_logs`)
 4. Kritisch: iOS-Safari-Kompatibilität bedenken (kein `position: fixed` auf dynamischen Elementen)
+
+### Testszenarien-Checkliste (nach Feature-Änderungen)
+
+- [ ] Erster App-Start (Onboarding-Flow)
+- [ ] Tap auf jeden SMALL-Button (S, M, A, L₁, L₂) → Punkt wird gespeichert?
+- [ ] Toast erscheint nach Tap? (Milestone bei Punkt 1, 5, 10)
+- [ ] Schneller Doppel-Tap → kein Glitch?
+- [ ] Tab-Wechsel (Heute → Reflexion → Verlauf → zurück)
+- [ ] Offline-Modus (kein Netzwerk → App funktioniert?)
+- [ ] Name mit Sonderzeichen (Umlaute, Emoji)
+- [ ] PWA Standalone vs. Safari-Tab
 
 ## IndexedDB-Schema
 
