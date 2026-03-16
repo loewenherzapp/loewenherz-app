@@ -141,6 +141,92 @@ async function getLetterMissing2Weeks() {
   return longestMissing;
 }
 
+// ---- Wiederholungsschutz (konfigurierbar) ----
+
+function randomFromPool(pool, storageKey, maxRecent) {
+  if (!pool || pool.length === 0) {
+    pool = TEXTS.quatschi.general;
+  }
+  const recent = storageGet(storageKey) || [];
+  const available = pool.filter(text => !recent.includes(text));
+  const source = available.length > 0 ? available : pool;
+  const chosen = source[Math.floor(Math.random() * source.length)];
+
+  const updated = [chosen, ...recent];
+  if (updated.length > maxRecent) updated.length = maxRecent;
+  storageSet(storageKey, updated);
+
+  return chosen;
+}
+
+// ---- Tap-Feedback (Quatschi-Toast nach SMALL-Punkt) ----
+
+export function getTapFeedback(letter, pointCountToday) {
+  // 1. Milestone hat Vorrang
+  if (pointCountToday === 1) {
+    return randomFromPool(TEXTS.tap.milestone.first, 'tap_milestone_recent', 4);
+  }
+  if (pointCountToday === 5) {
+    return randomFromPool(TEXTS.tap.milestone.fifth, 'tap_milestone_recent', 2);
+  }
+  if (pointCountToday === 10) {
+    return randomFromPool(TEXTS.tap.milestone.tenth, 'tap_milestone_recent', 2);
+  }
+
+  // 2. 30% Chance auf buchstabenspezifisch
+  const letterPool = TEXTS.tap.byLetter[letter];
+  if (Math.random() < 0.3 && letterPool && letterPool.length > 0) {
+    return randomFromPool(letterPool, 'tap_letter_recent', 3);
+  }
+
+  // 3. Default: generisch
+  return randomFromPool(TEXTS.tap.general, 'tap_general_recent', 4);
+}
+
+// ---- Toast anzeigen ----
+
+let _toastTimer = null;
+
+export function showTapToast(text, userName) {
+  const rendered = text.replace(/\{name\}/g, userName);
+  const duration = rendered.length > 35 ? 3000 : 2000;
+
+  // Remove any existing toast
+  const existing = document.getElementById('tap-toast');
+  if (existing) {
+    clearTimeout(_toastTimer);
+    existing.remove();
+  }
+
+  // Insert toast INSIDE the dashboard DOM (no position:fixed — bulletproof on iOS)
+  const quatschiLine = document.querySelector('.quatschi-line');
+  if (!quatschiLine) return;
+
+  const toast = document.createElement('div');
+  toast.id = 'tap-toast';
+  toast.textContent = rendered;
+  toast.style.cssText = 'background:rgba(41,37,36,0.92); color:#fafaf9; font-size:13px; font-weight:500; line-height:1.4; padding:8px 16px; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,0.3); text-align:center; margin:0 auto 8px; max-width:260px; cursor:pointer;';
+
+  // Insert right after quatschi-line (above the SMALL buttons)
+  quatschiLine.insertAdjacentElement('afterend', toast);
+
+  // Tap-to-dismiss
+  toast.addEventListener('click', () => {
+    clearTimeout(_toastTimer);
+    dismissToast(toast);
+  });
+
+  // Auto-dismiss
+  _toastTimer = setTimeout(() => dismissToast(toast), duration);
+}
+
+function dismissToast(toast) {
+  if (!toast || !toast.parentNode) return;
+  toast.style.transition = 'opacity 0.3s ease';
+  toast.style.opacity = '0';
+  setTimeout(() => { if (toast.parentNode) toast.remove(); }, 300);
+}
+
 // ---- Dashboard Quatschi-Text (Wasserfall-Priorität) ----
 
 export async function getDashboardQuatschiText(userName) {

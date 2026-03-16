@@ -229,6 +229,94 @@ export const TEXTS = {
   },
 
   // ==========================================
+  // TAP-FEEDBACK (Quatschi-Toast nach SMALL-Punkt)
+  // ==========================================
+
+  tap: {
+    general: [
+      "Notiert, {name}.",
+      "Läuft bei dir, {name}.",
+      "Punkt für dich, {name}.",
+      "Check. Weiter geht's.",
+      "Gebucht, {name}.",
+      "Sauber, {name}.",
+      "Drin. Nächster Zug, {name}?",
+      "Quatschi hat's gesehen. Du auch."
+    ],
+
+    byLetter: {
+      S: [
+        "Cocktail aufgefüllt, {name}.",
+        "Dein Körper sagt danke.",
+        "Selbstfürsorge ist kein Luxus.",
+        "Grundbedürfnis: check.",
+        "Basis gesichert, {name}.",
+        "Erst der Cocktail, dann die Welt."
+      ],
+      M: [
+        "Quatschi erkannt. Halbe Miete.",
+        "Radio Bullshit: aus.",
+        "Haltungswechsel registriert.",
+        "Autopilot unterbrochen, {name}.",
+        "Metaintervention. Fancy Wort, starke Wirkung.",
+        "Quatschi wurde bemerkt. Das reicht."
+      ],
+      A: [
+        "Gefühl benannt. Mut bewiesen.",
+        "Fühlen ist Daten sammeln, {name}.",
+        "Emotion erkannt, {name}.",
+        "Gundula sagt danke.",
+        "Gefühl da? Dann ist es richtig.",
+        "Affekt wahrgenommen. Stark, {name}."
+      ],
+      L1: [
+        "Löwenherz in Aktion.",
+        "Mut ist leise, {name}.",
+        "Schritt gewagt. Respekt.",
+        "Vermeidung? Nicht heute.",
+        "Dein Löwenherz brüllt, {name}.",
+        "Das war ein mutiger Zug."
+      ],
+      L2: [
+        "Freundlich mit dir selbst, {name}.",
+        "Selbstliebe ist Training.",
+        "Feldwebel hat Pause, {name}.",
+        "Liebe ist auch eine Entscheidung.",
+        "Du wärst ein guter Freund für dich.",
+        "Grenze gesetzt? Stark, {name}."
+      ]
+    },
+
+    milestone: {
+      first: [
+        "Erster Punkt! Alles über null ist Gewinn.",
+        "Tag gestartet, {name}. Mehr braucht's nicht.",
+        "Eins. Reicht. Zählt.",
+        "Der erste Punkt ist der schwerste, {name}.",
+        "Los geht's, {name}.",
+        "Null ist vorbei. Du bist dran.",
+        "Erster Punkt des Tages. Läuft.",
+        "Angefangen, {name}. Das ist alles.",
+        "Punkt eins. Quatschi ist irritiert.",
+        "Start. Kein Applaus nötig, {name}."
+      ],
+      fifth: [
+        "Fünf Punkte, {name}. Solide.",
+        "Fünfter Punkt. Du meinst es ernst.",
+        "Handvoll Punkte. Starker Tag, {name}.",
+        "Fünf. Quatschi wird nervös.",
+        "High Five, {name}."
+      ],
+      tenth: [
+        "Zehn Punkte. Löwentag, {name}.",
+        "Zweistellig, {name}. Respekt.",
+        "Zehn. Quatschi ist sprachlos.",
+        "Das ist dein Tag, {name}."
+      ]
+    }
+  },
+
+  // ==========================================
   // UI TEXTE
   // ==========================================
 

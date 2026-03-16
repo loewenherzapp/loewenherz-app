@@ -8,7 +8,7 @@ import { openSheet } from '../components/bottom-sheet.js';
 import { renderWeekDots, formatDate, getMonday } from '../components/week-dots.js';
 import { renderBalanceBars } from '../components/balance-bar.js';
 import { showDayDetail } from './history.js';
-import { getDashboardQuatschiText } from '../quatschi.js';
+import { getDashboardQuatschiText, getTapFeedback, showTapToast } from '../quatschi.js';
 
 const LETTERS = ['S', 'M', 'A', 'L1', 'L2'];
 const DISPLAY_LETTERS = ['S', 'M', 'A', 'L₁', 'L₂'];
@@ -96,15 +96,22 @@ export async function renderDashboard(container, profile) {
       const qs = TEXTS.ui.quickSelect[letter];
       openSheet(qs.title, qs.options, async (opt) => {
         const now = new Date();
+        const todayStr = formatDate(now);
         await addSmallPoint({
-          date: formatDate(now),
+          date: todayStr,
           time: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`,
           letter: letter,
           category: opt.key,
           categoryLabel: opt.label
         });
-        // Refresh dashboard
+        // Get updated point count for today (AFTER tap)
+        const updatedPoints = await getPointsByDate(todayStr);
+        const pointCountToday = updatedPoints.length;
+        // Tap feedback toast
+        const feedbackText = getTapFeedback(letter, pointCountToday);
+        // Refresh dashboard FIRST, then show toast inside the new DOM
         await renderDashboard(container, profile);
+        showTapToast(feedbackText, name);
       });
     });
 

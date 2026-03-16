@@ -1308,6 +1308,24 @@ a:active {
   flex: 1;
 }
 
+/* ---- Tap Toast ---- */
+.tap-toast {
+  position: fixed;
+  z-index: 150;
+  background: rgba(41, 37, 36, 0.92);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  padding: 10px 16px;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  max-width: 260px;
+  text-align: center;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
 /* ---- Utilities ---- */
 .hidden {
   display: none !important;
