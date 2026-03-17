@@ -586,8 +586,8 @@ a:active { opacity: 0.7; }
 }
 
 .gundula-icon {
-  width: 44px;
-  height: 44px;
+  width: 56px;
+  height: 56px;
   object-fit: contain;
   flex-shrink: 0;
   vertical-align: middle;
