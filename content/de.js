@@ -415,7 +415,7 @@ export const TEXTS = {
       close: "Schließen",
       tabTitle: "Reflexion",
       pastTitle: "Letzte Reflexion",
-      noReflection: "Noch keine Reflexion. Starte heute Abend deine erste.",
+      noReflection: "Zwei Minuten für dich. Der Tag kann warten.",
       startNow: "Jetzt reflektieren",
       lastDays: "Letzte 7 Tage"
     },

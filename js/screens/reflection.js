@@ -83,6 +83,12 @@ function startReflectionFlow(container, profile) {
 
   renderStep1();
 
+  function progressDots(activeStep) {
+    return `<div class="progress-dots">${[1,2,3].map(i =>
+      `<div class="progress-dot${i === activeStep ? ' active' : ''}"></div>`
+    ).join('')}</div>`;
+  }
+
   function setMoodGradient(moodKey) {
     const appEl = document.getElementById('app');
     if (moodKey) {
@@ -95,6 +101,7 @@ function startReflectionFlow(container, profile) {
   function renderStep1() {
     const title = t.title.replace('{name}', name);
     let html = `<div class="reflection-screen">`;
+    html += progressDots(1);
     html += `<div class="ref-question">${title}</div>`;
     html += `<div class="mood-list" id="mood-list">`;
 
@@ -128,6 +135,7 @@ function startReflectionFlow(container, profile) {
 
   function renderStep2() {
     let html = `<div class="reflection-screen">`;
+    html += progressDots(2);
     html += `<h2 class="flow-title">${t.helpedTitle}</h2>`;
     html += `<div class="helped-grid" id="helped-grid">`;
 
@@ -191,6 +199,7 @@ function startReflectionFlow(container, profile) {
 
   function renderStep3() {
     let html = `<div class="reflection-screen">`;
+    html += progressDots(3);
     html += `<h2 class="flow-title">${t.gratitudeTitle}</h2>`;
     html += `<input type="text" class="gratitude-input" id="gratitude-input" placeholder="${t.gratitudePlaceholder}" maxlength="200">`;
     html += `<div class="gratitude-buttons">`;
@@ -236,6 +245,7 @@ function startReflectionFlow(container, profile) {
 
   function renderCompletion(comment) {
     let html = `<div class="reflection-screen">`;
+    html += progressDots(3);
     html += `<div class="reflection-end">`;
 
     // Quote block with animated text
