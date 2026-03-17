@@ -2,7 +2,7 @@
 // Löwenherz PWA — Service Worker (Cache-First)
 // ============================================================
 
-const CACHE_NAME = 'loewenherz-v18';
+const CACHE_NAME = 'loewenherz-v19';
 
 const URLS_TO_CACHE = [
   './',
@@ -25,7 +25,11 @@ const URLS_TO_CACHE = [
   './content/de.js',
   './assets/icons/icon-180.png',
   './assets/icons/icon-192.png',
-  './assets/icons/icon-512.png'
+  './assets/icons/icon-512.png',
+  './assets/gundula/gundula-entspannt-56.png',
+  './assets/gundula/gundula-ruhig-56.png',
+  './assets/gundula/gundula-wachsam-56.png',
+  './assets/gundula/gundula-tense-56.png'
 ];
 
 // Install — cache all app files

@@ -579,6 +579,14 @@ a:active { opacity: 0.7; }
   flex-shrink: 0;
 }
 
+.gundula-icon {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  flex-shrink: 0;
+  transition: transform 0.6s ease, opacity 0.3s ease;
+}
+
 .gundula-text {
   font-family: var(--font-sans);
   font-size: 14px;
@@ -602,6 +610,9 @@ a:active { opacity: 0.7; }
 
 .gundula-row.tense .gundula-emoji { transform: scale(0.85) rotate(-5deg); }
 .gundula-row.entspannt .gundula-emoji { transform: scale(1.1); }
+
+.gundula-row.tense .gundula-icon { transform: scale(0.85); }
+.gundula-row.entspannt .gundula-icon { transform: scale(1.1); }
 
 /* Week Circles */
 .week-block {
