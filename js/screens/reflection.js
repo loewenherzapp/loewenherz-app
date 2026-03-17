@@ -24,7 +24,7 @@ export async function renderReflection(container, profile) {
   recentReflections.sort((a, b) => b.date.localeCompare(a.date));
   const lastReflection = recentReflections.length > 0 ? recentReflections[0] : null;
 
-  let html = `<div class="reflection-screen">`;
+  let html = `<div class="reflection-screen reflection-landing">`;
   html += `<h2 class="reflection-title">${t.tabTitle}</h2>`;
 
   if (lastReflection) {
@@ -37,7 +37,7 @@ export async function renderReflection(container, profile) {
         <div class="reflection-last-mood">
           <span>${mood ? mood.emoji : ''}</span>
           <span>${mood ? mood.label : ''}</span>
-          <span style="color:var(--ref-muted);font-size:12px;margin-left:auto;">${dateLabel}</span>
+          <span style="color:var(--ref-muted);font-size:11px;margin-left:auto;">${dateLabel}</span>
         </div>
       </div>
     `;
@@ -47,7 +47,7 @@ export async function renderReflection(container, profile) {
 
   // Last 7 days emoji row
   if (recentReflections.length > 0) {
-    html += `<div style="font-size:12px;color:var(--ref-muted);margin-bottom:8px;">${t.lastDays}</div>`;
+    html += `<div style="font-size:11px;color:var(--ref-muted);margin-bottom:8px;">${t.lastDays}</div>`;
     html += `<div class="reflection-emoji-row">`;
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
@@ -133,7 +133,7 @@ function startReflectionFlow(container, profile) {
 
     const labels = TEXTS.ui.smallLabels;
     ['S', 'M', 'A', 'L1', 'L2'].forEach(letter => {
-      const display = letter === 'L1' ? 'L₁' : letter === 'L2' ? 'L₂' : letter;
+      const display = letter === 'L1' ? 'L' : letter === 'L2' ? 'L' : letter;
       html += `<button class="helped-btn" data-letter="${letter}">${display} ${labels[letter]}</button>`;
     });
 

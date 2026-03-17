@@ -11,7 +11,7 @@ import { showDayDetail } from './history.js';
 import { getDashboardQuatschiText, getTapFeedback, showTapToast } from '../quatschi.js';
 
 const LETTERS = ['S', 'M', 'A', 'L1', 'L2'];
-const DISPLAY_LETTERS = ['S', 'M', 'A', 'L₁', 'L₂'];
+const DISPLAY_LETTERS = ['S', 'M', 'A', 'L', 'L'];
 const BUTTON_LABELS = ['Selbst', 'Meta', 'Affekt', 'Löwen', 'Liebe'];
 
 // Color config per SMALL letter
