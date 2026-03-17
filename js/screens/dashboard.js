@@ -161,6 +161,9 @@ export async function renderDashboard(container, profile) {
       const qs = TEXTS.ui.quickSelect[letter];
       openSheet(qs.title, qs.options, async (opt) => {
         try {
+          // Haptic feedback — subtle 15ms vibration on tap
+          if (navigator.vibrate) navigator.vibrate(15);
+
           const now = new Date();
           const todayStr = formatDate(now);
           await addSmallPoint({
