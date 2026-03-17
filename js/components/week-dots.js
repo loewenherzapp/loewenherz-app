@@ -1,5 +1,5 @@
 // ============================================================
-// Week Dots Component
+// Week Circles Component — 3-level glow system, no numbers
 // ============================================================
 
 const DAY_LABELS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
@@ -36,9 +36,6 @@ export function getWeekNumber(d) {
   return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
 }
 
-/**
- * Build lookup maps from a range query: { "YYYY-MM-DD": [...items] }
- */
 function groupByDate(items) {
   const map = {};
   for (const item of items) {
@@ -57,21 +54,23 @@ function groupReflectionsByDate(items) {
 }
 
 /**
- * Render week dots into a container for the dashboard (current week).
- * Caller provides pre-fetched data to avoid duplicate IDB queries
- * (Safari/iOS can return inconsistent results from separate transactions).
- * @param {HTMLElement} container
- * @param {Array} points - pre-fetched points for this week
- * @param {Array} reflections - pre-fetched reflections for this week
- * @param {Function} onDayClick - callback(dateStr) when a dot with data is tapped
+ * 3-level state: empty / low / active
  */
-export function renderWeekDots(container, points, reflections, onDayClick) {
+function getDayCircleState(pointCount) {
+  if (pointCount >= 5) return 'active';
+  if (pointCount >= 1) return 'low';
+  return 'empty';
+}
+
+/**
+ * Render week circles for the dashboard (current week).
+ */
+export function renderWeekCircles(container, points, reflections, onDayClick) {
   const today = new Date();
   const todayStr = formatDate(today);
   const monday = getMonday(today);
 
   const pointsByDay = groupByDate(points);
-  const reflectionsByDay = groupReflectionsByDate(reflections);
 
   container.innerHTML = '';
 
@@ -81,59 +80,42 @@ export function renderWeekDots(container, points, reflections, onDayClick) {
     const dateStr = formatDate(dayDate);
 
     const wrap = document.createElement('div');
-    wrap.className = 'week-dot-wrap';
+    wrap.className = 'week-circle-wrap';
 
-    const dot = document.createElement('div');
-    dot.className = 'week-dot';
+    const circle = document.createElement('div');
+    circle.className = 'week-circle';
 
-    // Check if today
-    if (dateStr === todayStr) {
-      dot.classList.add('today');
-    }
-
-    // Check for points and reflections via lookup
     const dayPoints = pointsByDay[dateStr] || [];
-    const reflection = reflectionsByDay[dateStr] || null;
-    const hasPoints = dayPoints.length > 0;
+    const state = getDayCircleState(dayPoints.length);
+    circle.classList.add(state);
 
-    if (hasPoints) {
-      dot.classList.add('active');
+    if (dateStr === todayStr) {
+      circle.classList.add('today');
     }
 
-    if (reflection) {
-      dot.classList.add('mood-' + reflection.mood);
-    }
-
-    if (hasPoints || reflection) {
-      dot.style.cursor = 'pointer';
-      dot.addEventListener('click', () => onDayClick && onDayClick(dateStr));
+    if (dayPoints.length > 0) {
+      circle.style.cursor = 'pointer';
+      circle.addEventListener('click', () => onDayClick && onDayClick(dateStr));
     }
 
     const label = document.createElement('div');
-    label.className = 'week-dot-label';
+    label.className = 'week-day-label';
     label.textContent = DAY_LABELS[i];
 
-    wrap.appendChild(dot);
+    wrap.appendChild(circle);
     wrap.appendChild(label);
     container.appendChild(wrap);
   }
 }
 
 /**
- * Render week dots for history view (any week).
- * Caller provides pre-fetched data to avoid duplicate IDB queries.
- * @param {HTMLElement} container
- * @param {Date} mondayDate - Monday of the week to render
- * @param {Array} points - pre-fetched points for this week
- * @param {Array} reflections - pre-fetched reflections for this week
- * @param {Function} onDayClick - callback(dateStr) when a dot with data is tapped
+ * Render week dots for history view (any week) — uses same 3-level system.
  */
 export function renderHistoryWeekDots(container, mondayDate, points, reflections, onDayClick) {
   const today = new Date();
   const todayStr = formatDate(today);
 
   const pointsByDay = groupByDate(points);
-  const reflectionsByDay = groupReflectionsByDate(reflections);
 
   container.innerHTML = '';
 
@@ -152,24 +134,15 @@ export function renderHistoryWeekDots(container, mondayDate, points, reflections
       dot.classList.add('today');
     }
 
-    // Future dates
     if (dayDate > today && dateStr !== todayStr) {
       dot.classList.add('future');
     }
 
     const dayPoints = pointsByDay[dateStr] || [];
-    const reflection = reflectionsByDay[dateStr] || null;
-    const hasPoints = dayPoints.length > 0;
+    const state = getDayCircleState(dayPoints.length);
+    dot.classList.add(state);
 
-    if (hasPoints) {
-      dot.classList.add('active');
-    }
-
-    if (reflection) {
-      dot.classList.add('mood-' + reflection.mood);
-    }
-
-    if (hasPoints || reflection) {
+    if (dayPoints.length > 0) {
       dot.style.cursor = 'pointer';
       dot.addEventListener('click', () => onDayClick && onDayClick(dateStr));
     }
@@ -183,3 +156,6 @@ export function renderHistoryWeekDots(container, mondayDate, points, reflections
     container.appendChild(wrap);
   }
 }
+
+// Legacy export for dashboard.js (old name)
+export { renderWeekCircles as renderWeekDots };

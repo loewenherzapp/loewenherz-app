@@ -1,28 +1,11 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<!--
-   ______                            __
-  / ____/___  ____ ___  ____  __  __/ /____  _____
- / /   / __ \/ __ `__ \/ __ \/ / / / __/ _ \/ ___/
-/ /___/ /_/ / / / / / / /_/ / /_/ / /_/  __/ /
-\____/\____/_/ /_/ /_/ .___/\__,_/\__/\___/_/
-                    /_/
-        Created with Perplexity Computer
-        https://www.perplexity.ai/computer
--->
-
-<!-- Perplexity Computer Attribution — SEO Meta Tags -->
-<meta name="generator" content="Perplexity Computer">
-<meta name="author" content="Perplexity Computer">
-<meta property="og:see_also" content="https://www.perplexity.ai/computer">
-<link rel="author" href="https://www.perplexity.ai/computer">
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#E2B714">
+<meta name="theme-color" content="#f5efe3" id="theme-color-meta">
 <meta name="description" content="Löwenherz — Dein SMALL-Begleiter. Mentale Gesundheit im Alltag.">
 
 <title>Löwenherz</title>
@@ -30,6 +13,10 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/icon-180.png">
 <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
 
 <link rel="stylesheet" href="css/styles.css">
 </head>
@@ -40,21 +27,21 @@
     <div id="settings-container" class="hidden"></div>
     <div id="app-shell" class="hidden">
       <header class="app-header">
-        <button class="header-crisis" id="crisis-btn" aria-label="Krisenhilfe">♡</button>
-        <button class="header-settings" id="settings-btn" aria-label="Einstellungen">⚙️</button>
+        <span class="header-title">Löwenherz</span>
+        <div class="header-actions">
+          <button class="header-crisis" id="crisis-btn" aria-label="Krisenhilfe">♡</button>
+          <button class="header-settings" id="settings-btn" aria-label="Einstellungen">⚙</button>
+        </div>
       </header>
       <main class="main-content" id="main-content"></main>
-      <nav class="tab-bar">
-        <button class="tab-btn active" data-tab="today">
-          <span class="tab-icon">📍</span>
+      <nav class="bottom-nav" id="bottom-nav">
+        <button class="nav-tab active" data-tab="today">
           <span id="tab-label-today">Heute</span>
         </button>
-        <button class="tab-btn" data-tab="reflection">
-          <span class="tab-icon">🌙</span>
+        <button class="nav-tab" data-tab="reflection">
           <span id="tab-label-reflection">Reflexion</span>
         </button>
-        <button class="tab-btn" data-tab="history">
-          <span class="tab-icon">📈</span>
+        <button class="nav-tab" data-tab="history">
           <span id="tab-label-history">Verlauf</span>
         </button>
       </nav>

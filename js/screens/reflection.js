@@ -1,5 +1,6 @@
 // ============================================================
-// Reflection — Tab with default view and 3-step flow
+// Reflection — Tab with dark mode, circle mood buttons, and
+//              3-step flow with quote animation
 // ============================================================
 
 import { TEXTS } from '../../content/de.js';
@@ -20,11 +21,9 @@ export async function renderReflection(container, profile) {
   sevenAgo.setDate(sevenAgo.getDate() - 7);
   const recentReflections = await getReflectionsByDateRange(formatDate(sevenAgo), todayStr);
 
-  // Sort by date desc to find the last one
   recentReflections.sort((a, b) => b.date.localeCompare(a.date));
   const lastReflection = recentReflections.length > 0 ? recentReflections[0] : null;
 
-  // Build default view
   let html = `<div class="reflection-screen">`;
   html += `<h2 class="reflection-title">${t.tabTitle}</h2>`;
 
@@ -38,19 +37,18 @@ export async function renderReflection(container, profile) {
         <div class="reflection-last-mood">
           <span>${mood ? mood.emoji : ''}</span>
           <span>${mood ? mood.label : ''}</span>
-          <span style="color:var(--text-secondary);font-size:12px;margin-left:auto;">${dateLabel}</span>
+          <span style="color:var(--ref-muted);font-size:12px;margin-left:auto;">${dateLabel}</span>
         </div>
       </div>
     `;
   } else {
-    html += `<p style="color:var(--text-secondary);text-align:center;margin-bottom:20px;">${t.noReflection}</p>`;
+    html += `<p style="color:var(--ref-muted);text-align:center;margin-bottom:20px;">${t.noReflection}</p>`;
   }
 
   // Last 7 days emoji row
   if (recentReflections.length > 0) {
-    html += `<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">${t.lastDays}</div>`;
+    html += `<div style="font-size:12px;color:var(--ref-muted);margin-bottom:8px;">${t.lastDays}</div>`;
     html += `<div class="reflection-emoji-row">`;
-    // Show last 7 days in order
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
@@ -80,24 +78,28 @@ function startReflectionFlow(container, profile) {
   const t = TEXTS.ui.reflection;
   let selectedMood = null;
   let selectedHelped = [];
-  let helpedAlt = null; // 'dontknow' or 'survived'
+  let helpedAlt = null;
   let gratitudeText = '';
 
   renderStep1();
 
+  function setMoodGradient(moodKey) {
+    const appEl = document.getElementById('app');
+    if (moodKey) {
+      appEl.setAttribute('data-mood', moodKey);
+    } else {
+      appEl.removeAttribute('data-mood');
+    }
+  }
+
   function renderStep1() {
     const title = t.title.replace('{name}', name);
     let html = `<div class="reflection-screen">`;
-    html += `<h2 class="flow-title">${title}</h2>`;
+    html += `<div class="ref-question">${title}</div>`;
     html += `<div class="mood-list" id="mood-list">`;
 
     t.moods.forEach(m => {
-      html += `
-        <button class="mood-option" data-mood="${m.key}">
-          <span class="mood-emoji">${m.emoji}</span>
-          <span>${m.label}</span>
-        </button>
-      `;
+      html += `<button class="mood-btn" data-mood="${m.key}" aria-label="${m.label}">${m.emoji}</button>`;
     });
 
     html += `</div>`;
@@ -106,7 +108,7 @@ function startReflectionFlow(container, profile) {
 
     container.innerHTML = html;
 
-    const btns = container.querySelectorAll('.mood-option');
+    const btns = container.querySelectorAll('.mood-btn');
     const nextBtn = document.getElementById('mood-next');
 
     btns.forEach(btn => {
@@ -114,6 +116,7 @@ function startReflectionFlow(container, profile) {
         btns.forEach(b => b.classList.remove('selected'));
         btn.classList.add('selected');
         selectedMood = btn.dataset.mood;
+        setMoodGradient(selectedMood);
         nextBtn.disabled = false;
       });
     });
@@ -155,7 +158,6 @@ function startReflectionFlow(container, profile) {
     letterBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         const letter = btn.dataset.letter;
-        // Deselect alts
         helpedAlt = null;
         altBtns.forEach(a => a.classList.remove('selected'));
 
@@ -172,7 +174,6 @@ function startReflectionFlow(container, profile) {
 
     altBtns.forEach(btn => {
       btn.addEventListener('click', () => {
-        // Deselect letters
         selectedHelped = [];
         letterBtns.forEach(b => b.classList.remove('selected'));
         altBtns.forEach(a => a.classList.remove('selected'));
@@ -220,7 +221,6 @@ function startReflectionFlow(container, profile) {
     const todayStr = formatDate(new Date());
     const helped = helpedAlt ? [helpedAlt] : selectedHelped;
 
-    // Stimmungsbasierter Abschluss-Kommentar aus Pool
     const endComment = getReflectionEndComment(selectedMood, name);
 
     await saveReflection({
@@ -237,15 +237,29 @@ function startReflectionFlow(container, profile) {
   function renderCompletion(comment) {
     let html = `<div class="reflection-screen">`;
     html += `<div class="reflection-end">`;
-    html += `<div class="reflection-end-emoji">🦁</div>`;
-    html += `<p class="reflection-end-comment">${comment}</p>`;
-    html += `<p class="reflection-end-gn">${t.goodNight}</p>`;
+
+    // Quote block with animated text
+    html += `<div class="ref-quote-block">`;
+    html += `<div class="ref-quotemark">"</div>`;
+    html += `<div class="ref-quote-text">${comment}</div>`;
+    html += `</div>`;
+
+    // Goodnight
+    html += `<div class="goodnight">`;
+    html += `<div class="goodnight-line"></div>`;
+    html += `<div class="goodnight-text">${t.goodNight}</div>`;
+    html += `</div>`;
+
+    html += `<div class="mt-24">`;
     html += `<button class="btn-primary" id="reflection-close">${t.close}</button>`;
+    html += `</div>`;
+
     html += `</div></div>`;
 
     container.innerHTML = html;
 
     document.getElementById('reflection-close').addEventListener('click', () => {
+      setMoodGradient(null);
       renderReflection(container, profile);
     });
   }

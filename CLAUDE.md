@@ -31,7 +31,7 @@
 | Zielgerät | iPhone (iOS Safari / Standalone PWA), sekundär Android |
 | DB | IndexedDB mit In-Memory-Fallback (`js/db.js`) |
 | Offline | Service Worker, Cache-First-Strategie |
-| Design | Dark Theme, mobile-first, Daumen-optimiert |
+| Design | Journal Design (warm/hell), Reflexion dunkel, mobile-first |
 
 ## Architektur
 
@@ -88,18 +88,22 @@ index.html                    ← Single Entry Point
 
 ## Design System
 
-### Farben
-- Hintergrund: `#1C1917` (primary), `#292524` (card)
-- Text: `#E7E5E4` (primary), `#A8A29E` (secondary)
-- Akzent: `#E2B714` (Gold/Löwe), `#F59E0B` (Amber)
-- Moods: drowned `#3B6EB5`, tough `#7B8BA3`, okay `#C4A94D`, good `#D97706`, lion `#E2B714`
+### Farben (Journal Design — warm, editorial)
+- Dashboard: `--bg-page: #f5efe3`, `--bg-paper: #faf6ed`, `--bg-card: #eee7d8`
+- Text: `--text-primary: #2c2418`, `--text-body: #4a3f30`, `--text-secondary: #8a7d6a`
+- SMALL-Farben: S `#c4793a`, M `#4a9e8e`, A `#9e6d94`, L1 `#b8922e`, L2 `#be5a5a`
+- Akzent: `--gold: #b8922e`, `--gold-warm: #d4a843`
+- Reflexion (dunkel): `--ref-bg: #1a1714`, `--ref-text: #f5ead6`
+- Fonts: Instrument Serif (display/quatschi), DM Sans (UI)
 
 ### UI-Prinzipien
-- **Daumen-Zone**: Interaktive Elemente im unteren 60% des Screens
+- **Journal, nicht Dashboard** — warme Ästhetik, editorial, literarisch-humorvoll
 - **Kein Modal für Feedback**: Toasts/Inline-Elemente statt Modals
 - **Haptic Feedback**: `navigator.vibrate(50)` bei Taps
 - **Dezent**: Halbtransparente Hintergründe, subtile Schatten, keine grellen Farben
-- **Keine subtilen Animationen** — iOS Safari rendert CSS-Transitions auf dynamischen Elementen unzuverlässig. Lieber sofort sichtbar + Fade-out beim Entfernen. Einfachheit > Eleganz.
+- **Reflexion = Dunkel**: `.reflexion-mode` auf `#app` schaltet das gesamte Farbschema um
+- **Gundula-Bar**: 4 Zustände basierend auf 7-Tage-Konsistenz (tense/wachsam/ruhig/entspannt)
+- **Wochenkreise**: 3 Leuchtstufen (empty/low/active), KEINE Zahlen
 
 ## iOS-Safari Fallstricke (gelernt durch Schmerz)
 

@@ -199,16 +199,16 @@ export function showTapToast(text, userName) {
   }
 
   // Insert toast INSIDE the dashboard DOM (no position:fixed — bulletproof on iOS)
-  const quatschiLine = document.querySelector('.quatschi-line');
-  if (!quatschiLine) return;
+  const quatschiHero = document.querySelector('.quatschi-hero');
+  if (!quatschiHero) return;
 
   const toast = document.createElement('div');
   toast.id = 'tap-toast';
+  toast.className = 'tap-toast';
   toast.textContent = rendered;
-  toast.style.cssText = 'background:rgba(41,37,36,0.92); color:#fafaf9; font-size:13px; font-weight:500; line-height:1.4; padding:8px 16px; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,0.3); text-align:center; margin:0 auto 8px; max-width:260px; cursor:pointer;';
 
-  // Insert right after quatschi-line (above the SMALL buttons)
-  quatschiLine.insertAdjacentElement('afterend', toast);
+  // Insert right after quatschi-hero (above the stats row)
+  quatschiHero.insertAdjacentElement('afterend', toast);
 
   // Tap-to-dismiss
   toast.addEventListener('click', () => {

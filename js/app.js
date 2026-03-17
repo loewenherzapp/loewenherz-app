@@ -38,8 +38,8 @@ async function init() {
   // Bind header buttons (click + touch for reliable mobile response)
   bindHeaderButtons();
 
-  // Bind tab buttons
-  document.querySelectorAll('.tab-btn').forEach(btn => {
+  // Bind tab buttons (new class: .nav-tab)
+  document.querySelectorAll('.nav-tab').forEach(btn => {
     btn.addEventListener('click', () => {
       const tab = btn.dataset.tab;
       switchTab(tab);
@@ -50,7 +50,6 @@ async function init() {
   profile = await getProfile();
 
   if (!profile || !profile.onboardingComplete) {
-    // Check standalone
     if (!isStandalone()) {
       showLanding();
     } else {
@@ -74,9 +73,6 @@ function showLanding() {
   container.classList.remove('hidden');
   renderLanding(container);
 
-  // Also set up a way to proceed for testing (double-tap lion or wait)
-  // In real use, user installs and reopens
-  // For now, allow scrolling down to see a "Continue anyway" link for desktop testing
   const skipEl = document.createElement('button');
   skipEl.className = 'landing-toggle';
   skipEl.textContent = TEXTS.ui.landing.continueAnyway;
@@ -84,7 +80,6 @@ function showLanding() {
   skipEl.addEventListener('click', () => {
     showOnboarding();
   });
-  // Append after a delay to not distract
   setTimeout(() => {
     const landingScreen = container.querySelector('.landing-screen');
     if (landingScreen) landingScreen.appendChild(skipEl);
@@ -104,12 +99,10 @@ function showOnboarding() {
 function showApp() {
   hideAll();
   document.getElementById('app-shell').classList.remove('hidden');
-  // Re-bind header buttons to guarantee they work after shell becomes visible
   bindHeaderButtons();
   switchTab('today');
 }
 
-// Robust binding: both click and touchend for PWA / iOS reliability
 function bindHeaderButtons() {
   const crisisBtn = document.getElementById('crisis-btn');
   const settingsBtn = document.getElementById('settings-btn');
@@ -126,13 +119,30 @@ function bindHeaderButtons() {
   }
 }
 
+// Update theme-color meta tag
+function setThemeColor(color) {
+  const meta = document.getElementById('theme-color-meta');
+  if (meta) meta.setAttribute('content', color);
+}
+
 async function switchTab(tab) {
   currentTab = tab;
 
   // Update tab bar active state
-  document.querySelectorAll('.tab-btn').forEach(btn => {
+  document.querySelectorAll('.nav-tab').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.tab === tab);
   });
+
+  // Reflexion mode: toggle dark class on #app
+  const appEl = document.getElementById('app');
+  if (tab === 'reflection') {
+    appEl.classList.add('reflexion-mode');
+    setThemeColor('#1a1714');
+  } else {
+    appEl.classList.remove('reflexion-mode');
+    appEl.removeAttribute('data-mood');
+    setThemeColor('#f5efe3');
+  }
 
   // Re-fetch profile in case name changed
   profile = await getProfile();
@@ -153,29 +163,27 @@ async function showSettings() {
   const container = document.getElementById('settings-container');
   container.classList.remove('hidden');
 
-  // Re-fetch profile
+  // Remove reflexion mode when going to settings
+  const appEl = document.getElementById('app');
+  appEl.classList.remove('reflexion-mode');
+  appEl.removeAttribute('data-mood');
+  setThemeColor('#f5efe3');
+
   profile = await getProfile();
 
   await renderSettings(
     container,
     profile,
-    // onBack
     () => showApp(),
-    // onDataDeleted
-    () => {
-      window.location.reload();
-    }
+    () => { window.location.reload(); }
   );
 }
 
 // Register service worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    // SW scope relative to document
     const swUrl = new URL('sw.js', window.location.href.replace(/\/[^/]*$/, '/'));
-    navigator.serviceWorker.register(swUrl.href).catch(() => {
-      // SW registration failed — possibly in dev, ignore
-    });
+    navigator.serviceWorker.register(swUrl.href).catch(() => {});
   });
 }
 

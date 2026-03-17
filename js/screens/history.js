@@ -1,11 +1,11 @@
 // ============================================================
-// History — "Mein Weg" / "Verlauf" tab
+// History — "Verlauf" tab with new design
 // ============================================================
 
 import { TEXTS } from '../../content/de.js';
 import { getPointsByDate, getPointsByDateRange, getReflectionByDate, getReflectionsByDateRange } from '../db.js';
 import { formatDate, getMonday, getWeekNumber, renderHistoryWeekDots } from '../components/week-dots.js';
-import { renderBalanceBars } from '../components/balance-bar.js';
+import { renderBalanceBar } from '../components/balance-bar.js';
 
 const MOOD_MAP = {};
 TEXTS.ui.reflection.moods.forEach(m => { MOOD_MAP[m.key] = m; });
@@ -79,7 +79,6 @@ export async function showDayDetail(dateStr) {
   html += `<button class="btn-secondary detail-popup-close" id="detail-close">${TEXTS.ui.reflection.close}</button>`;
   html += `</div></div>`;
 
-  // Add to body
   const el = document.createElement('div');
   el.id = 'day-detail-container';
   el.innerHTML = html;
@@ -96,7 +95,6 @@ export async function renderHistory(container, profile) {
   const t = TEXTS.ui.history;
   const title = t.title.replace('{name}', name);
 
-  // Week header labels: index 0=current, 1=last, 2=two ago, 3=three ago
   const weekHeaders = [t.thisWeek, t.lastWeek, t.weeksAgo2, t.weeksAgo3];
 
   container.innerHTML = `
@@ -111,7 +109,6 @@ export async function renderHistory(container, profile) {
   const today = new Date();
   const currentMonday = getMonday(today);
 
-  // Always show exactly 4 weeks
   for (let w = 0; w < 4; w++) {
     const monday = new Date(currentMonday);
     monday.setDate(currentMonday.getDate() - (w * 7));
@@ -133,17 +130,17 @@ export async function renderHistory(container, profile) {
     weekEl.innerHTML = `
       <div class="history-week-header">${headerText}</div>
       <div class="history-dots" id="hw-dots-${w}"></div>
-      <div class="balance-bars" id="hw-balance-${w}"></div>
+      <div id="hw-balance-${w}"></div>
     `;
 
     weeksContainer.appendChild(weekEl);
 
-    // Render dots (pass pre-fetched data — avoids duplicate IDB queries on Safari)
+    // Render dots with 3-level system
     const dotsEl = weekEl.querySelector('.history-dots');
     renderHistoryWeekDots(dotsEl, monday, points, reflections, (dateStr) => showDayDetail(dateStr));
 
-    // Render balance
-    const balanceEl = weekEl.querySelector('.balance-bars');
-    renderBalanceBars(balanceEl, points);
+    // Render color-coded balance bar
+    const balanceEl = weekEl.querySelector(`#hw-balance-${w}`);
+    renderBalanceBar(balanceEl, points);
   }
 }
