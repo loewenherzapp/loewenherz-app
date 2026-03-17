@@ -45,20 +45,20 @@ export async function renderReflection(container, profile) {
     html += `<p style="color:var(--ref-muted);text-align:center;margin-bottom:20px;">${t.noReflection}</p>`;
   }
 
-  // Last 7 days emoji row
-  if (recentReflections.length > 0) {
-    html += `<div style="font-size:11px;color:var(--ref-muted);margin-bottom:8px;">${t.lastDays}</div>`;
-    html += `<div class="reflection-emoji-row">`;
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const ds = formatDate(d);
-      const ref = recentReflections.find(r => r.date === ds);
-      const emoji = ref && MOOD_MAP[ref.mood] ? MOOD_MAP[ref.mood].emoji : '';
-      html += `<div class="reflection-emoji-day">${emoji}</div>`;
-    }
-    html += `</div>`;
+  // Last 7 days emoji row with day labels
+  const dayLabels = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+  html += `<div style="font-size:11px;color:var(--ref-muted);margin-bottom:8px;">${t.lastDays}</div>`;
+  html += `<div class="reflection-emoji-row">`;
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const ds = formatDate(d);
+    const ref = recentReflections.find(r => r.date === ds);
+    const emoji = ref && MOOD_MAP[ref.mood] ? MOOD_MAP[ref.mood].emoji : '';
+    const dayLabel = dayLabels[d.getDay()];
+    html += `<div class="reflection-day-wrap"><div class="reflection-emoji-day">${emoji}</div><div class="reflection-day-label">${dayLabel}</div></div>`;
   }
+  html += `</div>`;
 
   html += `
     <div class="mt-24">
