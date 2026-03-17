@@ -96,6 +96,21 @@ index.html                    ← Single Entry Point
 - Reflexion (dunkel): `--ref-bg: #1a1714`, `--ref-text: #f5ead6`
 - Fonts: Instrument Serif (display/quatschi), DM Sans (UI)
 
+### Typografie-Hierarchie (5 Stufen, nicht mehr)
+| Stufe | Größe | Font | Verwendung |
+|-------|-------|------|------------|
+| Hero | 24px | Serif italic | Quatschi-Text |
+| Display | 38px | Serif | Punktezahl |
+| Body | 14px | Sans | Gundula-Text, Stats-Labels, alles was gelesen werden soll |
+| Small | 11px | Sans | QUATSCHI-Tag, DIESE WOCHE, Wochentage, Button-Labels |
+| Nav | 13px | Sans | Bottom-Navigation (Heute / Reflexion / Verlauf) |
+
+Prinzip: Keine Zwischenstufen. Serif für emotionale Texte, Sans für Funktionales.
+
+### SMALL-Buttons
+- Farbkreise zeigen **einzelne Buchstaben**: S, M, A, L, L (nicht L₁/L₂)
+- Unterscheidung L1/L2 nur über Farbe (Gold vs. Warmrot) und Label darunter
+
 ### UI-Prinzipien
 - **Journal, nicht Dashboard** — warme Ästhetik, editorial, literarisch-humorvoll
 - **Kein Modal für Feedback**: Toasts/Inline-Elemente statt Modals
@@ -131,7 +146,7 @@ index.html                    ← Single Entry Point
 ### Testszenarien-Checkliste (nach Feature-Änderungen)
 
 - [ ] Erster App-Start (Onboarding-Flow)
-- [ ] Tap auf jeden SMALL-Button (S, M, A, L₁, L₂) → Punkt wird gespeichert?
+- [ ] Tap auf jeden SMALL-Button (S, M, A, L, L) → Punkt wird gespeichert?
 - [ ] Toast erscheint nach Tap? (Milestone bei Punkt 1, 5, 10)
 - [ ] Schneller Doppel-Tap → kein Glitch?
 - [ ] Tab-Wechsel (Heute → Reflexion → Verlauf → zurück)
