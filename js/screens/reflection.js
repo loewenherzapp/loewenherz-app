@@ -141,8 +141,7 @@ function startReflectionFlow(container, profile) {
 
     const labels = TEXTS.ui.smallLabels;
     ['S', 'M', 'A', 'L1', 'L2'].forEach(letter => {
-      const display = letter === 'L1' ? 'L' : letter === 'L2' ? 'L' : letter;
-      html += `<button class="helped-btn" data-letter="${letter}">${display} ${labels[letter]}</button>`;
+      html += `<button class="helped-btn" data-letter="${letter}">${labels[letter]}</button>`;
     });
 
     html += `</div>`;
