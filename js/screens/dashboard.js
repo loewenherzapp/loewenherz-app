@@ -46,10 +46,10 @@ const GUNDULA_PIP_COLORS = {
 };
 
 const GUNDULA_ICONS = {
-  entspannt: 'assets/gundula/gundula-entspannt-56.png',
-  ruhig: 'assets/gundula/gundula-ruhig-56.png',
-  wachsam: 'assets/gundula/gundula-wachsam-56.png',
-  tense: 'assets/gundula/gundula-tense-56.png'
+  entspannt: 'assets/gundula/gundula-entspannt-88.png',
+  ruhig: 'assets/gundula/gundula-ruhig-88.png',
+  wachsam: 'assets/gundula/gundula-wachsam-88.png',
+  tense: 'assets/gundula/gundula-tense-88.png'
 };
 
 // Preload all Gundula icons to prevent flicker
@@ -116,7 +116,7 @@ export async function renderDashboard(container, profile) {
       <div class="balance-section" id="dashboard-balance"></div>
 
       <div class="gundula-row ${gundulaState}" id="gundula-bar">
-        <img src="${GUNDULA_ICONS[gundulaState]}" alt="Gundula" class="gundula-icon" width="28" height="28">
+        <img src="${GUNDULA_ICONS[gundulaState]}" alt="Gundula" class="gundula-icon" width="44" height="44">
         <span class="gundula-text">${GUNDULA_TEXTS[gundulaState]}</span>
         <span class="gundula-pip" style="background:${GUNDULA_PIP_COLORS[gundulaState]};${gundulaState === 'ruhig' ? 'opacity:0.7;' : ''}"></span>
       </div>

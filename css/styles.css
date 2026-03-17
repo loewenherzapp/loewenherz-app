@@ -566,8 +566,8 @@ a:active { opacity: 0.7; }
 .gundula-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
+  gap: 12px;
+  padding: 8px 14px;
   border-radius: var(--radius-sm);
   transition: background 0.8s ease;
   margin-bottom: 20px;
@@ -580,10 +580,11 @@ a:active { opacity: 0.7; }
 }
 
 .gundula-icon {
-  width: 28px;
-  height: 28px;
+  width: 44px;
+  height: 44px;
   object-fit: contain;
   flex-shrink: 0;
+  vertical-align: middle;
   transition: transform 0.6s ease, opacity 0.3s ease;
 }
 
