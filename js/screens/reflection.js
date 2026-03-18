@@ -32,10 +32,13 @@ function randomFrom(arr) {
 }
 
 // Morning reflection localStorage helpers
-function saveMorningReflectionDone(dateStr) {
+function saveMorningReflectionDone(dateStr, chipId, customText) {
   localStorage.setItem('morningReflection_' + dateStr, JSON.stringify({
     completed: true,
-    completedAt: new Date().toISOString()
+    completedAt: new Date().toISOString(),
+    chip: chipId,
+    customText: customText || null,
+    points: 3
   }));
 }
 
@@ -43,6 +46,25 @@ function isMorningReflectionDone(dateStr) {
   const data = localStorage.getItem('morningReflection_' + dateStr);
   return data ? JSON.parse(data).completed : false;
 }
+
+// Intention chips config
+const INTENTION_CHIPS = [
+  { id: 'wie-wasser', label: 'Wie Wasser' },
+  { id: 'neugierig', label: 'Neugierig' },
+  { id: 'machen-statt-denken', label: 'Machen statt denken' },
+  { id: 'dran-bleiben', label: 'Dran bleiben' },
+  { id: 'freundlich-mit-mir', label: 'Freundlich mit mir' },
+  { id: 'eigene', label: 'Eigene…' }
+];
+
+const WENN_DANN_TEXTS = {
+  'wie-wasser': 'Irgendwann heute wird es eng. Du merkst es\u2009—\u2009atmest aus und lässt es durch. Nicht dein Kampf.',
+  'neugierig': 'Irgendwann heute schlägt Quatschi Alarm. Du merkst es\u2009—\u2009trittst einen Schritt zurück und schaust zu. Was passiert hier eigentlich?',
+  'machen-statt-denken': 'Irgendwann heute will dein Kopf ein Problem endlos drehen. Du merkst es\u2009—\u2009und tust den nächsten Schritt, egal wie klein.',
+  'dran-bleiben': 'Heute wird ein Moment kommen, in dem du denkst: Egal. Du merkst es\u2009—\u2009und machst weiter. Nicht perfekt. Einfach weiter.',
+  'freundlich-mit-mir': 'Heute wirst du streng mit dir sein. Du merkst es\u2009—\u2009und stellst dir vor, wie du mit einer Freundin reden würdest. Genau so.',
+  'eigene': 'Du hast dir vorgenommen, wie du heute sein willst. Irgendwann wird ein Moment kommen, der das testet. Du merkst es\u2009—\u2009und erinnerst dich: Das war mein Plan.'
+};
 
 export async function renderReflection(container, profile) {
   const todayStr = formatDate(new Date());
@@ -126,7 +148,7 @@ export async function renderReflection(container, profile) {
   const morningBtn = document.getElementById('morning-start');
   if (morningBtn) {
     morningBtn.addEventListener('click', () => {
-      renderMorningPlaceholder(container, profile);
+      startMorningFlow(container, profile);
     });
   }
 
@@ -138,14 +160,135 @@ export async function renderReflection(container, profile) {
   }
 }
 
-function renderMorningPlaceholder(container, profile) {
-  container.innerHTML = `<div class="reflection-screen">
-    <div class="ref-question">Morgenreflexion kommt gleich 🚧</div>
-    <button class="btn-primary" id="morning-back">Zurück</button>
-  </div>`;
-  document.getElementById('morning-back').addEventListener('click', () => {
-    renderReflection(container, profile);
-  });
+function startMorningFlow(container, profile) {
+  let selectedChip = null;
+  let customText = '';
+
+  // Set morning gradient
+  const appEl = document.getElementById('app');
+  appEl.setAttribute('data-mood', 'morning');
+
+  renderMorningStep1();
+
+  function morningProgressDots(activeStep) {
+    return `<div class="progress-dots">${[1,2].map(i =>
+      `<div class="progress-dot${i === activeStep ? ' active' : ''}"></div>`
+    ).join('')}</div>`;
+  }
+
+  function renderMorningStep1() {
+    let html = `<div class="reflection-screen">`;
+    html += morningProgressDots(1);
+    html += `<div class="ref-question">Wie willst du heute sein?</div>`;
+    html += `<div class="intention-chips" id="intention-chips">`;
+
+    INTENTION_CHIPS.forEach(chip => {
+      const isCustom = chip.id === 'eigene';
+      html += `<button class="intention-chip${isCustom ? ' intention-chip-custom' : ''}" data-chip="${chip.id}">${chip.label}</button>`;
+    });
+
+    html += `</div>`;
+    html += `<div class="intention-custom-wrap hidden" id="custom-wrap">`;
+    html += `<input type="text" class="intention-custom-input" id="custom-input" placeholder="Meine Haltung heute…" maxlength="50">`;
+    html += `</div>`;
+    html += `<button class="btn-primary" id="morning-next" disabled>Weiter →</button>`;
+    html += `</div>`;
+
+    container.innerHTML = html;
+
+    const chips = container.querySelectorAll('.intention-chip');
+    const nextBtn = document.getElementById('morning-next');
+    const customWrap = document.getElementById('custom-wrap');
+    const customInput = document.getElementById('custom-input');
+
+    chips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        const chipId = chip.dataset.chip;
+
+        // Deselect all
+        chips.forEach(c => c.classList.remove('selected'));
+        chip.classList.add('selected');
+
+        if (chipId === 'eigene') {
+          customWrap.classList.remove('hidden');
+          customWrap.classList.add('visible');
+          selectedChip = 'eigene';
+          customText = customInput.value.trim();
+          nextBtn.disabled = customText.length === 0;
+          setTimeout(() => customInput.focus(), 200);
+        } else {
+          customWrap.classList.remove('visible');
+          customWrap.classList.add('hidden');
+          customText = '';
+          selectedChip = chipId;
+          nextBtn.disabled = false;
+        }
+      });
+    });
+
+    customInput.addEventListener('input', () => {
+      customText = customInput.value.trim();
+      nextBtn.disabled = customText.length === 0;
+    });
+
+    nextBtn.addEventListener('click', () => {
+      if (selectedChip) renderMorningStep2();
+    });
+  }
+
+  function renderMorningStep2() {
+    const wennDannText = WENN_DANN_TEXTS[selectedChip];
+    const showCustomLabel = selectedChip === 'eigene' && customText;
+
+    let html = `<div class="reflection-screen">`;
+    html += morningProgressDots(2);
+    html += `<div class="morning-viz">`;
+    html += `<div class="morning-sun">☀️</div>`;
+
+    if (showCustomLabel) {
+      html += `<div class="morning-custom-label">${customText}</div>`;
+    }
+
+    html += `<div class="morning-wenn-dann">${wennDannText}</div>`;
+    html += `</div>`;
+
+    // Separator + Closer
+    html += `<div class="goodnight">`;
+    html += `<div class="goodnight-line"></div>`;
+    html += `<div class="goodnight-text">Guten Morgen, Löwenherz.</div>`;
+    html += `</div>`;
+
+    html += `<div class="mt-24">`;
+    html += `<button class="btn-primary" id="morning-close">Schließen</button>`;
+    html += `</div>`;
+
+    html += `</div>`;
+
+    container.innerHTML = html;
+
+    document.getElementById('morning-close').addEventListener('click', async () => {
+      const todayStr = formatDate(new Date());
+      const now = new Date();
+      const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+      // +3 Gundula-Punkte
+      // Gundula-Score is day-based (unique days with ≥1 point in last 7 days)
+      // Adding 3 points increases today's total but thresholds are day-based, not point-based
+      // TODO: Schwellenwerte prüfen falls nötig — neuer theoretischer Max-Tagesscore ist 10 statt 5 (3 Morgen + 5 SMALL + 2 Abend)
+      await addSmallPoint({ date: todayStr, time: timeStr, letter: 'S', category: 'morning-reflection', categoryLabel: 'Morgenreflexion' });
+      await addSmallPoint({ date: todayStr, time: timeStr, letter: 'M', category: 'morning-reflection', categoryLabel: 'Morgenreflexion' });
+      await addSmallPoint({ date: todayStr, time: timeStr, letter: 'A', category: 'morning-reflection', categoryLabel: 'Morgenreflexion' });
+
+      // Save to localStorage
+      saveMorningReflectionDone(todayStr, selectedChip, customText);
+
+      // Remove morning gradient
+      appEl.removeAttribute('data-mood');
+
+      // Direct back to hub
+      renderReflection(container, profile);
+    });
+  }
 }
 
 function startReflectionFlow(container, profile) {
