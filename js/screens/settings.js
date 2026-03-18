@@ -289,12 +289,12 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
 
   // Impressum
   document.getElementById('settings-impressum').addEventListener('click', () => {
-    showLegalPopup(t.impressum, t.impressumText);
+    showLegalPage('impressum', t.impressum);
   });
 
   // Datenschutz
   document.getElementById('settings-datenschutz').addEventListener('click', () => {
-    showLegalPopup(t.datenschutz, t.datenschutzText);
+    showLegalPage('datenschutz', t.datenschutz);
   });
 
   // Delete
@@ -310,22 +310,85 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
   }
 }
 
-function showLegalPopup(title, text) {
+const LEGAL_CONTENT = {
+  impressum: `
+    <h2>Impressum</h2>
+    <p>Angaben gemäß EU-Verordnung (E-Commerce-Richtlinie 2000/31/EG):</p>
+    <p><strong>Der AngstDoc & Kollegen S.R.L.</strong><br>
+    Strada C. C. Arion 11<br>
+    011081 Bukarest<br>
+    Rumänien</p>
+    <p>E-Mail: <a href="mailto:pe@angstdoc.de">pe@angstdoc.de</a></p>
+    <p>Vertreten durch: Patrick Elkuch</p>
+    <p>Handelsregister: [HIER REGISTERNUMMER EINFÜGEN]<br>
+    USt-IdNr.: [HIER UST-ID EINFÜGEN]</p>
+    <div class="legal-notice">
+      <p><strong>Hinweis:</strong> Diese App dient ausschließlich der allgemeinen Information und Selbstreflexion. Sie ersetzt keine ärztliche oder psychotherapeutische Behandlung. Bei akuten psychischen Krisen wende dich bitte an den ärztlichen Bereitschaftsdienst (116 117), die Telefonseelsorge (0800 111 0 111 / 0800 111 0 222) oder den Notruf (112).</p>
+    </div>
+  `,
+  datenschutz: `
+    <h2>Datenschutzerklärung</h2>
+    <p class="legal-meta">Stand: März 2026</p>
+
+    <h3>1. Verantwortlicher</h3>
+    <p>Der AngstDoc & Kollegen S.R.L.<br>
+    Strada C. C. Arion 11<br>
+    011081 Bukarest, Rumänien<br>
+    E-Mail: <a href="mailto:pe@angstdoc.de">pe@angstdoc.de</a></p>
+
+    <h3>2. Datenverarbeitung in der App</h3>
+    <p>Diese App speichert deine Daten (Reflexionen, Stimmungen, SMALL-Punkte, Einstellungen) ausschließlich lokal auf deinem Gerät (IndexedDB/LocalStorage). Es werden keine personenbezogenen Daten an unsere Server übertragen. Wir haben keinen Zugriff auf deine Eingaben.</p>
+    <p>Wenn du die App oder deine Browserdaten löschst, werden alle gespeicherten Daten unwiderruflich entfernt.</p>
+
+    <h3>3. Hosting</h3>
+    <p>Die App wird über Vercel Inc. (440 N Barranca Ave #4133, Covina, CA 91723, USA) gehostet. Beim Aufruf der App werden automatisch technische Daten (u.a. IP-Adresse, Zeitpunkt des Zugriffs, Browsertyp) an Vercel-Server übermittelt. Diese Verarbeitung erfolgt auf Grundlage unseres berechtigten Interesses an der technischen Bereitstellung der App (Art. 6 Abs. 1 lit. f DSGVO).</p>
+    <p>Vercel verarbeitet Daten teilweise in den USA. Die Übermittlung erfolgt auf Basis von EU-Standardvertragsklauseln.</p>
+    <p>Mehr Informationen: <a href="https://vercel.com/legal/privacy-policy" target="_blank" rel="noopener noreferrer">vercel.com/legal/privacy-policy</a></p>
+
+    <h3>4. Webanalyse (Vercel Web Analytics)</h3>
+    <p>Wir nutzen Vercel Web Analytics zur statistischen Auswertung der App-Nutzung. Dabei werden ausschließlich aggregierte, anonyme Daten erhoben — keine Cookies, keine persönlichen Daten, keine Nutzerprofile. Es ist keine Identifizierung einzelner Nutzer möglich.</p>
+    <p>Rechtsgrundlage: Berechtigtes Interesse (Art. 6 Abs. 1 lit. f DSGVO).</p>
+
+    <h3>5. Cookies</h3>
+    <p>Diese App verwendet keine Cookies.</p>
+
+    <h3>6. Keine Weitergabe an Dritte</h3>
+    <p>Deine Daten werden nicht an Dritte weitergegeben, verkauft oder für Werbezwecke genutzt.</p>
+
+    <h3>7. Deine Rechte</h3>
+    <p>Du hast das Recht auf Auskunft, Berichtigung, Löschung und Einschränkung der Verarbeitung deiner Daten sowie das Recht auf Datenübertragbarkeit und Widerspruch. Da alle Daten lokal auf deinem Gerät gespeichert werden, hast du jederzeit volle Kontrolle — du kannst sie über die Browsereinstellungen oder durch Löschen der App entfernen.</p>
+    <p>Bei Fragen zum Datenschutz: <a href="mailto:pe@angstdoc.de">pe@angstdoc.de</a></p>
+
+    <h3>8. Beschwerderecht</h3>
+    <p>Du hast das Recht, dich bei einer Datenschutz-Aufsichtsbehörde zu beschweren. Die zuständige Behörde in Rumänien ist:</p>
+    <p>Autoritatea Națională de Supraveghere a Prelucrării Datelor cu Caracter Personal (ANSPDCP)<br>
+    B-dul G-ral. Gheorghe Magheru 28-30, Sector 1, București<br>
+    <a href="https://www.dataprotection.ro" target="_blank" rel="noopener noreferrer">www.dataprotection.ro</a></p>
+  `
+};
+
+function showLegalPage(key, title) {
   const el = document.createElement('div');
+  el.className = 'legal-page';
   el.innerHTML = `
-    <div class="detail-popup-overlay" id="legal-overlay">
-      <div class="detail-popup">
-        <div style="font-size:16px;font-weight:600;margin-bottom:12px;">${title}</div>
-        <p style="font-size:13px;color:var(--text-secondary);line-height:1.6;margin-bottom:16px;">${text}</p>
-        <button class="btn-secondary" id="legal-close">${TEXTS.ui.reflection.close}</button>
-      </div>
+    <header class="app-header">
+      <button class="legal-back" id="legal-back">← ${title}</button>
+      <div></div>
+    </header>
+    <div class="legal-content">
+      ${LEGAL_CONTENT[key]}
     </div>
   `;
   document.body.appendChild(el);
 
-  document.getElementById('legal-close').addEventListener('click', () => el.remove());
-  document.getElementById('legal-overlay').addEventListener('click', (e) => {
-    if (e.target === e.currentTarget) el.remove();
+  // Animate in
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => el.classList.add('active'));
+  });
+
+  document.getElementById('legal-back').addEventListener('click', () => {
+    el.classList.remove('active');
+    setTimeout(() => el.remove(), 300);
   });
 }
 
