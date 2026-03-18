@@ -118,6 +118,7 @@ export async function renderDashboard(container, profile) {
       <div class="gundula-row ${gundulaState}" id="gundula-bar">
         <img src="${GUNDULA_ICONS[gundulaState]}" alt="Gundula" class="gundula-icon" width="56" height="56">
         <span class="gundula-text">${GUNDULA_TEXTS[gundulaState]}</span>
+        <button class="gundula-info-btn" id="gundula-info" aria-label="Gundula Info">ⓘ</button>
         <span class="gundula-pip" style="background:${GUNDULA_PIP_COLORS[gundulaState]};${gundulaState === 'ruhig' ? 'opacity:0.7;' : ''}"></span>
       </div>
 
@@ -208,4 +209,56 @@ export async function renderDashboard(container, profile) {
   renderWeekCircles(weekCirclesEl, weekPoints, weekReflections, (dateStr) => {
     showDayDetail(dateStr);
   });
+
+  // Gundula info button
+  document.getElementById('gundula-info').addEventListener('click', (e) => {
+    e.stopPropagation();
+    showGundulaInfo();
+  });
+}
+
+function showGundulaInfo() {
+  // Remove existing if any
+  const existing = document.getElementById('gundula-sheet-overlay');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'gundula-sheet-overlay';
+  overlay.className = 'info-sheet-overlay';
+
+  overlay.innerHTML = `
+    <div class="info-sheet">
+      <div class="info-sheet-grip"></div>
+      <h3>Wie funktioniert Gundula?</h3>
+      <p>Gundula ist dein Nervensystem — uralt, gut gemeint, manchmal etwas übervorsichtig.</p>
+      <p>Sie reagiert auf deinen Biochemie-Cocktail: Schlaf, Bewegung, Stress, Ernährung. Je besser du für dich sorgst, desto ruhiger wird sie.</p>
+      <p><strong>Gundula hat vier Zustände:</strong></p>
+      <div class="info-states">
+        <div class="info-state"><span class="info-dot" style="background:var(--color-M)"></span> Entspannt — Alles im grünen Bereich</div>
+        <div class="info-state"><span class="info-dot" style="background:var(--color-M);opacity:0.7"></span> Ruhig — Wachsam, aber gelassen</div>
+        <div class="info-state"><span class="info-dot" style="background:var(--gold)"></span> Wachsam — Aufmerksamkeit erhöht</div>
+        <div class="info-state"><span class="info-dot" style="background:var(--color-L2)"></span> Angespannt — Alarmstufe</div>
+      </div>
+      <p>Ihr Zustand berechnet sich aus deinen SMALL-Punkten und deiner Aktivität der letzten Tage. Jeder Tap auf einen SMALL-Buchstaben hilft ihr, runterzukommen.</p>
+      <button class="info-sheet-close">Verstanden</button>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  // Animate in
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => overlay.classList.add('active'));
+  });
+
+  // Close handlers
+  const close = () => {
+    overlay.classList.remove('active');
+    setTimeout(() => overlay.remove(), 300);
+  };
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) close();
+  });
+  overlay.querySelector('.info-sheet-close').addEventListener('click', close);
 }
