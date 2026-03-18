@@ -1,52 +1,110 @@
 // ============================================================
-// Reflection — Tab with dark mode, circle mood buttons, and
-//              3-step flow with quote animation
+// Reflection — Morgen/Abend Hub + Abend-Flow
 // ============================================================
 
 import { TEXTS } from '../../content/de.js';
-import { getReflectionByDate, getReflectionsByDateRange, saveReflection } from '../db.js';
+import { getReflectionByDate, getReflectionsByDateRange, saveReflection, addSmallPoint } from '../db.js';
 import { formatDate } from '../components/week-dots.js';
 import { getReflectionEndComment } from '../quatschi.js';
 
 const MOOD_MAP = {};
 TEXTS.ui.reflection.moods.forEach(m => { MOOD_MAP[m.key] = m; });
 
-export async function renderReflection(container, profile) {
-  const name = profile.name;
-  const t = TEXTS.ui.reflection;
-  const todayStr = formatDate(new Date());
+// Quatschi-Sprüche für Erledigt-States
+const MORNING_DONE_QUATSCHI = [
+  "Quatschi hatte andere Pläne für deinen Morgen. Pech.",
+  "Erledigt. Quatschi ist noch nicht mal wach.",
+  "Weiche gestellt. Der Rest ist Bonus.",
+  "Quatschi wollte moderieren. Zu spät.",
+  "Morgenreflexion gemacht. Quatschi ist irritiert."
+];
 
-  // Get recent reflections (last 7 days)
+const EVENING_DONE_QUATSCHI = [
+  "Tag abgehakt. Quatschi muss warten bis morgen.",
+  "Reflexion gemacht. Gundula nickt zufrieden.",
+  "Erledigt. Der Tag gehört dir.",
+  "Quatschi wollte noch grübeln. Zu spät, Feierabend.",
+  "Gute Nacht, Quatschi. Morgen darfst du wieder."
+];
+
+function randomFrom(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+// Morning reflection localStorage helpers
+function saveMorningReflectionDone(dateStr) {
+  localStorage.setItem('morningReflection_' + dateStr, JSON.stringify({
+    completed: true,
+    completedAt: new Date().toISOString()
+  }));
+}
+
+function isMorningReflectionDone(dateStr) {
+  const data = localStorage.getItem('morningReflection_' + dateStr);
+  return data ? JSON.parse(data).completed : false;
+}
+
+export async function renderReflection(container, profile) {
+  const todayStr = formatDate(new Date());
+  const hour = new Date().getHours();
+
+  // Check statuses
+  const morningDone = isMorningReflectionDone(todayStr);
+  const eveningReflection = await getReflectionByDate(todayStr);
+  const eveningDone = !!eveningReflection;
+
+  // Time windows
+  const morningActive = hour >= 5 && hour <= 11;
+  const eveningActive = hour >= 18 || hour <= 4;
+
+  // Get recent reflections for emoji row
   const sevenAgo = new Date();
   sevenAgo.setDate(sevenAgo.getDate() - 7);
   const recentReflections = await getReflectionsByDateRange(formatDate(sevenAgo), todayStr);
 
-  recentReflections.sort((a, b) => b.date.localeCompare(a.date));
-  const lastReflection = recentReflections.length > 0 ? recentReflections[0] : null;
+  let html = `<div class="reflection-screen" style="justify-content:flex-start;padding-top:16px;">`;
 
-  let html = `<div class="reflection-screen reflection-landing">`;
-  html += `<h2 class="reflection-title">${t.tabTitle}</h2>`;
+  // Hub cards
+  html += `<div class="ref-hub-cards">`;
 
-  if (lastReflection) {
-    const mood = MOOD_MAP[lastReflection.mood];
-    const dateObj = new Date(lastReflection.date + 'T12:00:00');
-    const dateLabel = dateObj.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' });
-    html += `
-      <div class="reflection-last">
-        <div class="reflection-last-header">${t.pastTitle}</div>
-        <div class="reflection-last-mood">
-          <span>${mood ? mood.emoji : ''}</span>
-          <span>${mood ? mood.label : ''}</span>
-          <span style="color:var(--ref-muted);font-size:11px;margin-left:auto;">${dateLabel}</span>
-        </div>
-      </div>
-    `;
+  // === Morning Card ===
+  const morningClass = morningDone ? 'done' : (!morningActive ? 'inactive' : '');
+  html += `<div class="ref-hub-card ref-card-morning ${morningClass}">`;
+  html += `<div class="ref-card-header"><span class="ref-card-icon">☀️</span><span class="ref-card-title">Morgenreflexion</span></div>`;
+
+  if (morningDone) {
+    html += `<div class="ref-card-sub done-quatschi">${randomFrom(MORNING_DONE_QUATSCHI)}</div>`;
+    html += `<div class="ref-card-points">+3 Gundula-Punkte ✓</div>`;
+  } else if (morningActive) {
+    html += `<div class="ref-card-sub">Wie willst du heute sein?</div>`;
+    html += `<button class="ref-card-btn" id="morning-start">Jetzt starten</button>`;
   } else {
-    html += `<p style="color:var(--ref-muted);text-align:center;margin-bottom:20px;">${t.noReflection}</p>`;
+    html += `<div class="ref-card-sub">Morgen wieder ab 5 Uhr</div>`;
   }
 
-  // Last 7 days emoji row with day labels
+  html += `</div>`;
+
+  // === Evening Card ===
+  const eveningClass = eveningDone ? 'done' : (!eveningActive ? 'inactive' : '');
+  html += `<div class="ref-hub-card ref-card-evening ${eveningClass}">`;
+  html += `<div class="ref-card-header"><span class="ref-card-icon">🌙</span><span class="ref-card-title">Abendreflexion</span></div>`;
+
+  if (eveningDone) {
+    html += `<div class="ref-card-sub done-quatschi">${randomFrom(EVENING_DONE_QUATSCHI)}</div>`;
+    html += `<div class="ref-card-points">+2 Gundula-Punkte ✓</div>`;
+  } else if (eveningActive) {
+    html += `<div class="ref-card-sub">Zwei Minuten für dich. Der Tag kann warten.</div>`;
+    html += `<button class="ref-card-btn" id="evening-start">Jetzt reflektieren</button>`;
+  } else {
+    html += `<div class="ref-card-sub">Ab 18 Uhr</div>`;
+  }
+
+  html += `</div>`;
+  html += `</div>`; // end ref-hub-cards
+
+  // 7-day emoji row
   const dayLabels = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+  const t = TEXTS.ui.reflection;
   html += `<div style="font-size:11px;color:var(--ref-muted);margin-bottom:8px;">${t.lastDays}</div>`;
   html += `<div class="reflection-emoji-row">`;
   for (let i = 6; i >= 0; i--) {
@@ -60,16 +118,33 @@ export async function renderReflection(container, profile) {
   }
   html += `</div>`;
 
-  html += `
-    <div class="mt-24">
-      <button class="btn-primary" id="start-reflection">${t.startNow}</button>
-    </div>
-  </div>`;
+  html += `</div>`; // end reflection-screen
 
   container.innerHTML = html;
 
-  document.getElementById('start-reflection').addEventListener('click', () => {
-    startReflectionFlow(container, profile);
+  // Event handlers
+  const morningBtn = document.getElementById('morning-start');
+  if (morningBtn) {
+    morningBtn.addEventListener('click', () => {
+      renderMorningPlaceholder(container, profile);
+    });
+  }
+
+  const eveningBtn = document.getElementById('evening-start');
+  if (eveningBtn) {
+    eveningBtn.addEventListener('click', () => {
+      startReflectionFlow(container, profile);
+    });
+  }
+}
+
+function renderMorningPlaceholder(container, profile) {
+  container.innerHTML = `<div class="reflection-screen">
+    <div class="ref-question">Morgenreflexion kommt gleich 🚧</div>
+    <button class="btn-primary" id="morning-back">Zurück</button>
+  </div>`;
+  document.getElementById('morning-back').addEventListener('click', () => {
+    renderReflection(container, profile);
   });
 }
 
@@ -239,6 +314,12 @@ function startReflectionFlow(container, profile) {
       quatschiComment: endComment
     });
 
+    // Add 2 Gundula points for evening reflection
+    const now = new Date();
+    const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    await addSmallPoint({ date: todayStr, time: timeStr, letter: 'S', category: 'reflection', categoryLabel: 'Abendreflexion' });
+    await addSmallPoint({ date: todayStr, time: timeStr, letter: 'M', category: 'reflection', categoryLabel: 'Abendreflexion' });
+
     renderCompletion(endComment);
   }
 
@@ -269,7 +350,13 @@ function startReflectionFlow(container, profile) {
 
     document.getElementById('reflection-close').addEventListener('click', () => {
       setMoodGradient(null);
-      renderReflection(container, profile);
+      // Show points feedback
+      container.innerHTML = `<div class="reflection-screen">
+        <div class="points-feedback">+2 Gundula-Punkte</div>
+      </div>`;
+      setTimeout(() => {
+        renderReflection(container, profile);
+      }, 2500);
     });
   }
 }

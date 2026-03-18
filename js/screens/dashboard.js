@@ -10,6 +10,13 @@ import { renderBalanceBar } from '../components/balance-bar.js';
 import { showDayDetail } from './history.js';
 import { getDashboardQuatschiText, getTapFeedback, showTapToast } from '../quatschi.js';
 
+const MORNING_NUDGE_TEXTS = [
+  "Quatschi fragt, ob du heute einen Plan hast?",
+  "Gundula wartet auf deine Morgenreflexion.",
+  "Wie willst du heute sein? Quatschi hat schon Vorschläge. Ignoriere sie.",
+  "Die Weiche stellt sich nicht von allein."
+];
+
 const LETTERS = ['S', 'M', 'A', 'L1', 'L2'];
 const DISPLAY_LETTERS = ['S', 'M', 'A', 'L', 'L'];
 const BUTTON_LABELS = ['Selbst', 'Meta', 'Affekt', 'Löwen', 'Liebe'];
@@ -87,14 +94,27 @@ export async function renderDashboard(container, profile) {
   const activeDays = await getActiveDaysLast7();
   const gundulaState = getGundulaState(activeDays);
 
-  // Quatschi text
-  const quatschi = await getDashboardQuatschiText(name);
+  // Quatschi text — check for morning nudge
+  const hour = new Date().getHours();
+  const morningWindow = hour >= 5 && hour <= 11;
+  const morningDoneKey = 'morningReflection_' + todayStr;
+  const morningDoneData = localStorage.getItem(morningDoneKey);
+  const morningDone = morningDoneData ? JSON.parse(morningDoneData).completed : false;
+  const showMorningNudge = morningWindow && !morningDone;
+
+  const quatschi = showMorningNudge
+    ? MORNING_NUDGE_TEXTS[Math.floor(Math.random() * MORNING_NUDGE_TEXTS.length)]
+    : await getDashboardQuatschiText(name);
+
+  const quatschiTextHtml = showMorningNudge
+    ? `<div class="quatschi-nudge" id="quatschi-nudge"><span class="quatschi-text">${quatschi}</span><span class="quatschi-nudge-arrow">\u2192</span></div>`
+    : `<div class="quatschi-text">${quatschi}</div>`;
 
   container.innerHTML = `
     <div class="dashboard-screen">
       <div class="quatschi-hero">
         <div class="quatschi-tag">QUATSCHI</div>
-        <div class="quatschi-text">${quatschi}</div>
+        ${quatschiTextHtml}
         <div class="quatschi-divider"></div>
       </div>
 
@@ -215,6 +235,14 @@ export async function renderDashboard(container, profile) {
     e.stopPropagation();
     showGundulaInfo();
   });
+
+  // Morning nudge tap -> navigate to reflection tab
+  const nudgeEl = document.getElementById('quatschi-nudge');
+  if (nudgeEl) {
+    nudgeEl.addEventListener('click', () => {
+      document.querySelector('.nav-tab[data-tab="reflection"]').click();
+    });
+  }
 }
 
 function showGundulaInfo() {
