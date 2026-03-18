@@ -55,6 +55,9 @@
     <div id="crisis-modal"></div>
   </div>
   <script type="module" src="js/app.js"></script>
-  <script defer src="/_vercel/insights/script.js"></script>
+  <script type="module">
+    import { inject } from 'https://cdn.jsdelivr.net/npm/@vercel/analytics@1/dist/index.mjs';
+    inject({ mode: 'production' });
+  </script>
 </body>
 </html>
