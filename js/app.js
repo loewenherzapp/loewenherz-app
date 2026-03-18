@@ -106,6 +106,7 @@ function showApp() {
 function bindHeaderButtons() {
   const crisisBtn = document.getElementById('crisis-btn');
   const settingsBtn = document.getElementById('settings-btn');
+  const infoBtn = document.getElementById('header-info-btn');
 
   if (crisisBtn && !crisisBtn._bound) {
     crisisBtn.addEventListener('click', openCrisis);
@@ -116,6 +117,10 @@ function bindHeaderButtons() {
     settingsBtn.addEventListener('click', showSettings);
     settingsBtn.addEventListener('touchend', (e) => { e.preventDefault(); showSettings(); });
     settingsBtn._bound = true;
+  }
+  if (infoBtn && !infoBtn._bound) {
+    infoBtn.addEventListener('click', showAppInfo);
+    infoBtn._bound = true;
   }
 }
 
@@ -132,6 +137,12 @@ async function switchTab(tab) {
   document.querySelectorAll('.nav-tab').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.tab === tab);
   });
+
+  // Header: prominent title + info button on dashboard only
+  const headerTitle = document.querySelector('.header-title');
+  const headerInfoBtn = document.getElementById('header-info-btn');
+  if (headerTitle) headerTitle.classList.toggle('prominent', tab === 'today');
+  if (headerInfoBtn) headerInfoBtn.classList.toggle('hidden', tab !== 'today');
 
   // Reflexion mode: toggle dark class on #app
   const appEl = document.getElementById('app');
@@ -177,6 +188,42 @@ async function showSettings() {
     () => showApp(),
     () => { window.location.reload(); }
   );
+}
+
+function showAppInfo() {
+  const existing = document.getElementById('app-info-overlay');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'app-info-overlay';
+  overlay.className = 'info-sheet-overlay';
+
+  overlay.innerHTML = `
+    <div class="info-sheet">
+      <div class="info-sheet-grip"></div>
+      <h3>Löwenherz</h3>
+      <p class="info-subtitle">Angst wird erlernt. Gelassenheit auch.</p>
+      <p>Die Begleit-App zum Buch. Morgenreflexion, Abendreflexion, und zwischendurch ein SMALL-Reminder\u2009—\u2009damit Quatschi nicht allein moderiert.</p>
+      <p>Kein Programm. Drei Leitplanken. Alles über null ist Gewinn.</p>
+      <button class="info-sheet-close">Verstanden</button>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => overlay.classList.add('active'));
+  });
+
+  const close = () => {
+    overlay.classList.remove('active');
+    setTimeout(() => overlay.remove(), 300);
+  };
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) close();
+  });
+  overlay.querySelector('.info-sheet-close').addEventListener('click', close);
 }
 
 // Register service worker

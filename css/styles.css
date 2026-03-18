@@ -143,10 +143,49 @@ a:active { opacity: 0.7; }
   background: var(--bg-page);
 }
 
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .header-title {
   font-family: var(--font-serif);
   font-size: 19px;
   color: var(--text-secondary);
+  transition: font-size 0.2s ease;
+}
+
+/* Prominent header on dashboard */
+.header-title.prominent {
+  font-size: 23px;
+  font-weight: 600;
+}
+
+.header-info-btn {
+  background: none;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  opacity: 0.4;
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1;
+  flex-shrink: 0;
+  min-width: 30px;
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: manipulation;
+}
+
+.header-info-btn:active {
+  opacity: 0.8;
+}
+
+.header-info-btn.hidden {
+  display: none;
 }
 
 .header-actions {
@@ -209,7 +248,7 @@ a:active { opacity: 0.7; }
   gap: 3px;
   padding: 6px 18px;
   font-family: var(--font-sans);
-  font-size: 13px;
+  font-size: 15px;
   color: var(--text-muted);
   background: none;
   border: none;
@@ -699,6 +738,12 @@ a:active { opacity: 0.7; }
   line-height: 1.6;
   color: var(--text-secondary);
   margin: 0 0 12px;
+}
+
+.info-sheet .info-subtitle {
+  font-style: italic;
+  color: var(--text-muted);
+  margin-bottom: 16px;
 }
 
 .info-states {
