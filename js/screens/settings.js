@@ -314,14 +314,15 @@ const LEGAL_CONTENT = {
   impressum: `
     <h2>Impressum</h2>
     <p>Angaben gemäß EU-Verordnung (E-Commerce-Richtlinie 2000/31/EG):</p>
-    <p><strong>Der AngstDoc & Kollegen S.R.L.</strong><br>
-    Strada C. C. Arion 11<br>
-    011081 Bukarest<br>
+    <p><strong>Der AngstDoc und Kollegen S.R.L.</strong><br>
+    Inh. Dr. med. Patrick Eberle<br>
+    Strada C.C. Arion 11<br>
+    011082 Bukarest<br>
     Rumänien</p>
-    <p>E-Mail: <a href="mailto:pe@angstdoc.de">pe@angstdoc.de</a></p>
-    <p>Vertreten durch: Patrick Elkuch</p>
-    <p>Handelsregister: [HIER REGISTERNUMMER EINFÜGEN]<br>
-    USt-IdNr.: [HIER UST-ID EINFÜGEN]</p>
+    <p>Mobil: <a href="tel:+4915156315884">+49 151 5631 5884</a><br>
+    E-Mail: <a href="mailto:pe@angstdoc.de">pe@angstdoc.de</a></p>
+    <p>Handelsregister: Rumänisches Handelsregister<br>
+    VAT: RO48978340</p>
     <div class="legal-notice">
       <p><strong>Hinweis:</strong> Diese App dient ausschließlich der allgemeinen Information und Selbstreflexion. Sie ersetzt keine ärztliche oder psychotherapeutische Behandlung. Bei akuten psychischen Krisen wende dich bitte an den ärztlichen Bereitschaftsdienst (116 117), die Telefonseelsorge (0800 111 0 111 / 0800 111 0 222) oder den Notruf (112).</p>
     </div>
@@ -331,9 +332,10 @@ const LEGAL_CONTENT = {
     <p class="legal-meta">Stand: März 2026</p>
 
     <h3>1. Verantwortlicher</h3>
-    <p>Der AngstDoc & Kollegen S.R.L.<br>
-    Strada C. C. Arion 11<br>
-    011081 Bukarest, Rumänien<br>
+    <p>Der AngstDoc und Kollegen S.R.L.<br>
+    Inh. Dr. med. Patrick Eberle<br>
+    Strada C.C. Arion 11<br>
+    011082 Bukarest, Rumänien<br>
     E-Mail: <a href="mailto:pe@angstdoc.de">pe@angstdoc.de</a></p>
 
     <h3>2. Datenverarbeitung in der App</h3>
