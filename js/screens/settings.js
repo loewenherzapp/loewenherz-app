@@ -5,6 +5,7 @@
 import { TEXTS } from '../../content/de.js';
 import { getProfile, saveProfile, clearAllData, migrateToV2, saveRemindersV2, saveMorningRitual, saveEveningReflection } from '../db.js';
 import { openCrisis } from '../components/crisis-modal.js';
+import { scheduleReminders, syncOneSignalTags } from '../push.js';
 
 /**
  * Sort reminders by time (earliest first).
@@ -83,7 +84,7 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
           <div id="reminders-list">
             ${sorted.map(r => renderAlarmSlot(r)).join('')}
           </div>
-          <p class="settings-hint">${t.pushHint}</p>
+          <p class="settings-hint">Zeiten für deine SMALL-Erinnerungen.</p>
         </div>
       </div>
 
@@ -102,6 +103,45 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
         <div class="settings-card" id="evening-reflection-card">
           ${renderRitualSlot(eveningReflection, 'evening-reflection')}
           <p class="settings-hint">${t.eveningReflectionHint}</p>
+        </div>
+      </div>
+
+      <!-- Push-Benachrichtigungen -->
+      <div class="settings-section" id="push-settings-section">
+        <div class="settings-label">Erinnerungen</div>
+        <div class="settings-card" id="push-settings-card">
+          <div class="push-setting-row">
+            <div class="push-setting-labels">
+              <div class="push-setting-label">Push-Benachrichtigungen</div>
+              <div class="push-setting-sublabel">Erinnerungen an Reflexion und SMALL-Momente</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="push-main-toggle" ${localStorage.getItem('loewenherz_push_enabled') === 'true' ? 'checked' : ''}>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="push-blocked-hint hidden" id="push-blocked-hint">Push-Benachrichtigungen sind im Browser blockiert. Bitte aktiviere sie in deinen Browser-Einstellungen.</div>
+          <div id="push-sub-settings" class="${localStorage.getItem('loewenherz_push_enabled') !== 'true' ? 'push-settings-disabled' : ''}">
+            <div class="push-settings-divider"></div>
+            <div class="push-setting-time">
+              <div class="push-setting-label">Morgenreflexion</div>
+              <input type="time" class="reminder-time" id="push-morning-time" value="${localStorage.getItem('loewenherz_morning_time') || '07:00'}">
+            </div>
+            <div class="push-setting-time">
+              <div class="push-setting-label">Abendreflexion</div>
+              <input type="time" class="reminder-time" id="push-evening-time" value="${localStorage.getItem('loewenherz_evening_time') || '20:30'}">
+            </div>
+            <div class="push-setting-row">
+              <div class="push-setting-labels">
+                <div class="push-setting-label">SMALL-Reminder tagsüber</div>
+                <div class="push-setting-sublabel">8 kurze Impulse zwischen Morgen und Abend</div>
+              </div>
+              <label class="toggle">
+                <input type="checkbox" id="push-small-toggle" ${localStorage.getItem('loewenherz_small_reminders') !== 'false' ? 'checked' : ''}>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -282,6 +322,104 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
     if (eveningReflection.time === e.target.value) return;
     eveningReflection.time = e.target.value;
     saveEveningReflection(eveningReflection);
+  });
+
+  // ---- Push Settings ----
+  const pushMainToggle = document.getElementById('push-main-toggle');
+  const pushSubSettings = document.getElementById('push-sub-settings');
+  const pushBlockedHint = document.getElementById('push-blocked-hint');
+  const pushMorningTime = document.getElementById('push-morning-time');
+  const pushEveningTime = document.getElementById('push-evening-time');
+  const pushSmallToggle = document.getElementById('push-small-toggle');
+
+  function updatePushSubState() {
+    const enabled = localStorage.getItem('loewenherz_push_enabled') === 'true';
+    if (enabled) {
+      pushSubSettings.classList.remove('push-settings-disabled');
+    } else {
+      pushSubSettings.classList.add('push-settings-disabled');
+    }
+  }
+
+  pushMainToggle.addEventListener('change', () => {
+    if (pushMainToggle.checked) {
+      // Einschalten
+      if (typeof Notification !== 'undefined' && Notification.permission === 'denied') {
+        pushBlockedHint.classList.remove('hidden');
+        pushMainToggle.checked = false;
+        return;
+      }
+      pushBlockedHint.classList.add('hidden');
+
+      if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+        // Browser-Permission-Dialog
+        if (window.OneSignal && OneSignal.Slidedown) {
+          OneSignal.Slidedown.promptPush();
+        } else {
+          Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+              localStorage.setItem('loewenherz_push_enabled', 'true');
+              updatePushSubState();
+              syncOneSignalTags();
+              scheduleReminders();
+            } else {
+              pushMainToggle.checked = false;
+              localStorage.setItem('loewenherz_push_enabled', 'false');
+              updatePushSubState();
+            }
+          });
+        }
+      }
+
+      localStorage.setItem('loewenherz_push_enabled', 'true');
+      updatePushSubState();
+      syncOneSignalTags();
+      scheduleReminders();
+    } else {
+      // Ausschalten
+      localStorage.setItem('loewenherz_push_enabled', 'false');
+      updatePushSubState();
+      syncOneSignalTags();
+      scheduleReminders();
+    }
+  });
+
+  let pushMorningTimer;
+  pushMorningTime.addEventListener('change', () => {
+    clearTimeout(pushMorningTimer);
+    pushMorningTimer = setTimeout(() => {
+      localStorage.setItem('loewenherz_morning_time', pushMorningTime.value);
+      syncOneSignalTags();
+      scheduleReminders();
+    }, 1500);
+  });
+  pushMorningTime.addEventListener('focusout', () => {
+    clearTimeout(pushMorningTimer);
+    localStorage.setItem('loewenherz_morning_time', pushMorningTime.value);
+    syncOneSignalTags();
+    scheduleReminders();
+  });
+
+  let pushEveningTimer;
+  pushEveningTime.addEventListener('change', () => {
+    clearTimeout(pushEveningTimer);
+    pushEveningTimer = setTimeout(() => {
+      localStorage.setItem('loewenherz_evening_time', pushEveningTime.value);
+      syncOneSignalTags();
+      scheduleReminders();
+    }, 1500);
+  });
+  pushEveningTime.addEventListener('focusout', () => {
+    clearTimeout(pushEveningTimer);
+    localStorage.setItem('loewenherz_evening_time', pushEveningTime.value);
+    syncOneSignalTags();
+    scheduleReminders();
+  });
+
+  pushSmallToggle.addEventListener('change', () => {
+    localStorage.setItem('loewenherz_small_reminders', pushSmallToggle.checked ? 'true' : 'false');
+    syncOneSignalTags();
+    scheduleReminders();
   });
 
   // Crisis

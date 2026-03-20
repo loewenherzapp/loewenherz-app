@@ -12,6 +12,7 @@ import { renderDashboard } from './screens/dashboard.js';
 import { renderReflection } from './screens/reflection.js';
 import { renderHistory } from './screens/history.js';
 import { renderSettings } from './screens/settings.js';
+import { scheduleReminders } from './push.js';
 
 let currentTab = 'today';
 let profile = null;
@@ -101,6 +102,9 @@ function showApp() {
   document.getElementById('app-shell').classList.remove('hidden');
   bindHeaderButtons();
   switchTab('today');
+
+  // Initialize push reminder engine
+  scheduleReminders();
 }
 
 function bindHeaderButtons() {
