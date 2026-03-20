@@ -1,6 +1,12 @@
 // ============================================================
-// Löwenherz PWA — Service Worker (Cache-First)
+// Löwenherz PWA — Combined Service Worker
+// OneSignal Push + Cache-First Strategy
 // ============================================================
+
+// OneSignal Service Worker Import
+importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
+
+// === Cache Service Worker ===
 
 const CACHE_NAME = 'loewenherz-v35';
 

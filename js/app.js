@@ -101,7 +101,17 @@ function showApp() {
   hideAll();
   document.getElementById('app-shell').classList.remove('hidden');
   bindHeaderButtons();
-  switchTab('today');
+
+  // Deep-link: open target tab from notification URL, or default to today
+  const params = new URLSearchParams(window.location.search);
+  const targetTab = params.get('tab');
+  if (targetTab) {
+    const tabMap = { 'heute': 'today', 'today': 'today', 'reflexion': 'reflection', 'reflection': 'reflection', 'verlauf': 'history', 'history': 'history' };
+    switchTab(tabMap[targetTab] || 'today');
+    window.history.replaceState({}, '', window.location.pathname);
+  } else {
+    switchTab('today');
+  }
 
   // Initialize push reminder engine
   scheduleReminders();
@@ -230,13 +240,8 @@ function showAppInfo() {
   overlay.querySelector('.info-sheet-close').addEventListener('click', close);
 }
 
-// Register service worker
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    const swUrl = new URL('sw.js', window.location.href.replace(/\/[^/]*$/, '/'));
-    navigator.serviceWorker.register(swUrl.href).catch(() => {});
-  });
-}
+// Service Worker: OneSignal handles registration of OneSignalSDKWorker.js automatically.
+// Manual registration removed to avoid conflicts.
 
 // Boot
 document.addEventListener('DOMContentLoaded', init);

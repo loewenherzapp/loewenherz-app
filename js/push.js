@@ -2,6 +2,19 @@
 // Löwenherz PWA — Push Notifications & Reminder Engine
 // ============================================================
 
+// --- OneSignal Initialization ---
+
+window.OneSignalDeferred = window.OneSignalDeferred || [];
+OneSignalDeferred.push(async function(OneSignal) {
+  await OneSignal.init({
+    appId: "1aeeca68-13c9-400a-a243-dd749527c49f",
+    serviceWorkerParam: { scope: "/" },
+    serviceWorkerPath: "OneSignalSDKWorker.js",
+    notifyButton: { enable: false },
+    welcomeNotification: { disable: true }
+  });
+});
+
 // --- Notification Texts ---
 
 const morningTexts = [
