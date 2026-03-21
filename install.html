@@ -49,16 +49,16 @@
       margin: 0 auto 20px;
       border-radius: 20px;
       overflow: hidden;
-      background: linear-gradient(135deg, #2A9D8F 0%, #1a7a6f 100%);
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 16px rgba(42, 157, 143, 0.3);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
     }
 
-    .app-icon svg {
-      width: 48px;
-      height: 48px;
+    .app-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
 
     .hero h1 {
@@ -452,17 +452,7 @@
   <section class="hero">
     <div class="container">
       <div class="app-icon">
-        <!-- Löwen-Platzhalter SVG — später durch echtes Icon ersetzen -->
-        <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="24" cy="20" r="8" fill="#E9C46A"/>
-          <ellipse cx="24" cy="19" rx="5" ry="5.5" fill="#fff"/>
-          <circle cx="21.5" cy="17.5" r="1.2" fill="#1a1a1a"/>
-          <circle cx="26.5" cy="17.5" r="1.2" fill="#1a1a1a"/>
-          <ellipse cx="24" cy="20.5" rx="1.5" ry="1" fill="#E9C46A"/>
-          <path d="M22 22 Q24 24 26 22" stroke="#1a1a1a" stroke-width="0.8" fill="none" stroke-linecap="round"/>
-          <path d="M14 14 Q12 8 18 10 Q16 6 22 8 Q24 4 26 8 Q32 6 30 10 Q36 8 34 14" fill="#E9C46A" stroke="none"/>
-          <path d="M20 28 L18 38 L22 36 L24 40 L26 36 L30 38 L28 28" fill="#E9C46A"/>
-        </svg>
+        <img src="/assets/loewenherz-icon.png" alt="Löwenherz" width="80" height="80">
       </div>
       <h1>Löwenherz</h1>
       <p class="subtitle">Die Begleit-App zum Buch.</p>
@@ -627,8 +617,7 @@
           <div class="desktop-hint">
             <h2 class="guide-title">Löwenherz ist für dein Handy gemacht.</h2>
             <p>Scanne den QR-Code mit deinem Handy — die Installation dauert 30 Sekunden.</p>
-            <!-- Patrick: Ersetze dieses div durch ein <img src="qr-code.png"> — generiere den QR-Code für https://loewenherz-app.vercel.app/install.html z.B. auf qr-code-generator.com -->
-            <div class="qr-placeholder">QR-Code</div>
+            <img src="/assets/qr-install.png" alt="QR-Code für Löwenherz" width="200" height="200" style="border-radius: 12px;">
             <p class="qr-caption">https://loewenherz-app.vercel.app/install.html</p>
           </div>
         </div>
@@ -689,8 +678,7 @@
   <section class="desktop-qr-section">
     <div class="container">
       <p>Oder scanne den Code mit deinem Handy:</p>
-      <!-- Patrick: Ersetze dieses div durch ein <img src="qr-code.png"> — generiere den QR-Code für https://loewenherz-app.vercel.app/install.html z.B. auf qr-code-generator.com -->
-      <div class="qr-placeholder">QR-Code</div>
+      <img src="/assets/qr-install.png" alt="QR-Code für Löwenherz" width="200" height="200" style="border-radius: 12px;">
     </div>
   </section>
 
