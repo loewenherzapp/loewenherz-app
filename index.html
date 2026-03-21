@@ -2,6 +2,22 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
+<script>
+// Wenn der User /install.html aufruft aber der Service Worker
+// stattdessen index.html serviert, Cache löschen und frisch laden
+if ((location.pathname === '/install.html' || location.pathname === '/install')
+    && !location.search.includes('_=')) {
+  if ('caches' in window) {
+    caches.keys().then(function(n) { n.forEach(function(k) {
+      caches.open(k).then(function(c) { c.delete('/install.html'); });
+    }); });
+  }
+  if (navigator.serviceWorker) {
+    navigator.serviceWorker.getRegistration().then(function(r) { if (r) r.update(); });
+  }
+  location.replace('/install.html?_=' + Date.now());
+}
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">

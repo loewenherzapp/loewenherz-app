@@ -5,6 +5,13 @@
       "headers": [
         { "key": "Service-Worker-Allowed", "value": "/" }
       ]
+    },
+    {
+      "source": "/install.html",
+      "headers": [
+        { "key": "Service-Worker-Allowed", "value": "none" },
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+      ]
     }
   ],
   "functions": {
