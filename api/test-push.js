@@ -55,7 +55,7 @@ export default async function handler(req, res) {
         app_id: APP_ID,
         included_segments: ['Total Subscriptions'],
         headings: { en: 'Löwenherz Test' },
-        contents: { en: 'Wenn du das siehst, funktioniert die Pipeline! 🦁' },
+        contents: { en: 'Wenn du das siehst, funktioniert die Pipeline!' },
         url: 'https://loewenherz-app.vercel.app/?tab=heute',
         chrome_web_icon: 'https://loewenherz-app.vercel.app/assets/icons/icon-192.png'
       })
@@ -81,7 +81,7 @@ export default async function handler(req, res) {
           app_id: APP_ID,
           included_segments: ['Subscribed Users'],
           headings: { en: 'Löwenherz Test' },
-          contents: { en: 'Wenn du das siehst, funktioniert die Pipeline! 🦁' },
+          contents: { en: 'Wenn du das siehst, funktioniert die Pipeline!' },
           url: 'https://loewenherz-app.vercel.app/?tab=heute',
           chrome_web_icon: 'https://loewenherz-app.vercel.app/assets/icons/icon-192.png'
         })
@@ -93,7 +93,7 @@ export default async function handler(req, res) {
   }
 
   // ============================================================
-  // Schritt 5: Auch Tag-basierte Notification testen (wie die echte Route)
+  // Schritt 5: Tag-basierte Notification testen
   // ============================================================
   let tagTestResult = null;
   try {
@@ -125,9 +125,53 @@ export default async function handler(req, res) {
   }
 
   // ============================================================
-  // Diagnose-Report
+  // Schritt 6: Force-Set Tags auf allen Subscribern (Diagnose-Fix)
+  // Setzt Test-Tags auf ALLEN Playern um zu prüfen ob REST-Tags funktionieren
   // ============================================================
   const players = playersData?.players || [];
+  const forceTagResults = [];
+
+  // Nur wenn ?force_tags=true als Query-Parameter mitgegeben wird
+  if (req.query?.force_tags === 'true') {
+    for (const player of players) {
+      try {
+        const putResp = await fetch(
+          `https://onesignal.com/api/v1/players/${player.id}`,
+          {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Basic ${API_KEY}`
+            },
+            body: JSON.stringify({
+              app_id: APP_ID,
+              tags: {
+                morning_utc: '05:00',
+                evening_utc: '18:30',
+                small_enabled: 'true',
+                push_enabled: 'true'
+              }
+            })
+          }
+        );
+        const putData = await putResp.json();
+        forceTagResults.push({
+          player_id: player.id,
+          device_type: player.device_type,
+          result: putData
+        });
+      } catch (e) {
+        forceTagResults.push({
+          player_id: player.id,
+          error: e.message
+        });
+      }
+    }
+  }
+
+  // ============================================================
+  // Diagnose-Report
+  // ============================================================
   const playerSummary = players.map(p => ({
     id: p.id,
     device_type: p.device_type, // 5=Chrome, 0=iOS, 1=Android
@@ -158,6 +202,8 @@ export default async function handler(req, res) {
     },
 
     tag_filter_test: tagTestResult,
+
+    force_tag_results: forceTagResults.length > 0 ? forceTagResults : 'Add ?force_tags=true to force-set test tags on all subscribers',
 
     hint: 'notification_types: 1=subscribed, -2=unsubscribed. device_type: 0=iOS, 1=Android, 5=Chrome, 7=Safari'
   });

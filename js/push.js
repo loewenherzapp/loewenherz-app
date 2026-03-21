@@ -15,24 +15,52 @@ OneSignalDeferred.push(async function(OneSignal) {
   });
 
   // Debug: Subscription-Status loggen
-  console.log('[Löwenherz Push] OneSignal initialized');
-  console.log('[Löwenherz Push] Permission:', Notification.permission);
-  console.log('[Löwenherz Push] OptedIn:', OneSignal.User.PushSubscription.optedIn);
-  console.log('[Löwenherz Push] SubscriptionId:', OneSignal.User.PushSubscription.id);
+  console.log('[Push] OneSignal initialized');
+  console.log('[Push] Permission:', Notification.permission);
+  console.log('[Push] OptedIn:', OneSignal.User.PushSubscription.optedIn);
+  console.log('[Push] SubscriptionId:', OneSignal.User.PushSubscription.id);
 
-  // Tags synchen wenn User bereits opted-in ist
-  if (OneSignal.User.PushSubscription.optedIn) {
-    syncTagsToOneSignal();
-  }
-
-  // Auf Subscription-Änderung lauschen (z.B. User opted gerade erst in)
+  // Auf Subscription-Änderung lauschen (z.B. User opted gerade ein)
   OneSignal.User.PushSubscription.addEventListener('change', function(event) {
-    console.log('[Löwenherz Push] Subscription changed:', event.current);
+    console.log('[Push] Subscription changed:', event.current);
     if (event.current.optedIn) {
       syncTagsToOneSignal();
     }
   });
+
+  // Tags synchen — mit Polling falls optedIn noch nicht ready
+  attemptTagSync(0);
 });
+
+// --- Polling: Warte bis Subscription bereit ist ---
+
+function attemptTagSync(attempt) {
+  const MAX_ATTEMPTS = 10;
+  const INTERVAL_MS = 2000; // alle 2 Sekunden
+
+  if (!window.OneSignal || !window.OneSignal.User) {
+    if (attempt < MAX_ATTEMPTS) {
+      console.log(`[Push] OneSignal.User not ready, retry ${attempt + 1}/${MAX_ATTEMPTS}...`);
+      setTimeout(() => attemptTagSync(attempt + 1), INTERVAL_MS);
+    }
+    return;
+  }
+
+  const optedIn = OneSignal.User.PushSubscription.optedIn;
+  const subId = OneSignal.User.PushSubscription.id;
+
+  console.log(`[Push] Tag sync attempt ${attempt + 1}: optedIn=${optedIn}, id=${subId}`);
+
+  if (optedIn && subId) {
+    // User ist subscribed und hat eine ID → Tags synchen
+    syncTagsToOneSignal();
+  } else if (attempt < MAX_ATTEMPTS) {
+    // Noch nicht ready → retry
+    setTimeout(() => attemptTagSync(attempt + 1), INTERVAL_MS);
+  } else {
+    console.log('[Push] Max attempts reached. User not opted in or no subscription ID.');
+  }
+}
 
 // --- Time Helpers ---
 
@@ -53,7 +81,7 @@ export function localTimeToUTC(timeStr) {
   return `${String(utcH).padStart(2, '0')}:${String(utcM).padStart(2, '0')}`;
 }
 
-// --- Tag Sync: Dual-Strategie (Client + Server-Fallback) ---
+// --- Tag Sync: Dual-Strategie (Client + Server) ---
 
 function buildTags() {
   const morningRaw = localStorage.getItem('loewenherz_morning_time') || '07:00';
@@ -75,32 +103,41 @@ function buildTags() {
 
 function syncTagsToOneSignal() {
   const tags = buildTags();
-  console.log('[Löwenherz Push] Syncing tags (client):', tags);
+  console.log('[Push] Syncing tags:', tags);
 
   // Ansatz A: Client-seitig via SDK
-  if (window.OneSignal && window.OneSignal.User) {
-    OneSignal.User.addTags(tags);
+  try {
+    if (window.OneSignal && window.OneSignal.User) {
+      OneSignal.User.addTags(tags);
+      console.log('[Push] Client addTags() called');
+    }
+  } catch (e) {
+    console.warn('[Push] Client addTags() error:', e);
   }
 
-  // Ansatz B: Server-Fallback nach 3 Sekunden
+  // Ansatz B: Server-seitig via REST API (primäre Absicherung, nach 3s)
   setTimeout(() => {
     syncTagsViaServer(tags);
   }, 3000);
 }
 
 function syncTagsViaServer(tags) {
-  if (!window.OneSignal || !window.OneSignal.User || !window.OneSignal.User.PushSubscription) {
-    console.log('[Löwenherz Push] No OneSignal User, skipping server sync');
-    return;
+  let subscriptionId = null;
+
+  try {
+    if (window.OneSignal && window.OneSignal.User && window.OneSignal.User.PushSubscription) {
+      subscriptionId = OneSignal.User.PushSubscription.id;
+    }
+  } catch (e) {
+    console.warn('[Push] Error reading subscription ID:', e);
   }
 
-  const subscriptionId = OneSignal.User.PushSubscription.id;
   if (!subscriptionId) {
-    console.log('[Löwenherz Push] No subscription ID, cannot sync tags via server');
+    console.log('[Push] No subscription ID — skipping server sync');
     return;
   }
 
-  console.log('[Löwenherz Push] Syncing tags via server for:', subscriptionId);
+  console.log('[Push] Server sync for subscription:', subscriptionId);
 
   fetch('/api/set-tags', {
     method: 'POST',
@@ -109,10 +146,10 @@ function syncTagsViaServer(tags) {
   })
     .then(r => r.json())
     .then(data => {
-      console.log('[Löwenherz Push] Server tag sync result:', data);
+      console.log('[Push] Server sync result:', data);
     })
     .catch(err => {
-      console.warn('[Löwenherz Push] Server tag sync failed:', err);
+      console.warn('[Push] Server sync failed:', err);
     });
 }
 
