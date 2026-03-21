@@ -14,14 +14,24 @@ OneSignalDeferred.push(async function(OneSignal) {
     welcomeNotification: { disable: true }
   });
 
-  // Tags bei jedem App-Start synchen (nach erfolgreicher Init)
-  syncOneSignalTags();
-
   // Debug: Subscription-Status loggen
   console.log('[Löwenherz Push] OneSignal initialized');
   console.log('[Löwenherz Push] Permission:', Notification.permission);
   console.log('[Löwenherz Push] OptedIn:', OneSignal.User.PushSubscription.optedIn);
   console.log('[Löwenherz Push] SubscriptionId:', OneSignal.User.PushSubscription.id);
+
+  // Tags synchen wenn User bereits opted-in ist
+  if (OneSignal.User.PushSubscription.optedIn) {
+    syncTagsToOneSignal();
+  }
+
+  // Auf Subscription-Änderung lauschen (z.B. User opted gerade erst in)
+  OneSignal.User.PushSubscription.addEventListener('change', function(event) {
+    console.log('[Löwenherz Push] Subscription changed:', event.current);
+    if (event.current.optedIn) {
+      syncTagsToOneSignal();
+    }
+  });
 });
 
 // --- Time Helpers ---
@@ -43,42 +53,73 @@ export function localTimeToUTC(timeStr) {
   return `${String(utcH).padStart(2, '0')}:${String(utcM).padStart(2, '0')}`;
 }
 
-// --- OneSignal Tag Sync (UTC-based, 4 tags only) ---
+// --- Tag Sync: Dual-Strategie (Client + Server-Fallback) ---
 
-export function syncOneSignalTags() {
+function buildTags() {
   const morningRaw = localStorage.getItem('loewenherz_morning_time') || '07:00';
   const eveningRaw = localStorage.getItem('loewenherz_evening_time') || '20:30';
-
-  // Runden auf 15 Min
   const morning = roundTo15Min(morningRaw);
   const evening = roundTo15Min(eveningRaw);
-
-  // UTC konvertieren
   const morningUTC = localTimeToUTC(morning);
   const eveningUTC = localTimeToUTC(evening);
-
   const smallEnabled = localStorage.getItem('loewenherz_small_reminders') !== 'false';
   const pushEnabled = localStorage.getItem('loewenherz_push_enabled') === 'true';
 
-  // NUR diese 4 Tags — via Deferred-Queue für sichere Zustellung
-  const tags = {
+  return {
     morning_utc: morningUTC,
     evening_utc: eveningUTC,
     small_enabled: smallEnabled ? 'true' : 'false',
     push_enabled: pushEnabled ? 'true' : 'false'
   };
+}
 
-  console.log('[Löwenherz Push] Syncing tags:', tags);
+function syncTagsToOneSignal() {
+  const tags = buildTags();
+  console.log('[Löwenherz Push] Syncing tags (client):', tags);
 
+  // Ansatz A: Client-seitig via SDK
   if (window.OneSignal && window.OneSignal.User) {
     OneSignal.User.addTags(tags);
-  } else {
-    // Fallback: über Deferred-Queue setzen falls OneSignal noch nicht ready
-    window.OneSignalDeferred = window.OneSignalDeferred || [];
-    window.OneSignalDeferred.push(async function(OneSignal) {
-      OneSignal.User.addTags(tags);
-    });
   }
+
+  // Ansatz B: Server-Fallback nach 3 Sekunden
+  setTimeout(() => {
+    syncTagsViaServer(tags);
+  }, 3000);
+}
+
+function syncTagsViaServer(tags) {
+  if (!window.OneSignal || !window.OneSignal.User || !window.OneSignal.User.PushSubscription) {
+    console.log('[Löwenherz Push] No OneSignal User, skipping server sync');
+    return;
+  }
+
+  const subscriptionId = OneSignal.User.PushSubscription.id;
+  if (!subscriptionId) {
+    console.log('[Löwenherz Push] No subscription ID, cannot sync tags via server');
+    return;
+  }
+
+  console.log('[Löwenherz Push] Syncing tags via server for:', subscriptionId);
+
+  fetch('/api/set-tags', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ subscription_id: subscriptionId, tags: tags })
+  })
+    .then(r => r.json())
+    .then(data => {
+      console.log('[Löwenherz Push] Server tag sync result:', data);
+    })
+    .catch(err => {
+      console.warn('[Löwenherz Push] Server tag sync failed:', err);
+    });
+}
+
+// --- Exportierte Sync-Funktion (für Settings-Screen) ---
+
+export function syncOneSignalTags() {
+  syncTagsToOneSignal();
 }
 
 // --- Soft-Ask Overlay ---
@@ -139,7 +180,7 @@ export function showPushSoftAsk() {
       Notification.requestPermission().then(permission => {
         if (permission === 'granted') {
           localStorage.setItem('loewenherz_push_enabled', 'true');
-          syncOneSignalTags();
+          syncTagsToOneSignal();
         }
       });
     }
