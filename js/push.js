@@ -18,25 +18,26 @@ OneSignalDeferred.push(async function(OneSignal) {
   console.log('[Push] OneSignal initialized');
   console.log('[Push] Permission:', Notification.permission);
   console.log('[Push] OptedIn:', OneSignal.User.PushSubscription.optedIn);
-  console.log('[Push] SubscriptionId:', OneSignal.User.PushSubscription.id);
+  console.log('[Push] PushSubscription.id:', OneSignal.User.PushSubscription.id);
+  console.log('[Push] User.onesignalId:', OneSignal.User.onesignalId);
 
   // Auf Subscription-Änderung lauschen (z.B. User opted gerade ein)
   OneSignal.User.PushSubscription.addEventListener('change', function(event) {
     console.log('[Push] Subscription changed:', event.current);
     if (event.current.optedIn) {
-      syncTagsToOneSignal();
+      attemptTagSync(0);
     }
   });
 
-  // Tags synchen — mit Polling falls optedIn noch nicht ready
+  // Tags synchen — mit Polling falls IDs noch nicht ready
   attemptTagSync(0);
 });
 
-// --- Polling: Warte bis Subscription bereit ist ---
+// --- Polling: Warte bis Subscription + onesignalId bereit sind ---
 
 function attemptTagSync(attempt) {
-  const MAX_ATTEMPTS = 10;
-  const INTERVAL_MS = 2000; // alle 2 Sekunden
+  const MAX_ATTEMPTS = 15;
+  const INTERVAL_MS = 2000;
 
   if (!window.OneSignal || !window.OneSignal.User) {
     if (attempt < MAX_ATTEMPTS) {
@@ -47,18 +48,24 @@ function attemptTagSync(attempt) {
   }
 
   const optedIn = OneSignal.User.PushSubscription.optedIn;
+  const onesignalId = OneSignal.User.onesignalId;
   const subId = OneSignal.User.PushSubscription.id;
 
-  console.log(`[Push] Tag sync attempt ${attempt + 1}: optedIn=${optedIn}, id=${subId}`);
+  console.log(`[Push] Attempt ${attempt + 1}: optedIn=${optedIn}, onesignalId=${onesignalId}, subId=${subId}`);
 
-  if (optedIn && subId) {
-    // User ist subscribed und hat eine ID → Tags synchen
+  if (optedIn && onesignalId) {
+    // User ist subscribed und hat eine onesignalId → Tags synchen
     syncTagsToOneSignal();
   } else if (attempt < MAX_ATTEMPTS) {
-    // Noch nicht ready → retry
     setTimeout(() => attemptTagSync(attempt + 1), INTERVAL_MS);
   } else {
-    console.log('[Push] Max attempts reached. User not opted in or no subscription ID.');
+    console.log('[Push] Max attempts reached. optedIn:', optedIn, 'onesignalId:', onesignalId);
+    // Letzter Versuch: trotzdem Client-seitig addTags aufrufen
+    if (optedIn) {
+      console.log('[Push] Trying addTags anyway (no onesignalId)...');
+      const tags = buildTags();
+      try { OneSignal.User.addTags(tags); } catch (e) { /* ignore */ }
+    }
   }
 }
 
@@ -115,34 +122,35 @@ function syncTagsToOneSignal() {
     console.warn('[Push] Client addTags() error:', e);
   }
 
-  // Ansatz B: Server-seitig via REST API (primäre Absicherung, nach 3s)
+  // Ansatz B: Server-seitig via REST API (nach 3s als Absicherung)
   setTimeout(() => {
     syncTagsViaServer(tags);
   }, 3000);
 }
 
 function syncTagsViaServer(tags) {
-  let subscriptionId = null;
+  // onesignalId ist die korrekte ID für die neue User API
+  let onesignalId = null;
 
   try {
-    if (window.OneSignal && window.OneSignal.User && window.OneSignal.User.PushSubscription) {
-      subscriptionId = OneSignal.User.PushSubscription.id;
+    if (window.OneSignal && window.OneSignal.User) {
+      onesignalId = OneSignal.User.onesignalId;
     }
   } catch (e) {
-    console.warn('[Push] Error reading subscription ID:', e);
+    console.warn('[Push] Error reading onesignalId:', e);
   }
 
-  if (!subscriptionId) {
-    console.log('[Push] No subscription ID — skipping server sync');
+  if (!onesignalId) {
+    console.log('[Push] No onesignalId — skipping server sync');
     return;
   }
 
-  console.log('[Push] Server sync for subscription:', subscriptionId);
+  console.log('[Push] Server sync for onesignalId:', onesignalId);
 
   fetch('/api/set-tags', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ subscription_id: subscriptionId, tags: tags })
+    body: JSON.stringify({ onesignal_id: onesignalId, tags: tags })
   })
     .then(r => r.json())
     .then(data => {
@@ -162,7 +170,6 @@ export function syncOneSignalTags() {
 // --- Soft-Ask Overlay ---
 
 export function showPushSoftAsk() {
-  // Guard conditions
   if (typeof Notification === 'undefined') return;
   if (Notification.permission !== 'default') return;
   if (localStorage.getItem('loewenherz_push_asked')) return;
@@ -185,18 +192,15 @@ export function showPushSoftAsk() {
 
   document.body.appendChild(overlay);
 
-  // Animate in
   requestAnimationFrame(() => {
     requestAnimationFrame(() => overlay.classList.add('active'));
   });
 
-  // "Ja, gern →"
   document.getElementById('push-accept').addEventListener('click', () => {
     localStorage.setItem('loewenherz_push_asked', 'true');
     overlay.classList.remove('active');
     setTimeout(() => overlay.remove(), 300);
 
-    // Set defaults
     if (!localStorage.getItem('loewenherz_push_enabled')) {
       localStorage.setItem('loewenherz_push_enabled', 'true');
     }
@@ -210,20 +214,18 @@ export function showPushSoftAsk() {
       localStorage.setItem('loewenherz_small_reminders', 'true');
     }
 
-    // Trigger OneSignal permission
     if (window.OneSignal && OneSignal.Slidedown) {
       OneSignal.Slidedown.promptPush();
     } else if (typeof Notification !== 'undefined') {
       Notification.requestPermission().then(permission => {
         if (permission === 'granted') {
           localStorage.setItem('loewenherz_push_enabled', 'true');
-          syncTagsToOneSignal();
+          attemptTagSync(0);
         }
       });
     }
   });
 
-  // "Später"
   document.getElementById('push-later').addEventListener('click', () => {
     localStorage.setItem('loewenherz_push_asked', 'true');
     overlay.classList.remove('active');

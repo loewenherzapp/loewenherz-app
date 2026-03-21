@@ -3,9 +3,9 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'POST only' });
   }
 
-  const { subscription_id, tags } = req.body;
-  if (!subscription_id || !tags) {
-    return res.status(400).json({ error: 'Missing subscription_id or tags' });
+  const { onesignal_id, tags } = req.body;
+  if (!onesignal_id || !tags) {
+    return res.status(400).json({ error: 'Missing onesignal_id or tags' });
   }
 
   const API_KEY = process.env.ONESIGNAL_API_KEY;
@@ -24,27 +24,38 @@ export default async function handler(req, res) {
     }
   }
 
+  // --- Neue OneSignal User API (nicht Legacy /players/) ---
+  // PATCH /apps/{app_id}/users/by/onesignal_id/{onesignal_id}
+  const url = `https://api.onesignal.com/apps/${APP_ID}/users/by/onesignal_id/${onesignal_id}`;
+
   try {
-    const response = await fetch(
-      `https://onesignal.com/api/v1/players/${subscription_id}`,
-      {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${API_KEY}`
-        },
-        body: JSON.stringify({
-          app_id: APP_ID,
+    const response = await fetch(url, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${API_KEY}`
+      },
+      body: JSON.stringify({
+        properties: {
           tags: safeTags
-        })
-      }
-    );
+        }
+      })
+    });
 
     const data = await response.json();
-    console.log(`[set-tags] ${subscription_id}:`, safeTags, '→', data);
+    console.log(`[set-tags] ${onesignal_id}:`, safeTags, '→', response.status, data);
+
+    if (!response.ok) {
+      return res.status(200).json({
+        success: false,
+        http_status: response.status,
+        tags_attempted: safeTags,
+        onesignal_error: data
+      });
+    }
 
     return res.status(200).json({
-      success: data.success === true || data.success === 'true',
+      success: true,
       tags_set: safeTags,
       onesignal_response: data
     });
