@@ -6,5 +6,10 @@
         { "key": "Service-Worker-Allowed", "value": "/" }
       ]
     }
-  ]
+  ],
+  "functions": {
+    "api/send-notifications.js": {
+      "maxDuration": 30
+    }
+  }
 }

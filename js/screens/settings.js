@@ -5,7 +5,7 @@
 import { TEXTS } from '../../content/de.js';
 import { getProfile, saveProfile, clearAllData, migrateToV2, saveRemindersV2, saveMorningRitual, saveEveningReflection } from '../db.js';
 import { openCrisis } from '../components/crisis-modal.js';
-import { scheduleReminders, syncOneSignalTags } from '../push.js';
+import { syncOneSignalTags } from '../push.js';
 
 /**
  * Sort reminders by time (earliest first).
@@ -125,11 +125,11 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
             <div class="push-settings-divider"></div>
             <div class="push-setting-time">
               <div class="push-setting-label">Morgenreflexion</div>
-              <input type="time" class="reminder-time" id="push-morning-time" value="${localStorage.getItem('loewenherz_morning_time') || '07:00'}">
+              <input type="time" class="reminder-time" id="push-morning-time" step="900" value="${localStorage.getItem('loewenherz_morning_time') || '07:00'}">
             </div>
             <div class="push-setting-time">
               <div class="push-setting-label">Abendreflexion</div>
-              <input type="time" class="reminder-time" id="push-evening-time" value="${localStorage.getItem('loewenherz_evening_time') || '20:30'}">
+              <input type="time" class="reminder-time" id="push-evening-time" step="900" value="${localStorage.getItem('loewenherz_evening_time') || '20:30'}">
             </div>
             <div class="push-setting-row">
               <div class="push-setting-labels">
@@ -361,7 +361,6 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
               localStorage.setItem('loewenherz_push_enabled', 'true');
               updatePushSubState();
               syncOneSignalTags();
-              scheduleReminders();
             } else {
               pushMainToggle.checked = false;
               localStorage.setItem('loewenherz_push_enabled', 'false');
