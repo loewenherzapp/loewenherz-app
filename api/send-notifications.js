@@ -29,6 +29,9 @@ export default async function handler(req, res) {
 
   // ============================================================
   // MORGEN-NOTIFICATION
+  // Filter: morning_utc = currentSlot
+  // (push_enabled entfällt — wer Tags hat, will Push.
+  //  Wer Push deaktiviert, bekommt leere Tags → matcht nicht.)
   // ============================================================
   const morningTexts = [
     "Guten Morgen, Löwenherz. Wie willst du heute sein?",
@@ -43,9 +46,7 @@ export default async function handler(req, res) {
       appId: ONESIGNAL_APP_ID,
       apiKey: ONESIGNAL_API_KEY,
       filters: [
-        { field: 'tag', key: 'morning_utc', relation: '=', value: currentSlot },
-        { operator: 'AND' },
-        { field: 'tag', key: 'push_enabled', relation: '=', value: 'true' }
+        { field: 'tag', key: 'morning_utc', relation: '=', value: currentSlot }
       ],
       title: 'Löwenherz',
       body: morningTexts[dayOfYear % morningTexts.length],
@@ -73,9 +74,7 @@ export default async function handler(req, res) {
       appId: ONESIGNAL_APP_ID,
       apiKey: ONESIGNAL_API_KEY,
       filters: [
-        { field: 'tag', key: 'evening_utc', relation: '=', value: currentSlot },
-        { operator: 'AND' },
-        { field: 'tag', key: 'push_enabled', relation: '=', value: 'true' }
+        { field: 'tag', key: 'evening_utc', relation: '=', value: currentSlot }
       ],
       title: 'Löwenherz',
       body: eveningTexts[(dayOfYear + 2) % eveningTexts.length],
@@ -88,7 +87,7 @@ export default async function handler(req, res) {
 
   // ============================================================
   // SMALL-REMINDER
-  // Sendet an alle User mit small_enabled=true UND push_enabled=true,
+  // Sendet an alle User mit small_enabled=true,
   // ABER nur wenn currentSlot zwischen morning_utc und evening_utc liegt
   // und nicht gleich morning_utc oder evening_utc ist (kein Doppel).
   // ============================================================
@@ -108,8 +107,6 @@ export default async function handler(req, res) {
       appId: ONESIGNAL_APP_ID,
       apiKey: ONESIGNAL_API_KEY,
       filters: [
-        { field: 'tag', key: 'push_enabled', relation: '=', value: 'true' },
-        { operator: 'AND' },
         { field: 'tag', key: 'small_enabled', relation: '=', value: 'true' },
         { operator: 'AND' },
         // Nicht senden wenn dieser Slot = morning_utc (Doppel vermeiden)
@@ -165,8 +162,6 @@ async function sendNotification({ appId, apiKey, filters, title, body, url }) {
 
   const data = await response.json();
 
-  // OneSignal gibt recipients=0 zurück wenn kein User den Filter matcht
-  // Das ist kein Fehler, nur "niemand fällig"
   return {
     sent: true,
     recipients: data.recipients || 0,

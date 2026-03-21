@@ -14,14 +14,11 @@ OneSignalDeferred.push(async function(OneSignal) {
     welcomeNotification: { disable: true }
   });
 
-  // Debug: Subscription-Status loggen
   console.log('[Push] OneSignal initialized');
-  console.log('[Push] Permission:', Notification.permission);
   console.log('[Push] OptedIn:', OneSignal.User.PushSubscription.optedIn);
   console.log('[Push] PushSubscription.id:', OneSignal.User.PushSubscription.id);
-  console.log('[Push] User.onesignalId:', OneSignal.User.onesignalId);
 
-  // Auf Subscription-Änderung lauschen (z.B. User opted gerade ein)
+  // Auf Subscription-Änderung lauschen
   OneSignal.User.PushSubscription.addEventListener('change', function(event) {
     console.log('[Push] Subscription changed:', event.current);
     if (event.current.optedIn) {
@@ -29,11 +26,11 @@ OneSignalDeferred.push(async function(OneSignal) {
     }
   });
 
-  // Tags synchen — mit Polling falls IDs noch nicht ready
+  // Tags synchen — mit Polling bis PushSubscription.id bereit
   attemptTagSync(0);
 });
 
-// --- Polling: Warte bis Subscription + onesignalId bereit sind ---
+// --- Polling: Warte bis PushSubscription.id bereit ist ---
 
 function attemptTagSync(attempt) {
   const MAX_ATTEMPTS = 15;
@@ -41,31 +38,22 @@ function attemptTagSync(attempt) {
 
   if (!window.OneSignal || !window.OneSignal.User) {
     if (attempt < MAX_ATTEMPTS) {
-      console.log(`[Push] OneSignal.User not ready, retry ${attempt + 1}/${MAX_ATTEMPTS}...`);
       setTimeout(() => attemptTagSync(attempt + 1), INTERVAL_MS);
     }
     return;
   }
 
   const optedIn = OneSignal.User.PushSubscription.optedIn;
-  const onesignalId = OneSignal.User.onesignalId;
   const subId = OneSignal.User.PushSubscription.id;
 
-  console.log(`[Push] Attempt ${attempt + 1}: optedIn=${optedIn}, onesignalId=${onesignalId}, subId=${subId}`);
+  console.log(`[Push] Attempt ${attempt + 1}: optedIn=${optedIn}, subId=${subId}`);
 
-  if (optedIn && onesignalId) {
-    // User ist subscribed und hat eine onesignalId → Tags synchen
+  if (optedIn && subId) {
     syncTagsToOneSignal();
   } else if (attempt < MAX_ATTEMPTS) {
     setTimeout(() => attemptTagSync(attempt + 1), INTERVAL_MS);
   } else {
-    console.log('[Push] Max attempts reached. optedIn:', optedIn, 'onesignalId:', onesignalId);
-    // Letzter Versuch: trotzdem Client-seitig addTags aufrufen
-    if (optedIn) {
-      console.log('[Push] Trying addTags anyway (no onesignalId)...');
-      const tags = buildTags();
-      try { OneSignal.User.addTags(tags); } catch (e) { /* ignore */ }
-    }
+    console.log('[Push] Max attempts reached.');
   }
 }
 
@@ -88,9 +76,22 @@ export function localTimeToUTC(timeStr) {
   return `${String(utcH).padStart(2, '0')}:${String(utcM).padStart(2, '0')}`;
 }
 
-// --- Tag Sync: Dual-Strategie (Client + Server) ---
+// --- Tag Sync: NUR 3 Tags (Free Plan Limit) ---
+// morning_utc, evening_utc, small_enabled
+// push_enabled entfällt — wenn Push aus: alle Tags löschen
 
 function buildTags() {
+  const pushEnabled = localStorage.getItem('loewenherz_push_enabled') === 'true';
+
+  // Push deaktiviert → alle Tags löschen (leerer String = Tag wird gelöscht)
+  if (!pushEnabled) {
+    return {
+      morning_utc: '',
+      evening_utc: '',
+      small_enabled: ''
+    };
+  }
+
   const morningRaw = localStorage.getItem('loewenherz_morning_time') || '07:00';
   const eveningRaw = localStorage.getItem('loewenherz_evening_time') || '20:30';
   const morning = roundTo15Min(morningRaw);
@@ -98,13 +99,11 @@ function buildTags() {
   const morningUTC = localTimeToUTC(morning);
   const eveningUTC = localTimeToUTC(evening);
   const smallEnabled = localStorage.getItem('loewenherz_small_reminders') !== 'false';
-  const pushEnabled = localStorage.getItem('loewenherz_push_enabled') === 'true';
 
   return {
     morning_utc: morningUTC,
     evening_utc: eveningUTC,
-    small_enabled: smallEnabled ? 'true' : 'false',
-    push_enabled: pushEnabled ? 'true' : 'false'
+    small_enabled: smallEnabled ? 'true' : 'false'
   };
 }
 
@@ -112,7 +111,7 @@ function syncTagsToOneSignal() {
   const tags = buildTags();
   console.log('[Push] Syncing tags:', tags);
 
-  // Ansatz A: Client-seitig via SDK
+  // Client-seitig via SDK
   try {
     if (window.OneSignal && window.OneSignal.User) {
       OneSignal.User.addTags(tags);
@@ -122,35 +121,34 @@ function syncTagsToOneSignal() {
     console.warn('[Push] Client addTags() error:', e);
   }
 
-  // Ansatz B: Server-seitig via REST API (nach 3s als Absicherung)
+  // Server-Fallback nach 3s (Legacy Players API — funktioniert mit PushSubscription.id)
   setTimeout(() => {
     syncTagsViaServer(tags);
   }, 3000);
 }
 
 function syncTagsViaServer(tags) {
-  // onesignalId ist die korrekte ID für die neue User API
-  let onesignalId = null;
+  let subscriptionId = null;
 
   try {
-    if (window.OneSignal && window.OneSignal.User) {
-      onesignalId = OneSignal.User.onesignalId;
+    if (window.OneSignal && window.OneSignal.User && window.OneSignal.User.PushSubscription) {
+      subscriptionId = OneSignal.User.PushSubscription.id;
     }
   } catch (e) {
-    console.warn('[Push] Error reading onesignalId:', e);
+    console.warn('[Push] Error reading PushSubscription.id:', e);
   }
 
-  if (!onesignalId) {
-    console.log('[Push] No onesignalId — skipping server sync');
+  if (!subscriptionId) {
+    console.log('[Push] No PushSubscription.id — skipping server sync');
     return;
   }
 
-  console.log('[Push] Server sync for onesignalId:', onesignalId);
+  console.log('[Push] Server sync for:', subscriptionId);
 
   fetch('/api/set-tags', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ onesignal_id: onesignalId, tags: tags })
+    body: JSON.stringify({ player_id: subscriptionId, tags: tags })
   })
     .then(r => r.json())
     .then(data => {

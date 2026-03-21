@@ -27,8 +27,7 @@ export default async function handler(req, res) {
   }
 
   // ============================================================
-  // Schritt 2: Alle User abrufen via neue User API (Diagnose)
-  // Fallback: Legacy Players API für Subscriber-Liste
+  // Schritt 2: Alle Player abrufen (Legacy API)
   // ============================================================
   let playersData = null;
   try {
@@ -41,47 +40,55 @@ export default async function handler(req, res) {
     playersData = { error: e.message };
   }
 
-  // ============================================================
-  // Schritt 3: Für jeden Player die User-Details via neue API holen
-  // (zeigt Tags wie sie auf dem Server sind)
-  // ============================================================
   const players = playersData?.players || [];
-  const userDetails = [];
 
-  for (const player of players) {
-    // Versuche User-Details via onesignal_id (= player.id in Legacy API)
-    try {
-      const userResp = await fetch(
-        `https://api.onesignal.com/apps/${APP_ID}/users/by/onesignal_id/${player.id}`,
-        { headers: { 'Authorization': `Basic ${API_KEY}` } }
-      );
-      const userData = await userResp.json();
-      userDetails.push({
-        player_id: player.id,
-        device_type: player.device_type,
-        notification_types: player.notification_types,
-        last_active: player.last_active,
-        legacy_tags: player.tags,
-        user_api_tags: userData?.properties?.tags || 'NOT FOUND',
-        user_api_status: userResp.status,
-        subscriptions: (userData?.subscriptions || []).map(s => ({
-          id: s.id,
-          type: s.type,
-          enabled: s.enabled,
-          notification_types: s.notification_types
-        }))
-      });
-    } catch (e) {
-      userDetails.push({
-        player_id: player.id,
-        device_type: player.device_type,
-        error: e.message
-      });
+  // ============================================================
+  // Schritt 3: Force-Tags setzen (nur 3 Tags — Free Plan!)
+  // Nur wenn ?force_tags=true
+  // ============================================================
+  const forceTagResults = [];
+
+  if (req.query?.force_tags === 'true') {
+    const testTags = {
+      morning_utc: '05:00',
+      evening_utc: '18:30',
+      small_enabled: 'true'
+    };
+
+    for (const player of players) {
+      try {
+        const resp = await fetch(
+          `https://onesignal.com/api/v1/players/${player.id}`,
+          {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Basic ${API_KEY}`
+            },
+            body: JSON.stringify({
+              app_id: APP_ID,
+              tags: testTags
+            })
+          }
+        );
+        const data = await resp.json();
+        forceTagResults.push({
+          player_id: player.id,
+          device_type: player.device_type,
+          status: resp.status,
+          result: data
+        });
+      } catch (e) {
+        forceTagResults.push({
+          player_id: player.id,
+          error: e.message
+        });
+      }
     }
   }
 
   // ============================================================
-  // Schritt 4: Test-Notification an ALLE senden (Segment)
+  // Schritt 4: Test-Notification an ALLE (Segment)
   // ============================================================
   let segmentResult = null;
   try {
@@ -105,33 +112,8 @@ export default async function handler(req, res) {
     segmentResult = { error: e.message };
   }
 
-  // Fallback Segment
-  let fallbackResult = null;
-  if (segmentResult?.errors) {
-    try {
-      const resp2 = await fetch('https://onesignal.com/api/v1/notifications', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${API_KEY}`
-        },
-        body: JSON.stringify({
-          app_id: APP_ID,
-          included_segments: ['Subscribed Users'],
-          headings: { en: 'Löwenherz Test' },
-          contents: { en: 'Wenn du das siehst, funktioniert die Pipeline!' },
-          url: 'https://loewenherz-app.vercel.app/?tab=heute',
-          chrome_web_icon: 'https://loewenherz-app.vercel.app/assets/icons/icon-192.png'
-        })
-      });
-      fallbackResult = await resp2.json();
-    } catch (e) {
-      fallbackResult = { error: e.message };
-    }
-  }
-
   // ============================================================
-  // Schritt 5: Tag-basierte Notification testen (push_enabled=true)
+  // Schritt 5: Tag-basierte Notification testen (morning_utc exists)
   // ============================================================
   let tagTestResult = null;
   try {
@@ -144,7 +126,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         app_id: APP_ID,
         filters: [
-          { field: 'tag', key: 'push_enabled', relation: '=', value: 'true' }
+          { field: 'tag', key: 'morning_utc', relation: 'exists' }
         ],
         headings: { en: 'Tag-Filter Test' },
         contents: { en: 'Tag-basierte Notification funktioniert!' },
@@ -158,107 +140,39 @@ export default async function handler(req, res) {
   }
 
   // ============================================================
-  // Schritt 6: Force-Tags via NEUE User API setzen
-  // Nur wenn ?force_tags=true
-  // ============================================================
-  const forceTagResults = [];
-
-  if (req.query?.force_tags === 'true') {
-    for (const detail of userDetails) {
-      const playerId = detail.player_id;
-      if (!playerId) continue;
-
-      const testTags = {
-        morning_utc: '05:00',
-        evening_utc: '18:30',
-        small_enabled: 'true',
-        push_enabled: 'true'
-      };
-
-      // Methode 1: Neue User API (PATCH)
-      let newApiResult = null;
-      try {
-        const resp = await fetch(
-          `https://api.onesignal.com/apps/${APP_ID}/users/by/onesignal_id/${playerId}`,
-          {
-            method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Basic ${API_KEY}`
-            },
-            body: JSON.stringify({
-              properties: { tags: testTags }
-            })
-          }
-        );
-        newApiResult = { status: resp.status, body: await resp.json() };
-      } catch (e) {
-        newApiResult = { error: e.message };
-      }
-
-      // Methode 2: Legacy Players API (PUT) als Backup
-      let legacyResult = null;
-      try {
-        const resp2 = await fetch(
-          `https://onesignal.com/api/v1/players/${playerId}`,
-          {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Basic ${API_KEY}`
-            },
-            body: JSON.stringify({
-              app_id: APP_ID,
-              tags: testTags
-            })
-          }
-        );
-        legacyResult = { status: resp2.status, body: await resp2.json() };
-      } catch (e) {
-        legacyResult = { error: e.message };
-      }
-
-      forceTagResults.push({
-        player_id: playerId,
-        device_type: detail.device_type,
-        new_api_result: newApiResult,
-        legacy_api_result: legacyResult
-      });
-    }
-  }
-
-  // ============================================================
   // Diagnose-Report
   // ============================================================
+  const playerSummary = players.map(p => ({
+    id: p.id,
+    device_type: p.device_type,
+    last_active: p.last_active,
+    tags: p.tags,
+    notification_types: p.notification_types
+  }));
+
   return res.status(200).json({
     timestamp: new Date().toISOString(),
 
     api_check: {
       key_valid: !!appData?.name,
-      app_name: appData?.name || 'NOT FOUND',
-      errors: appData?.errors || null
+      app_name: appData?.name || 'NOT FOUND'
     },
 
     subscribers: {
       total: playersData?.total_count || 0,
-      details: userDetails
+      details: playerSummary
     },
 
-    segment_test: {
-      total_subscriptions: segmentResult,
-      subscribed_users_fallback: fallbackResult
-    },
-
+    segment_test: segmentResult,
     tag_filter_test: tagTestResult,
 
     force_tag_results: forceTagResults.length > 0
       ? forceTagResults
-      : 'Add ?force_tags=true to set test tags on all subscribers (via BOTH new + legacy API)',
+      : 'Add ?force_tags=true to set test tags (3 tags: morning_utc, evening_utc, small_enabled)',
 
     hints: {
       notification_types: '1=subscribed, -2=unsubscribed',
-      device_type: '0=iOS, 1=Android, 5=Chrome, 7=Safari',
-      next_step: 'If force_tags shows success, wait 30s then call this endpoint again WITHOUT force_tags to verify tags are set'
+      device_type: '0=iOS, 1=Android, 5=Chrome, 7=Safari, 17=Safari(macOS)'
     }
   });
 }

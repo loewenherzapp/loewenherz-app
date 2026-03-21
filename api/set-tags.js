@@ -3,9 +3,9 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'POST only' });
   }
 
-  const { onesignal_id, tags } = req.body;
-  if (!onesignal_id || !tags) {
-    return res.status(400).json({ error: 'Missing onesignal_id or tags' });
+  const { player_id, tags } = req.body;
+  if (!player_id || !tags) {
+    return res.status(400).json({ error: 'Missing player_id or tags' });
   }
 
   const API_KEY = process.env.ONESIGNAL_API_KEY;
@@ -15,8 +15,8 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'ONESIGNAL_API_KEY not configured' });
   }
 
-  // Nur erlaubte Tags durchlassen
-  const allowedKeys = ['morning_utc', 'evening_utc', 'small_enabled', 'push_enabled'];
+  // Nur erlaubte Tags durchlassen (max 3 — Free Plan Limit!)
+  const allowedKeys = ['morning_utc', 'evening_utc', 'small_enabled'];
   const safeTags = {};
   for (const key of allowedKeys) {
     if (tags[key] !== undefined) {
@@ -24,38 +24,29 @@ export default async function handler(req, res) {
     }
   }
 
-  // --- Neue OneSignal User API (nicht Legacy /players/) ---
-  // PATCH /apps/{app_id}/users/by/onesignal_id/{onesignal_id}
-  const url = `https://api.onesignal.com/apps/${APP_ID}/users/by/onesignal_id/${onesignal_id}`;
-
+  // Legacy Players API — PUT /api/v1/players/{player_id}
+  // player_id = PushSubscription.id aus dem SDK
   try {
-    const response = await fetch(url, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Basic ${API_KEY}`
-      },
-      body: JSON.stringify({
-        properties: {
+    const response = await fetch(
+      `https://onesignal.com/api/v1/players/${player_id}`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${API_KEY}`
+        },
+        body: JSON.stringify({
+          app_id: APP_ID,
           tags: safeTags
-        }
-      })
-    });
+        })
+      }
+    );
 
     const data = await response.json();
-    console.log(`[set-tags] ${onesignal_id}:`, safeTags, '→', response.status, data);
-
-    if (!response.ok) {
-      return res.status(200).json({
-        success: false,
-        http_status: response.status,
-        tags_attempted: safeTags,
-        onesignal_error: data
-      });
-    }
+    console.log(`[set-tags] ${player_id}:`, safeTags, '→', data);
 
     return res.status(200).json({
-      success: true,
+      success: data.success === true || data.success === 'true',
       tags_set: safeTags,
       onesignal_response: data
     });
