@@ -13,6 +13,15 @@ OneSignalDeferred.push(async function(OneSignal) {
     notifyButton: { enable: false },
     welcomeNotification: { disable: true }
   });
+
+  // Tags bei jedem App-Start synchen (nach erfolgreicher Init)
+  syncOneSignalTags();
+
+  // Debug: Subscription-Status loggen
+  console.log('[Löwenherz Push] OneSignal initialized');
+  console.log('[Löwenherz Push] Permission:', Notification.permission);
+  console.log('[Löwenherz Push] OptedIn:', OneSignal.User.PushSubscription.optedIn);
+  console.log('[Löwenherz Push] SubscriptionId:', OneSignal.User.PushSubscription.id);
 });
 
 // --- Time Helpers ---
@@ -51,13 +60,23 @@ export function syncOneSignalTags() {
   const smallEnabled = localStorage.getItem('loewenherz_small_reminders') !== 'false';
   const pushEnabled = localStorage.getItem('loewenherz_push_enabled') === 'true';
 
-  // NUR diese 4 Tags
-  if (window.OneSignal) {
-    OneSignal.User.addTags({
-      morning_utc: morningUTC,
-      evening_utc: eveningUTC,
-      small_enabled: smallEnabled ? 'true' : 'false',
-      push_enabled: pushEnabled ? 'true' : 'false'
+  // NUR diese 4 Tags — via Deferred-Queue für sichere Zustellung
+  const tags = {
+    morning_utc: morningUTC,
+    evening_utc: eveningUTC,
+    small_enabled: smallEnabled ? 'true' : 'false',
+    push_enabled: pushEnabled ? 'true' : 'false'
+  };
+
+  console.log('[Löwenherz Push] Syncing tags:', tags);
+
+  if (window.OneSignal && window.OneSignal.User) {
+    OneSignal.User.addTags(tags);
+  } else {
+    // Fallback: über Deferred-Queue setzen falls OneSignal noch nicht ready
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    window.OneSignalDeferred.push(async function(OneSignal) {
+      OneSignal.User.addTags(tags);
     });
   }
 }
