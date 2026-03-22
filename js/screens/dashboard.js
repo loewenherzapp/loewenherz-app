@@ -289,6 +289,7 @@ function animateDashboardEntrance() {
   if (gundulaIcon) {
     setTimeout(() => gundulaIcon.classList.add('gundula-breathe'), stagger * 7 + 400);
   }
+}
 
 function showGundulaInfo() {
   // Remove existing if any
