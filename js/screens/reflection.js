@@ -534,9 +534,9 @@ function startReflectionFlow(container, profile) {
 
     document.getElementById('reflection-close').addEventListener('click', () => {
       setMoodGradient(null);
-      // Show points feedback
+      // Show points feedback with completion celebration
       container.innerHTML = `<div class="reflection-screen">
-        <div class="points-feedback">+2 Gundula-Punkte</div>
+        <div class="points-feedback"><span class="completion-check">✓</span> +2 Gundula-Punkte</div>
       </div>`;
       setTimeout(() => {
         renderReflection(container, profile);

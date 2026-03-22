@@ -72,7 +72,7 @@ async function getActiveDaysLast7() {
   return uniqueDays.size;
 }
 
-export async function renderDashboard(container, profile) {
+export async function renderDashboard(container, profile, { animate = true } = {}) {
   const name = profile.name;
   const todayStr = formatDate(new Date());
 
@@ -195,22 +195,40 @@ export async function renderDashboard(container, profile) {
             categoryLabel: opt.label
           });
 
-          // Tap animation
+          // --- Erfolgs-Animation auf dem Button ---
           btn.classList.add('tapped');
           btn.style.background = colors.bg;
-          setTimeout(() => {
-            btn.classList.remove('tapped');
-            btn.style.background = '';
-          }, 400);
 
-          // Get updated count
+          // Gold-Glow auf dem Dot
+          dot.classList.add('dot-success');
+
+          // Checkmark-Overlay
+          const check = document.createElement('span');
+          check.className = 'dot-check';
+          check.textContent = '✓';
+          dot.appendChild(check);
+
+          // Punkte-Zähler bump
+          const statsNum = document.querySelector('.stats-number');
+          if (statsNum) {
+            const oldVal = parseInt(statsNum.textContent) || 0;
+            statsNum.textContent = oldVal + 1;
+            statsNum.classList.add('stats-bump');
+            statsNum.addEventListener('animationend', () => statsNum.classList.remove('stats-bump'), { once: true });
+          }
+
+          // Get updated count for toast
           const updatedPoints = await getPointsByDate(todayStr);
           const pointCountToday = updatedPoints.length;
           const feedbackText = getTapFeedback(letter, pointCountToday);
 
-          // Refresh dashboard, then show toast
-          await renderDashboard(container, profile);
+          // Toast sofort zeigen (parallel zur Animation)
           showTapToast(feedbackText, name);
+
+          // Nach 600ms: Re-Render OHNE Animation
+          setTimeout(async () => {
+            await renderDashboard(container, profile, { animate: false });
+          }, 600);
         } catch (e) {
           console.error('SMALL tap error:', e);
         }
@@ -244,8 +262,8 @@ export async function renderDashboard(container, profile) {
     });
   }
 
-  // --- Dashboard entrance animations (staggered fadeUp) ---
-  animateDashboardEntrance();
+  // --- Dashboard entrance animations (nur bei Tab-Wechsel, nicht nach SMALL-Tap) ---
+  if (animate) animateDashboardEntrance();
 }
 
 function animateDashboardEntrance() {
@@ -257,9 +275,9 @@ function animateDashboardEntrance() {
     { sel: '.quatschi-hero', cls: 'fade-in', delay: 0 },
     { sel: '.stats-row', cls: 'fade-up', delay: stagger },
     { sel: '.balance-section', cls: 'fade-up', delay: stagger * 2 },
-    { sel: '.gundula-row', cls: 'fade-in-scale', delay: stagger * 7 },
-    { sel: '.week-block', cls: 'fade-up', delay: stagger * 8 },
-    { sel: '.mantra-anchor', cls: 'fade-in', delay: stagger * 9 }
+    { sel: '.gundula-row', cls: 'fade-in-scale', delay: stagger * 4 },
+    { sel: '.week-block', cls: 'fade-up', delay: stagger * 5 },
+    { sel: '.mantra-anchor', cls: 'fade-in', delay: stagger * 6 }
   ];
 
   // Apply animation classes
@@ -287,7 +305,7 @@ function animateDashboardEntrance() {
   // Gundula breathe after entrance
   const gundulaIcon = document.querySelector('.gundula-icon');
   if (gundulaIcon) {
-    setTimeout(() => gundulaIcon.classList.add('gundula-breathe'), stagger * 7 + 400);
+    setTimeout(() => gundulaIcon.classList.add('gundula-breathe'), stagger * 4 + 400);
   }
 }
 

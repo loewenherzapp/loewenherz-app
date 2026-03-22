@@ -2065,6 +2065,51 @@ a:active { opacity: 0.7; }
   100% { transform: scale(1); opacity: 1; }
 }
 
+/* --- SMALL-Tap Erfolgs-Animationen --- */
+
+/* Gold-Glow auf dem Dot nach Tap */
+.dot-success {
+  animation: dotGlow 600ms var(--ease-out);
+}
+@keyframes dotGlow {
+  0% { box-shadow: 0 0 0 0 rgba(200, 168, 78, 0); }
+  40% { box-shadow: 0 0 0 8px rgba(200, 168, 78, 0.35); }
+  100% { box-shadow: 0 0 0 0 rgba(200, 168, 78, 0); }
+}
+
+/* Checkmark-Overlay im Dot */
+.dot-check {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+  animation: checkPop 400ms var(--ease-out) forwards;
+  pointer-events: none;
+}
+
+.btn-dot {
+  position: relative;
+}
+
+/* Stats-Zähler Bump */
+.stats-bump {
+  animation: statsBump 300ms var(--ease-out);
+}
+@keyframes statsBump {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+
+/* Completion-Screen Checkmark */
+.completion-check {
+  display: inline-block;
+  animation: checkPop 500ms var(--ease-out);
+}
+
 /* ---- prefers-reduced-motion: disable all animations ---- */
 @media (prefers-reduced-motion: reduce) {
   .fade-up, .fade-up-scale, .fade-in-scale, .pop-in, .fade-in, .step-enter {
@@ -2078,8 +2123,12 @@ a:active { opacity: 0.7; }
   .chip-pulse {
     animation: none !important;
   }
-  .gundula-breathe {
+  .gundula-breathe, .dot-success, .stats-bump, .completion-check {
     animation: none !important;
+  }
+  .dot-check {
+    animation: none !important;
+    transform: translate(-50%, -50%) scale(1) !important;
   }
   .progress-dot {
     transition: none !important;
