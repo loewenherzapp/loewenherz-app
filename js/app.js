@@ -112,6 +112,11 @@ function showApp() {
   } else {
     switchTab('today');
   }
+
+  // Coach-Mark Tooltip beim Erststart
+  if (!localStorage.getItem('hasSeenInfo')) {
+    setTimeout(() => showCoachMark(), 800);
+  }
 }
 
 function bindHeaderButtons() {
@@ -216,6 +221,59 @@ async function showSettings() {
   );
 }
 
+function dismissCoachMark() {
+  const mark = document.getElementById('coach-mark');
+  if (mark) {
+    mark.classList.remove('active');
+    setTimeout(() => mark.remove(), 300);
+  }
+  localStorage.setItem('hasSeenInfo', 'true');
+}
+
+function showCoachMark() {
+  const infoBtn = document.getElementById('header-info-btn');
+  if (!infoBtn) return;
+
+  const mark = document.createElement('div');
+  mark.id = 'coach-mark';
+  mark.className = 'coach-mark';
+  mark.innerHTML = `
+    <div class="coach-mark-bubble">
+      <div class="coach-mark-arrow"></div>
+      Tippe hier für eine kurze Orientierung
+    </div>
+  `;
+
+  // Position unter dem ⓘ-Button
+  const rect = infoBtn.getBoundingClientRect();
+  mark.style.position = 'fixed';
+  mark.style.top = (rect.bottom + 8) + 'px';
+  mark.style.left = Math.max(12, rect.left + rect.width / 2 - 120) + 'px';
+  mark.style.zIndex = '500';
+
+  document.body.appendChild(mark);
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => mark.classList.add('active'));
+  });
+
+  // Tap anywhere dismisses
+  const dismiss = (e) => {
+    // If user tapped the ⓘ itself, let showAppInfo handle it
+    if (infoBtn.contains(e.target)) {
+      dismissCoachMark();
+      document.removeEventListener('click', dismiss, true);
+      return;
+    }
+    dismissCoachMark();
+    document.removeEventListener('click', dismiss, true);
+  };
+  // Delay listener to prevent immediate dismiss from same event
+  setTimeout(() => {
+    document.addEventListener('click', dismiss, true);
+  }, 100);
+}
+
 function showAppInfo() {
   const existing = document.getElementById('app-info-overlay');
   if (existing) existing.remove();
@@ -239,16 +297,7 @@ function showAppInfo() {
 
   document.body.appendChild(overlay);
 
-  // Dismiss erststart hint
-  if (!localStorage.getItem('hasSeenInfo')) {
-    localStorage.setItem('hasSeenInfo', 'true');
-    const hint = document.getElementById('erststart-hint');
-    if (hint) {
-      hint.style.transition = 'opacity 300ms ease';
-      hint.style.opacity = '0';
-      setTimeout(() => hint.remove(), 300);
-    }
-  }
+  dismissCoachMark();
 
   requestAnimationFrame(() => {
     requestAnimationFrame(() => overlay.classList.add('active'));

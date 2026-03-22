@@ -1938,14 +1938,37 @@ a:active { opacity: 0.7; }
   line-height: 1.5;
 }
 
-/* --- Erststart-Hint --- */
-.erststart-hint {
+/* --- Coach-Mark Tooltip --- */
+.coach-mark {
+  opacity: 0;
+  transition: opacity 300ms ease;
+  pointer-events: none;
+}
+.coach-mark.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+.coach-mark-bubble {
+  position: relative;
+  background: #fff;
+  color: var(--text-body);
+  font-size: 14px;
+  line-height: 1.4;
+  padding: 12px 18px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(80, 60, 30, 0.15);
+  max-width: 240px;
   text-align: center;
-  font-size: 13px;
-  font-style: italic;
-  color: var(--text-secondary);
-  margin-top: 8px;
-  margin-bottom: 4px;
+}
+.coach-mark-arrow {
+  position: absolute;
+  top: -6px;
+  right: 24px;
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  transform: rotate(45deg);
+  box-shadow: -2px -2px 4px rgba(80, 60, 30, 0.06);
 }
 
 /* ============================================================
