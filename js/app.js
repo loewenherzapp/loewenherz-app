@@ -229,13 +229,26 @@ function showAppInfo() {
       <div class="info-sheet-grip"></div>
       <h3>Löwenherz</h3>
       <p class="info-subtitle">Angst wird erlernt. Gelassenheit auch.</p>
-      <p>Die Begleit-App zum Buch. Morgenreflexion, Abendreflexion, und zwischendurch ein SMALL-Reminder\u2009—\u2009damit Quatschi nicht allein moderiert.</p>
+      <p>Die Begleit-App zum Buch.</p>
+      <p><strong>Heute-Tab:</strong> Tippe die SMALL-Buchstaben, wenn du einen bewussten Moment hattest — jeder Tap zählt als Punkt. Gundula zeigt dir, wie dein System gerade steht.</p>
+      <p><strong>Reflexion-Tab:</strong> Morgens eine Intention setzen, abends kurz reflektieren — zwei Minuten, die den Tag einrahmen.</p>
       <p>Kein Programm. Drei Leitplanken. Alles über null ist Gewinn.</p>
       <button class="info-sheet-close">Verstanden</button>
     </div>
   `;
 
   document.body.appendChild(overlay);
+
+  // Dismiss erststart hint
+  if (!localStorage.getItem('hasSeenInfo')) {
+    localStorage.setItem('hasSeenInfo', 'true');
+    const hint = document.getElementById('erststart-hint');
+    if (hint) {
+      hint.style.transition = 'opacity 300ms ease';
+      hint.style.opacity = '0';
+      setTimeout(() => hint.remove(), 300);
+    }
+  }
 
   requestAnimationFrame(() => {
     requestAnimationFrame(() => overlay.classList.add('active'));

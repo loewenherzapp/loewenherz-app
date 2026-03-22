@@ -1938,6 +1938,16 @@ a:active { opacity: 0.7; }
   line-height: 1.5;
 }
 
+/* --- Erststart-Hint --- */
+.erststart-hint {
+  text-align: center;
+  font-size: 13px;
+  font-style: italic;
+  color: var(--text-secondary);
+  margin-top: 8px;
+  margin-bottom: 4px;
+}
+
 /* ============================================================
    ANIMATIONS & MICRO-INTERACTIONS
    ============================================================ */

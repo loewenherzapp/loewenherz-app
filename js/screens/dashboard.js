@@ -117,6 +117,7 @@ export async function renderDashboard(container, profile, { animate = true } = {
         ${quatschiTextHtml}
         <div class="quatschi-divider"></div>
       </div>
+      ${!localStorage.getItem('hasSeenInfo') ? '<div class="erststart-hint" id="erststart-hint">Neu hier? Tippe ⓘ oben für eine kurze Orientierung.</div>' : ''}
 
       <div class="stats-row">
         <div class="stats-left">
