@@ -60,12 +60,26 @@ function groupReflectionsByDate(items) {
  * Returns { morning: boolean, evening: boolean }
  */
 function getReflectionStatus(dateStr, reflectionsByDay) {
-  // Morning: localStorage
-  const morningData = localStorage.getItem('morningReflection_' + dateStr);
-  const morning = morningData ? JSON.parse(morningData).completed === true : false;
+  // Morning: localStorage key = morningReflection_YYYY-MM-DD
+  let morning = false;
+  try {
+    const morningData = localStorage.getItem('morningReflection_' + dateStr);
+    if (morningData) {
+      const parsed = JSON.parse(morningData);
+      morning = parsed.completed === true;
+    }
+  } catch (e) {
+    // Invalid JSON — treat as not completed
+  }
 
-  // Evening: IndexedDB reflection object
-  const evening = !!reflectionsByDay[dateStr];
+  // Evening: IndexedDB reflection object (has mood field)
+  const eveningRef = reflectionsByDay[dateStr];
+  const evening = !!(eveningRef && eveningRef.mood);
+
+  // Debug: Log today's status
+  if (dateStr === new Date().toISOString().slice(0, 10)) {
+    console.log(`[Dots] Today ${dateStr}: morning=${morning}, evening=${evening}`, eveningRef || 'no reflection');
+  }
 
   return { morning, evening };
 }
