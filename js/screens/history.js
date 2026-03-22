@@ -5,7 +5,7 @@
 import { TEXTS } from '../../content/de.js';
 import { getPointsByDate, getPointsByDateRange, getReflectionByDate, getReflectionsByDateRange } from '../db.js';
 import { formatDate, getMonday, getWeekNumber, renderHistoryWeekDots } from '../components/week-dots.js';
-import { renderBalanceBar } from '../components/balance-bar.js';
+
 
 const MOOD_MAP = {};
 TEXTS.ui.reflection.moods.forEach(m => { MOOD_MAP[m.key] = m; });
@@ -130,7 +130,6 @@ export async function renderHistory(container, profile) {
     weekEl.innerHTML = `
       <div class="history-week-header">${headerText}</div>
       <div class="history-dots" id="hw-dots-${w}"></div>
-      <div id="hw-balance-${w}"></div>
     `;
 
     weeksContainer.appendChild(weekEl);
@@ -138,9 +137,5 @@ export async function renderHistory(container, profile) {
     // Render dots with 3-level system
     const dotsEl = weekEl.querySelector('.history-dots');
     renderHistoryWeekDots(dotsEl, monday, points, reflections, (dateStr) => showDayDetail(dateStr));
-
-    // Render color-coded balance bar
-    const balanceEl = weekEl.querySelector(`#hw-balance-${w}`);
-    renderBalanceBar(balanceEl, points);
   }
 }

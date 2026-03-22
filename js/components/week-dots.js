@@ -1,5 +1,5 @@
 // ============================================================
-// Week Circles Component — 3-level glow system, no numbers
+// Week Circles Component — Morgen/Abend Reflection Status
 // ============================================================
 
 const DAY_LABELS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
@@ -54,12 +54,73 @@ function groupReflectionsByDate(items) {
 }
 
 /**
- * 3-level state: empty / low / active
+ * Get reflection status for a day:
+ * - morning: check localStorage morningReflection_YYYY-MM-DD
+ * - evening: check reflections data (IndexedDB)
+ * Returns { morning: boolean, evening: boolean }
  */
-function getDayCircleState(pointCount) {
-  if (pointCount >= 5) return 'active';
-  if (pointCount >= 1) return 'low';
-  return 'empty';
+function getReflectionStatus(dateStr, reflectionsByDay) {
+  // Morning: localStorage
+  const morningData = localStorage.getItem('morningReflection_' + dateStr);
+  const morning = morningData ? JSON.parse(morningData).completed === true : false;
+
+  // Evening: IndexedDB reflection object
+  const evening = !!reflectionsByDay[dateStr];
+
+  return { morning, evening };
+}
+
+/**
+ * Render a single dot element with reflection-based state.
+ * dotClass: 'week-circle' or 'history-dot'
+ * useEmoji: true for large dots (dashboard), false for small dots (history)
+ */
+function renderDot(dotClass, dateStr, todayStr, today, status, hasPoints, useEmoji) {
+  const dot = document.createElement('div');
+  dot.className = dotClass;
+
+  const { morning, evening } = status;
+  const isFuture = new Date(dateStr + 'T12:00:00') > today && dateStr !== todayStr;
+
+  if (dateStr === todayStr) {
+    dot.classList.add('today');
+  }
+
+  if (isFuture) {
+    dot.classList.add('future');
+  }
+
+  if (morning && evening) {
+    // Stufe 3: Beides erledigt — voller Amber-Kreis mit ✓
+    dot.classList.add('dot-both');
+    if (useEmoji) {
+      dot.textContent = '✓';
+    }
+  } else if (morning) {
+    // Stufe 2a: Nur Morgen — ☀️
+    dot.classList.add('dot-half');
+    if (useEmoji) {
+      dot.textContent = '☀️';
+    } else {
+      dot.classList.add('dot-morning-half');
+    }
+  } else if (evening) {
+    // Stufe 2b: Nur Abend — 🌙
+    dot.classList.add('dot-half');
+    if (useEmoji) {
+      dot.textContent = '🌙';
+    } else {
+      dot.classList.add('dot-evening-half');
+    }
+  } else if (hasPoints) {
+    // Hat SMALL-Punkte aber keine Reflexion
+    dot.classList.add('dot-points');
+  } else {
+    // Stufe 1: Nichts gemacht
+    dot.classList.add('empty');
+  }
+
+  return dot;
 }
 
 /**
@@ -71,6 +132,7 @@ export function renderWeekCircles(container, points, reflections, onDayClick) {
   const monday = getMonday(today);
 
   const pointsByDay = groupByDate(points);
+  const reflectionsByDay = groupReflectionsByDate(reflections);
 
   container.innerHTML = '';
 
@@ -82,18 +144,12 @@ export function renderWeekCircles(container, points, reflections, onDayClick) {
     const wrap = document.createElement('div');
     wrap.className = 'week-circle-wrap';
 
-    const circle = document.createElement('div');
-    circle.className = 'week-circle';
-
     const dayPoints = pointsByDay[dateStr] || [];
-    const state = getDayCircleState(dayPoints.length);
-    circle.classList.add(state);
+    const status = getReflectionStatus(dateStr, reflectionsByDay);
 
-    if (dateStr === todayStr) {
-      circle.classList.add('today');
-    }
+    const circle = renderDot('week-circle', dateStr, todayStr, today, status, dayPoints.length > 0, true);
 
-    if (dayPoints.length > 0) {
+    if (dayPoints.length > 0 || status.morning || status.evening) {
       circle.style.cursor = 'pointer';
       circle.addEventListener('click', () => onDayClick && onDayClick(dateStr));
     }
@@ -109,13 +165,14 @@ export function renderWeekCircles(container, points, reflections, onDayClick) {
 }
 
 /**
- * Render week dots for history view (any week) — uses same 3-level system.
+ * Render week dots for history view (any week).
  */
 export function renderHistoryWeekDots(container, mondayDate, points, reflections, onDayClick) {
   const today = new Date();
   const todayStr = formatDate(today);
 
   const pointsByDay = groupByDate(points);
+  const reflectionsByDay = groupReflectionsByDate(reflections);
 
   container.innerHTML = '';
 
@@ -127,22 +184,12 @@ export function renderHistoryWeekDots(container, mondayDate, points, reflections
     const wrap = document.createElement('div');
     wrap.className = 'history-dot-wrap';
 
-    const dot = document.createElement('div');
-    dot.className = 'history-dot';
-
-    if (dateStr === todayStr) {
-      dot.classList.add('today');
-    }
-
-    if (dayDate > today && dateStr !== todayStr) {
-      dot.classList.add('future');
-    }
-
     const dayPoints = pointsByDay[dateStr] || [];
-    const state = getDayCircleState(dayPoints.length);
-    dot.classList.add(state);
+    const status = getReflectionStatus(dateStr, reflectionsByDay);
 
-    if (dayPoints.length > 0) {
+    const dot = renderDot('history-dot', dateStr, todayStr, today, status, dayPoints.length > 0, false);
+
+    if (dayPoints.length > 0 || status.morning || status.evening) {
       dot.style.cursor = 'pointer';
       dot.addEventListener('click', () => onDayClick && onDayClick(dateStr));
     }

@@ -6,7 +6,7 @@ import { TEXTS } from '../../content/de.js';
 import { getPointsByDate, addSmallPoint, getPointsByDateRange, getReflectionsByDateRange } from '../db.js';
 import { openSheet } from '../components/bottom-sheet.js';
 import { renderWeekCircles, formatDate, getMonday } from '../components/week-dots.js';
-import { renderBalanceBar } from '../components/balance-bar.js';
+
 import { showDayDetail } from './history.js';
 import { getDashboardQuatschiText, getTapFeedback, showTapToast } from '../quatschi.js';
 
@@ -133,8 +133,6 @@ export async function renderDashboard(container, profile, { animate = true } = {
         <div class="small-buttons" id="small-buttons"></div>
       </div>
 
-      <div class="balance-section" id="dashboard-balance"></div>
-
       <div class="gundula-row ${gundulaState}" id="gundula-bar">
         <img src="${GUNDULA_ICONS[gundulaState]}" alt="Gundula" class="gundula-icon" width="56" height="56">
         <span class="gundula-text">${GUNDULA_TEXTS[gundulaState]}</span>
@@ -238,10 +236,6 @@ export async function renderDashboard(container, profile, { animate = true } = {
     buttonsEl.appendChild(btn);
   });
 
-  // Render balance bar (color-coded)
-  const balanceEl = document.getElementById('dashboard-balance');
-  renderBalanceBar(balanceEl, weekPoints);
-
   // Render week circles
   const weekCirclesEl = document.getElementById('dashboard-week-circles');
   renderWeekCircles(weekCirclesEl, weekPoints, weekReflections, (dateStr) => {
@@ -274,8 +268,7 @@ function animateDashboardEntrance() {
   const elements = [
     { sel: '.quatschi-hero', cls: 'fade-in', delay: 0 },
     { sel: '.stats-row', cls: 'fade-up', delay: stagger },
-    { sel: '.balance-section', cls: 'fade-up', delay: stagger * 2 },
-    { sel: '.gundula-row', cls: 'fade-in-scale', delay: stagger * 4 },
+    { sel: '.gundula-row', cls: 'fade-in-scale', delay: stagger * 3 },
     { sel: '.week-block', cls: 'fade-up', delay: stagger * 5 },
     { sel: '.mantra-anchor', cls: 'fade-in', delay: stagger * 6 }
   ];

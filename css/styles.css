@@ -831,34 +831,50 @@ a:active { opacity: 0.7; }
   align-items: center;
   justify-content: center;
   font-family: var(--font-sans);
-  font-size: 11px;
+  font-size: 18px;
   font-weight: 600;
   transition: all 0.3s ease;
-  cursor: pointer;
+  cursor: default;
 }
 
+/* Stufe 1: Nichts gemacht */
 .week-circle.empty {
   background: var(--bg-paper);
   border: 1.5px solid var(--bg-card);
   color: var(--text-muted);
 }
 
-.week-circle.low {
-  background: rgba(212,168,67,0.12);
-  border: 1.5px solid rgba(212,168,67,0.25);
-  box-shadow: 0 0 6px rgba(212,168,67,0.1);
+/* Hat nur SMALL-Punkte, keine Reflexion */
+.week-circle.dot-points {
+  background: rgba(212,168,67,0.10);
+  border: 1.5px solid rgba(212,168,67,0.20);
 }
 
-.week-circle.active {
+/* Stufe 2: Nur Morgen oder nur Abend */
+.week-circle.dot-half {
+  background: rgba(200, 168, 78, 0.15);
+  border: 1.5px solid rgba(200, 168, 78, 0.30);
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* Stufe 3: Beides erledigt */
+.week-circle.dot-both {
   background: var(--gold-warm);
   color: #fff;
   border: 1.5px solid var(--gold-warm);
-  box-shadow: 0 0 12px var(--gold-glow), 0 2px 6px rgba(212,168,67,0.2);
+  box-shadow: 0 0 8px rgba(212,168,67,0.25);
+  font-size: 15px;
+  font-weight: 700;
 }
 
+/* Heutiger Tag: gestrichelter Rand */
 .week-circle.today {
   border-style: dashed;
   border-color: var(--text-secondary);
+}
+.week-circle.today.dot-both {
+  border-color: var(--gold-warm);
 }
 
 .week-day-label {
@@ -1554,13 +1570,15 @@ a:active { opacity: 0.7; }
   gap: 4px;
 }
 
-/* History dots use same 3-level system */
+/* History dots — smaller, no emoji, half-fill for single reflection */
 .history-dot {
   width: 28px;
   height: 28px;
   border-radius: 50%;
   transition: all 0.3s ease;
-  cursor: pointer;
+  cursor: default;
+  position: relative;
+  overflow: hidden;
 }
 
 .history-dot.empty {
@@ -1568,21 +1586,36 @@ a:active { opacity: 0.7; }
   border: 1.5px solid var(--bg-card);
 }
 
-.history-dot.low {
-  background: rgba(212,168,67,0.12);
-  border: 1.5px solid rgba(212,168,67,0.25);
-  box-shadow: 0 0 6px rgba(212,168,67,0.1);
+.history-dot.dot-points {
+  background: rgba(212,168,67,0.10);
+  border: 1.5px solid rgba(212,168,67,0.20);
 }
 
-.history-dot.active {
+/* Half-fill: nur Morgen → obere Hälfte amber */
+.history-dot.dot-half.dot-morning-half {
+  background: linear-gradient(to bottom, rgba(200,168,78,0.35) 50%, var(--bg-card) 50%);
+  border: 1.5px solid rgba(200,168,78,0.30);
+}
+
+/* Half-fill: nur Abend → untere Hälfte amber */
+.history-dot.dot-half.dot-evening-half {
+  background: linear-gradient(to bottom, var(--bg-card) 50%, rgba(200,168,78,0.35) 50%);
+  border: 1.5px solid rgba(200,168,78,0.30);
+}
+
+/* Beides erledigt → voll amber */
+.history-dot.dot-both {
   background: var(--gold-warm);
   border: 1.5px solid var(--gold-warm);
-  box-shadow: 0 0 10px var(--gold-glow);
+  box-shadow: 0 0 8px rgba(212,168,67,0.2);
 }
 
 .history-dot.today {
   border-style: dashed;
   border-color: var(--text-secondary);
+}
+.history-dot.today.dot-both {
+  border-color: var(--gold-warm);
 }
 
 .history-dot.future {
