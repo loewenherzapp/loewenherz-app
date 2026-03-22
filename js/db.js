@@ -4,7 +4,7 @@
 // ============================================================
 
 const DB_NAME = 'loewenherz-db';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 let dbInstance = null;
 let useMemory = false;
@@ -55,6 +55,10 @@ export function initDB() {
           const store = db.createObjectStore('reflections', { keyPath: 'id', autoIncrement: true });
           store.createIndex('date', 'date', { unique: true });
         }
+        // v2: Milestones store
+        if (!db.objectStoreNames.contains('milestones')) {
+          db.createObjectStore('milestones', { keyPath: 'id' });
+        }
       };
 
       request.onsuccess = (e) => {
@@ -66,6 +70,10 @@ export function initDB() {
         console.warn('IndexedDB open failed, using memory storage');
         useMemory = true;
         resolve(null);
+      };
+
+      request.onblocked = () => {
+        console.warn('IndexedDB upgrade blocked — another tab has the DB open. Please reload.');
       };
     } catch (e) {
       console.warn('IndexedDB exception, using memory storage');
@@ -350,6 +358,77 @@ export async function saveEveningReflection(data) {
   if (!profile) return;
   profile.eveningReflection = data;
   await saveProfile(profile);
+}
+
+// ---- All Points (for milestone engine) ----
+export function getAllPoints() {
+  if (useMemory) {
+    return Promise.resolve([...memStore.points]);
+  }
+  return new Promise((resolve, reject) => {
+    const tx = getDB().transaction('smallPoints', 'readonly');
+    const store = tx.objectStore('smallPoints');
+    const req = store.getAll();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+export function getAllReflections() {
+  if (useMemory) {
+    return Promise.resolve([...memStore.reflections]);
+  }
+  return new Promise((resolve, reject) => {
+    const tx = getDB().transaction('reflections', 'readonly');
+    const store = tx.objectStore('reflections');
+    const req = store.getAll();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+// ---- Milestones ----
+export function getMilestone(id) {
+  if (useMemory) {
+    return Promise.resolve(memStore.milestones ? memStore.milestones.find(m => m.id === id) || null : null);
+  }
+  return new Promise((resolve, reject) => {
+    const tx = getDB().transaction('milestones', 'readonly');
+    const store = tx.objectStore('milestones');
+    const req = store.get(id);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+export function saveMilestone(milestone) {
+  if (useMemory) {
+    if (!memStore.milestones) memStore.milestones = [];
+    const idx = memStore.milestones.findIndex(m => m.id === milestone.id);
+    if (idx >= 0) memStore.milestones[idx] = milestone;
+    else memStore.milestones.push(milestone);
+    return Promise.resolve(milestone);
+  }
+  return new Promise((resolve, reject) => {
+    const tx = getDB().transaction('milestones', 'readwrite');
+    const store = tx.objectStore('milestones');
+    const req = store.put(milestone);
+    req.onsuccess = () => resolve(milestone);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+export function getAllMilestonesDB() {
+  if (useMemory) {
+    return Promise.resolve(memStore.milestones ? [...memStore.milestones] : []);
+  }
+  return new Promise((resolve, reject) => {
+    const tx = getDB().transaction('milestones', 'readonly');
+    const store = tx.objectStore('milestones');
+    const req = store.getAll();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror = () => reject(req.error);
+  });
 }
 
 // ---- Clear All ----

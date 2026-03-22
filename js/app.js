@@ -4,6 +4,7 @@
 
 import { TEXTS } from '../content/de.js';
 import { initDB, getProfile } from './db.js';
+import { initMilestones, markMilestonesSeen } from './milestones.js';
 import { initBottomSheet } from './components/bottom-sheet.js';
 import { initCrisisModal, openCrisis } from './components/crisis-modal.js';
 import { renderLanding } from './screens/landing.js';
@@ -25,6 +26,9 @@ function isStandalone() {
 
 async function init() {
   await initDB();
+
+  // Init milestones (retroactive scan on first load)
+  initMilestones().catch(e => console.warn('[App] Milestone init failed:', e));
 
   // Init components
   initBottomSheet();
@@ -192,6 +196,7 @@ async function switchTab(tab) {
     await renderReflection(contentEl, profile);
   } else if (tab === 'history') {
     await renderHistory(contentEl, profile);
+    markMilestonesSeen().catch(() => {});
   }
 
   if (!skipAnim && hasContent) {

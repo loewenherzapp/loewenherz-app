@@ -8,6 +8,7 @@ import { openSheet } from '../components/bottom-sheet.js';
 import { renderWeekCircles, formatDate, getMonday } from '../components/week-dots.js';
 
 import { showDayDetail } from './history.js';
+import { checkMilestones } from '../milestones.js';
 import { getDashboardQuatschiText, getTapFeedback, showTapToast } from '../quatschi.js';
 
 const MORNING_NUDGE_TEXTS = [
@@ -192,6 +193,9 @@ export async function renderDashboard(container, profile, { animate = true } = {
             category: opt.key,
             categoryLabel: opt.label
           });
+
+          // Milestone check (async, non-blocking)
+          checkMilestones().catch(() => {});
 
           // --- Erfolgs-Animation auf dem Button ---
           btn.classList.add('tapped');

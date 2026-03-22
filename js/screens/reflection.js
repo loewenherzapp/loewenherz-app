@@ -7,6 +7,7 @@ import { getReflectionByDate, getReflectionsByDateRange, saveReflection, addSmal
 import { formatDate } from '../components/week-dots.js';
 import { getReflectionEndComment } from '../quatschi.js';
 import { checkSoftAskAfterReflexion } from '../push.js';
+import { checkMilestones } from '../milestones.js';
 
 const MOOD_MAP = {};
 TEXTS.ui.reflection.moods.forEach(m => { MOOD_MAP[m.key] = m; });
@@ -300,6 +301,9 @@ function startMorningFlow(container, profile) {
       // Save to localStorage
       saveMorningReflectionDone(todayStr, selectedChip, customText);
 
+      // Milestone check (async, non-blocking)
+      checkMilestones().catch(() => {});
+
       // Remove morning gradient
       appEl.removeAttribute('data-mood');
 
@@ -502,6 +506,9 @@ function startReflectionFlow(container, profile) {
     const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
     await addSmallPoint({ date: todayStr, time: timeStr, letter: 'S', category: 'reflection', categoryLabel: 'Abendreflexion' });
     await addSmallPoint({ date: todayStr, time: timeStr, letter: 'M', category: 'reflection', categoryLabel: 'Abendreflexion' });
+
+    // Milestone check (async, non-blocking)
+    checkMilestones().catch(() => {});
 
     renderCompletion(endComment);
   }
