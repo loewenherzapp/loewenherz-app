@@ -236,7 +236,7 @@ export async function renderHistory(container, profile) {
   if (hasAnyActivity) {
     const heroNumber = totalMoments;
     html += `<div class="history-hero-number">${heroNumber}</div>`;
-    html += `<div class="history-hero-label">bewusste Momente</div>`;
+    html += `<div class="history-hero-label">SMALL-Punkte</div>`;
     const detailParts = [];
     if (totalReflections > 0) detailParts.push(`${totalReflections} Reflexionen`);
     if (daysSinceStart > 1) detailParts.push(`seit ${daysSinceStart} Tagen dabei`);

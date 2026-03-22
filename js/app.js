@@ -245,11 +245,11 @@ function showCoachMark() {
     </div>
   `;
 
-  // Position unter dem ⓘ-Button
+  // Position unter dem ⓘ-Button (links ausgerichtet)
   const rect = infoBtn.getBoundingClientRect();
   mark.style.position = 'fixed';
   mark.style.top = (rect.bottom + 8) + 'px';
-  mark.style.right = '16px';
+  mark.style.left = Math.max(12, rect.left - 8) + 'px';
   mark.style.zIndex = '500';
 
   document.body.appendChild(mark);
