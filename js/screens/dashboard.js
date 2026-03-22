@@ -96,7 +96,7 @@ export async function renderDashboard(container, profile, { animate = true } = {
 
   // Quatschi text — check for morning nudge
   const hour = new Date().getHours();
-  const morningWindow = true; // hour >= 5 && hour <= 11; // DEBUG: temporarily always active
+  const morningWindow = hour >= 5 && hour <= 11;
   const morningDoneKey = 'morningReflection_' + todayStr;
   const morningDoneData = localStorage.getItem(morningDoneKey);
   const morningDone = morningDoneData ? JSON.parse(morningDoneData).completed : false;

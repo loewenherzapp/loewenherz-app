@@ -87,9 +87,9 @@ export async function renderReflection(container, profile) {
   const eveningReflection = await getReflectionByDate(todayStr);
   const eveningDone = !!eveningReflection;
 
-  // Time windows (DEBUG: temporarily always active — revert after testing)
-  const morningActive = true; // hour >= 5 && hour <= 11;
-  const eveningActive = true; // hour >= 18 || hour <= 4;
+  // Time windows
+  const morningActive = hour >= 5 && hour <= 11;
+  const eveningActive = hour >= 18 || hour <= 4;
 
   // Get recent reflections for emoji row
   const sevenAgo = new Date();
