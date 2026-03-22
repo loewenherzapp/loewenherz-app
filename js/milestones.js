@@ -217,6 +217,13 @@ async function checkAndAward(ctx, retroactive = false) {
       await saveMilestone(milestone);
       newMilestones.push(milestone);
       console.log(`[Milestone] ${id} reached at ${dateStr}${retroactive ? ' (retroactive)' : ''}`);
+
+      // Fire event for UI (badge-dot, toast)
+      try {
+        window.dispatchEvent(new CustomEvent('milestoneReached', {
+          detail: { id, type: def.type, date: dateStr, retroactive }
+        }));
+      } catch (e) { /* SSR safety */ }
     }
   }
 

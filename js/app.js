@@ -4,7 +4,8 @@
 
 import { TEXTS } from '../content/de.js';
 import { initDB, getProfile } from './db.js';
-import { initMilestones, markMilestonesSeen } from './milestones.js';
+import { initMilestones, markMilestonesSeen, getUnseenMilestoneCount } from './milestones.js';
+import { milestoneDisplayNames, milestoneIcons, milestoneTexts } from './weekly-cards.js';
 import { initBottomSheet } from './components/bottom-sheet.js';
 import { initCrisisModal, openCrisis } from './components/crisis-modal.js';
 import { renderLanding } from './screens/landing.js';
@@ -121,6 +122,20 @@ function showApp() {
   if (!localStorage.getItem('hasSeenInfo')) {
     setTimeout(() => showCoachMark(), 800);
   }
+
+  // Badge-Dot initialisieren
+  updateBadgeDot();
+
+  // Milestone-Toast-Listener (einmalig binden)
+  if (!window._milestoneListenerBound) {
+    window.addEventListener('milestoneReached', (e) => {
+      updateBadgeDot();
+      if (!e.detail.retroactive && currentTab === 'today') {
+        setTimeout(() => maybeShowMilestoneToast(e.detail), 500);
+      }
+    });
+    window._milestoneListenerBound = true;
+  }
 }
 
 function bindHeaderButtons() {
@@ -196,7 +211,7 @@ async function switchTab(tab) {
     await renderReflection(contentEl, profile);
   } else if (tab === 'history') {
     await renderHistory(contentEl, profile);
-    markMilestonesSeen().catch(() => {});
+    markMilestonesSeen().then(() => updateBadgeDot()).catch(() => {});
   }
 
   if (!skipAnim && hasContent) {
@@ -326,6 +341,159 @@ function showAppInfo() {
   });
   overlay.querySelector('.info-sheet-close').addEventListener('click', close);
 }
+
+// ============================================================
+// Badge-Dot on Verlauf Tab
+// ============================================================
+
+async function updateBadgeDot() {
+  try {
+    const count = await getUnseenMilestoneCount();
+    let dot = document.getElementById('badge-dot');
+
+    if (count > 0) {
+      if (!dot) {
+        const historyLabel = document.getElementById('tab-label-history');
+        if (!historyLabel) return;
+        dot = document.createElement('span');
+        dot.id = 'badge-dot';
+        dot.className = 'badge-dot';
+        historyLabel.style.position = 'relative';
+        historyLabel.appendChild(dot);
+        // FadeIn
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => dot.classList.add('visible'));
+        });
+      }
+    } else {
+      if (dot) {
+        dot.classList.remove('visible');
+        setTimeout(() => dot.remove(), 300);
+      }
+    }
+  } catch (e) {
+    // Silent
+  }
+}
+
+// ============================================================
+// Milestone Toast
+// ============================================================
+
+const toastVariant = {
+  P1: null, P2: null, P3: null, K1: null, K2: null,
+  P4: 'short', P5: 'short', K3: 'short', K4: 'short', E1: 'short', E2: 'short',
+  K5: 'quatschi', K6: 'quatschi', E3: 'quatschi', E4: 'quatschi', E5: 'quatschi',
+  K7: 'special', K8: 'special', K9: 'special', K10: 'special', E6: 'special'
+};
+
+const toastPriority = [
+  'K10', 'E6', 'K9', 'K8', 'K7',
+  'E5', 'E4', 'K6', 'E3', 'K5',
+  'E2', 'K4', 'E1', 'K3', 'P5', 'P4'
+];
+
+let toastVisible = false;
+let pendingToasts = [];
+
+function maybeShowMilestoneToast(detail) {
+  const variant = toastVariant[detail.id];
+  if (!variant) return; // No toast for this milestone
+
+  if (toastVisible) return; // One at a time
+
+  showMilestoneToast(detail.id, variant);
+}
+
+function truncateQuatschi(text) {
+  if (!text || text.length <= 60) return text;
+  const match = text.match(/^[^.!?]+[.!?]/);
+  return match ? match[0] : text;
+}
+
+function showMilestoneToast(id, variant) {
+  if (toastVisible) return;
+  toastVisible = true;
+
+  const name = milestoneDisplayNames[id] || id;
+  const icon = milestoneIcons[id] || '🏔';
+  const texts = milestoneTexts[id] || { q: null, g: null };
+  const isSpecial = variant === 'special';
+
+  const toast = document.createElement('div');
+  toast.className = `milestone-toast ${isSpecial ? 'milestone-toast-special' : ''}`;
+
+  let html = `<div class="milestone-toast-inner">`;
+  html += `<div class="milestone-toast-title">${icon}  ${name}</div>`;
+
+  // Quatschi text for 'quatschi' and 'special' variants
+  if ((variant === 'quatschi' || variant === 'special') && texts.q) {
+    const truncated = truncateQuatschi(texts.q);
+    html += `<div class="milestone-toast-quatschi">"${truncated}"</div>`;
+  }
+
+  html += `<div class="milestone-toast-cta">Im Verlauf ansehen →</div>`;
+  html += `</div>`;
+
+  toast.innerHTML = html;
+
+  // Insert above tab bar
+  const appEl = document.getElementById('app');
+  if (appEl) {
+    appEl.appendChild(toast);
+  } else {
+    document.body.appendChild(toast);
+  }
+
+  // Animate in
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!prefersReduced) {
+    toast.style.transform = 'translateY(100%)';
+    toast.style.opacity = '0';
+    requestAnimationFrame(() => {
+      toast.style.transition = 'transform 0.35s ease-out, opacity 0.35s ease-out';
+      toast.style.transform = 'translateY(0)';
+      toast.style.opacity = '1';
+    });
+  }
+
+  // Tap → navigate to Verlauf
+  toast.addEventListener('click', () => {
+    dismissToast(toast);
+    switchTab('history');
+  });
+
+  // Auto-dismiss after 4.5s
+  setTimeout(() => {
+    dismissToast(toast);
+  }, 4500);
+}
+
+function dismissToast(toast) {
+  if (!toast || !toast.parentNode) { toastVisible = false; return; }
+
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (prefersReduced) {
+    toast.remove();
+    toastVisible = false;
+    return;
+  }
+
+  toast.style.transition = 'transform 0.25s ease-in, opacity 0.25s ease-in';
+  toast.style.transform = 'translateY(100%)';
+  toast.style.opacity = '0';
+  setTimeout(() => {
+    toast.remove();
+    toastVisible = false;
+  }, 250);
+}
+
+// Debug function
+window.debugToast = function(milestoneId) {
+  const variant = toastVariant[milestoneId] || 'short';
+  toastVisible = false; // Force allow
+  showMilestoneToast(milestoneId, variant);
+};
 
 // Service Worker: OneSignal handles registration of OneSignalSDKWorker.js automatically.
 // Manual registration removed to avoid conflicts.

@@ -282,6 +282,60 @@ a:active { opacity: 0.7; }
   background: var(--gold);
 }
 
+/* ---- Badge Dot ---- */
+.badge-dot {
+  position: absolute;
+  top: -3px;
+  right: -8px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--gold-warm);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+.badge-dot.visible {
+  opacity: 1;
+}
+
+/* ---- Milestone Toast ---- */
+.milestone-toast {
+  position: absolute;
+  bottom: 68px;
+  left: 5%;
+  right: 5%;
+  z-index: 400;
+  background: var(--bg-paper);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+  cursor: pointer;
+}
+.milestone-toast-special {
+  background: rgba(212, 168, 67, 0.12);
+  border: 1px solid rgba(212, 168, 67, 0.25);
+}
+.milestone-toast-title {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+.milestone-toast-quatschi {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  font-style: italic;
+  color: var(--gold-warm);
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+.milestone-toast-cta {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
 /* ---- Main Content ---- */
 .main-content {
   flex: 1;
