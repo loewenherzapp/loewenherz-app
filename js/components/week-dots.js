@@ -76,10 +76,6 @@ function getReflectionStatus(dateStr, reflectionsByDay) {
   const eveningRef = reflectionsByDay[dateStr];
   const evening = !!(eveningRef && eveningRef.mood);
 
-  // Debug: Log today's status
-  if (dateStr === new Date().toISOString().slice(0, 10)) {
-    console.log(`[Dots] Today ${dateStr}: morning=${morning}, evening=${evening}`, eveningRef || 'no reflection');
-  }
 
   return { morning, evening };
 }
