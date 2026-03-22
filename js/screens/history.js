@@ -15,27 +15,32 @@ const WEEK_QUATSCHI = [
   // Level 0: keine Aktivität
   [
     "Ruhige Woche. Auch das gehört dazu.",
-    "Keine Punkte, kein Urteil. Nächste Woche ist noch da."
+    "Keine Punkte, kein Urteil. Gundula wartet geduldig.",
+    "Quatschi hat die Woche gewonnen. Aber Gundula führt im Gesamtklassement."
   ],
   // Level 1: 1-2 Reflexionen oder 1-5 SMALL-Punkte
   [
     "Ein paar Momente. Mehr als null. Genau so.",
-    "Quatschi findet, das zählt nicht. Gundula sieht das anders."
+    "Quatschi findet, das zählt nicht. Gundula sieht das anders.",
+    "Gundula hat das registriert. Leise, aber registriert."
   ],
   // Level 2: 3-5 Reflexionen oder 6-15 SMALL-Punkte
   [
-    "Quatschi verliert langsam die Übersicht. Gut so.",
-    "Dein Feldweg bekommt Reifenspuren."
+    "Dein Feldweg bekommt Reifenspuren.",
+    "Quatschi hat dreimal versucht zu moderieren. Dreimal überstimmt.",
+    "Gundula nickt öfter als sonst. Fällt dir das auf?"
   ],
   // Level 3: 6+ Reflexionen oder 16+ SMALL-Punkte
   [
+    "Quatschi verliert langsam die Übersicht. Gut so.",
     "Quatschi hat eine Beschwerde eingereicht. Abgelehnt.",
-    "Die Autobahn hat Konkurrenz bekommen."
+    "Gundula chillt im Schatten. Quatschi ist irritiert."
   ],
   // Level 4: 8+ Reflexionen UND 20+ SMALL-Punkte
   [
     "Quatschi überlegt, ob er sich einen neuen Job suchen soll.",
-    "Radio Bullshit meldet: Empfangsstörung. Bitte nicht beheben."
+    "Radio Bullshit meldet: Empfangsstörung. Bitte nicht beheben.",
+    "Gundula hat die Autobahn-Ausfahrt dekoriert. Mit Blumen."
   ]
 ];
 
