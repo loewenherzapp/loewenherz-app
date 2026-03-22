@@ -417,7 +417,7 @@ export const TEXTS = {
       pastTitle: "Letzte Reflexion",
       noReflection: "Zwei Minuten für dich. Der Tag kann warten.",
       startNow: "Jetzt reflektieren",
-      lastDays: "Letzte 7 Tage"
+      lastDays: "So war deine Woche"
     },
     history: {
       title: "Dein Weg, {name}",

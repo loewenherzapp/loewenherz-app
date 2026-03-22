@@ -240,6 +240,7 @@ function showCoachMark() {
   mark.innerHTML = `
     <div class="coach-mark-bubble">
       <div class="coach-mark-arrow"></div>
+      <span class="coach-mark-icon">ⓘ</span>
       Tippe hier für eine kurze Orientierung
     </div>
   `;
@@ -248,7 +249,7 @@ function showCoachMark() {
   const rect = infoBtn.getBoundingClientRect();
   mark.style.position = 'fixed';
   mark.style.top = (rect.bottom + 8) + 'px';
-  mark.style.left = Math.max(12, rect.left + rect.width / 2 - 120) + 'px';
+  mark.style.right = '16px';
   mark.style.zIndex = '500';
 
   document.body.appendChild(mark);
@@ -257,9 +258,17 @@ function showCoachMark() {
     requestAnimationFrame(() => mark.classList.add('active'));
   });
 
-  // Tap anywhere dismisses
+  // Tap on bubble → open Info-Sheet directly
+  mark.querySelector('.coach-mark-bubble').addEventListener('click', (e) => {
+    e.stopPropagation();
+    dismissCoachMark();
+    document.removeEventListener('click', dismiss, true);
+    showAppInfo();
+  });
+
+  // Tap anywhere else dismisses (without opening info)
   const dismiss = (e) => {
-    // If user tapped the ⓘ itself, let showAppInfo handle it
+    if (mark.contains(e.target)) return; // bubble handles itself
     if (infoBtn.contains(e.target)) {
       dismissCoachMark();
       document.removeEventListener('click', dismiss, true);
@@ -268,7 +277,6 @@ function showCoachMark() {
     dismissCoachMark();
     document.removeEventListener('click', dismiss, true);
   };
-  // Delay listener to prevent immediate dismiss from same event
   setTimeout(() => {
     document.addEventListener('click', dismiss, true);
   }, 100);

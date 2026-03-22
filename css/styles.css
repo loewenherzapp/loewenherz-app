@@ -1986,12 +1986,24 @@ a:active { opacity: 0.7; }
   background: #fff;
   color: var(--text-body);
   font-size: 14px;
-  line-height: 1.4;
-  padding: 12px 18px;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(80, 60, 30, 0.15);
-  max-width: 240px;
+  line-height: 1.5;
+  padding: 14px 20px;
+  border-radius: 14px;
+  box-shadow: 0 4px 24px rgba(80, 60, 30, 0.18);
+  max-width: 250px;
   text-align: center;
+  cursor: pointer;
+  border: 1.5px solid rgba(200, 168, 78, 0.25);
+  -webkit-tap-highlight-color: transparent;
+}
+.coach-mark-bubble:active {
+  transform: scale(0.97);
+}
+.coach-mark-icon {
+  display: block;
+  font-size: 22px;
+  margin-bottom: 4px;
+  color: var(--gold-warm);
 }
 .coach-mark-arrow {
   position: absolute;
@@ -2001,7 +2013,8 @@ a:active { opacity: 0.7; }
   height: 12px;
   background: #fff;
   transform: rotate(45deg);
-  box-shadow: -2px -2px 4px rgba(80, 60, 30, 0.06);
+  border-top: 1.5px solid rgba(200, 168, 78, 0.25);
+  border-left: 1.5px solid rgba(200, 168, 78, 0.25);
 }
 
 /* ============================================================
