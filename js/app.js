@@ -171,12 +171,25 @@ async function switchTab(tab) {
 
   const contentEl = document.getElementById('main-content');
 
+  // Tab crossfade: fade out → render → fade in
+  const skipAnim = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!skipAnim) {
+    contentEl.classList.add('tab-fade-out');
+    await new Promise(r => setTimeout(r, 150));
+  }
+
   if (tab === 'today') {
     await renderDashboard(contentEl, profile);
   } else if (tab === 'reflection') {
     await renderReflection(contentEl, profile);
   } else if (tab === 'history') {
     await renderHistory(contentEl, profile);
+  }
+
+  if (!skipAnim) {
+    // Force reflow, then fade in
+    void contentEl.offsetHeight;
+    contentEl.classList.remove('tab-fade-out');
   }
 }
 

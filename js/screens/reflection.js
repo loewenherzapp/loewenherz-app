@@ -11,6 +11,17 @@ import { checkSoftAskAfterReflexion } from '../push.js';
 const MOOD_MAP = {};
 TEXTS.ui.reflection.moods.forEach(m => { MOOD_MAP[m.key] = m; });
 
+// B2: Animate step entrance (slideIn from right)
+function animateStepEntrance(container) {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const screen = container.querySelector('.reflection-screen');
+  if (!screen) return;
+  screen.classList.add('step-enter');
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => screen.classList.add('visible'));
+  });
+}
+
 // Quatschi-Sprüche für Erledigt-States
 const MORNING_DONE_QUATSCHI = [
   "Quatschi hatte andere Pläne für deinen Morgen. Pech.",
@@ -196,6 +207,7 @@ function startMorningFlow(container, profile) {
     html += `</div>`;
 
     container.innerHTML = html;
+    animateStepEntrance(container);
 
     const chips = container.querySelectorAll('.intention-chip');
     const nextBtn = document.getElementById('morning-next');
@@ -205,6 +217,10 @@ function startMorningFlow(container, profile) {
     chips.forEach(chip => {
       chip.addEventListener('click', () => {
         const chipId = chip.dataset.chip;
+
+        // B3: chip pulse
+        chip.classList.add('chip-pulse');
+        chip.addEventListener('animationend', () => chip.classList.remove('chip-pulse'), { once: true });
 
         // Deselect all
         chips.forEach(c => c.classList.remove('selected'));
@@ -266,6 +282,7 @@ function startMorningFlow(container, profile) {
     html += `</div>`;
 
     container.innerHTML = html;
+    animateStepEntrance(container);
 
     document.getElementById('morning-close').addEventListener('click', async () => {
       const todayStr = formatDate(new Date());
@@ -337,6 +354,16 @@ function startReflectionFlow(container, profile) {
 
     container.innerHTML = html;
 
+    // B4: Mood emoji popIn animation
+    animateStepEntrance(container);
+    const moodBtns = container.querySelectorAll('.mood-btn');
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      moodBtns.forEach((btn, i) => {
+        btn.classList.add('pop-in');
+        setTimeout(() => btn.classList.add('visible'), 20 + i * 60);
+      });
+    }
+
     const btns = container.querySelectorAll('.mood-btn');
     const nextBtn = document.getElementById('mood-next');
 
@@ -344,6 +371,9 @@ function startReflectionFlow(container, profile) {
       btn.addEventListener('click', () => {
         btns.forEach(b => b.classList.remove('selected'));
         btn.classList.add('selected');
+        // B3: chip pulse
+        btn.classList.add('chip-pulse');
+        btn.addEventListener('animationend', () => btn.classList.remove('chip-pulse'), { once: true });
         selectedMood = btn.dataset.mood;
         setMoodGradient(selectedMood);
         nextBtn.disabled = false;
@@ -375,6 +405,7 @@ function startReflectionFlow(container, profile) {
     html += `</div>`;
 
     container.innerHTML = html;
+    animateStepEntrance(container);
 
     const letterBtns = container.querySelectorAll('.helped-btn');
     const altBtns = container.querySelectorAll('.helped-alt');
@@ -389,6 +420,10 @@ function startReflectionFlow(container, profile) {
         const letter = btn.dataset.letter;
         helpedAlt = null;
         altBtns.forEach(a => a.classList.remove('selected'));
+
+        // B3: chip pulse
+        btn.classList.add('chip-pulse');
+        btn.addEventListener('animationend', () => btn.classList.remove('chip-pulse'), { once: true });
 
         if (selectedHelped.includes(letter)) {
           selectedHelped = selectedHelped.filter(l => l !== letter);
@@ -429,6 +464,7 @@ function startReflectionFlow(container, profile) {
     html += `</div></div>`;
 
     container.innerHTML = html;
+    animateStepEntrance(container);
 
     const input = document.getElementById('gratitude-input');
     const skipBtn = document.getElementById('gratitude-skip');
@@ -494,6 +530,7 @@ function startReflectionFlow(container, profile) {
     html += `</div></div>`;
 
     container.innerHTML = html;
+    animateStepEntrance(container);
 
     document.getElementById('reflection-close').addEventListener('click', () => {
       setMoodGradient(null);

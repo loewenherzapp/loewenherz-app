@@ -243,7 +243,52 @@ export async function renderDashboard(container, profile) {
       document.querySelector('.nav-tab[data-tab="reflection"]').click();
     });
   }
+
+  // --- Dashboard entrance animations (staggered fadeUp) ---
+  animateDashboardEntrance();
 }
+
+function animateDashboardEntrance() {
+  // Skip if user prefers reduced motion
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  const stagger = 60;
+  const elements = [
+    { sel: '.quatschi-hero', cls: 'fade-in', delay: 0 },
+    { sel: '.stats-row', cls: 'fade-up', delay: stagger },
+    { sel: '.balance-section', cls: 'fade-up', delay: stagger * 2 },
+    { sel: '.gundula-row', cls: 'fade-in-scale', delay: stagger * 7 },
+    { sel: '.week-block', cls: 'fade-up', delay: stagger * 8 },
+    { sel: '.mantra-anchor', cls: 'fade-in', delay: stagger * 9 }
+  ];
+
+  // Apply animation classes
+  elements.forEach(({ sel, cls, delay }) => {
+    const el = document.querySelector(sel);
+    if (!el) return;
+    el.classList.add(cls);
+    setTimeout(() => el.classList.add('visible'), 20 + delay);
+  });
+
+  // SMALL buttons: individual staggered fadeUp with scale
+  const smallBtns = document.querySelectorAll('.small-btn');
+  smallBtns.forEach((btn, i) => {
+    btn.classList.add('fade-up-scale');
+    setTimeout(() => btn.classList.add('visible'), 20 + stagger * 2 + i * 80);
+  });
+
+  // Week dots: sequential fadeIn
+  const weekDots = document.querySelectorAll('.week-circle-wrap');
+  weekDots.forEach((dot, i) => {
+    dot.classList.add('fade-up');
+    setTimeout(() => dot.classList.add('visible'), 20 + stagger * 8 + i * 40);
+  });
+
+  // Gundula breathe after entrance
+  const gundulaIcon = document.querySelector('.gundula-icon');
+  if (gundulaIcon) {
+    setTimeout(() => gundulaIcon.classList.add('gundula-breathe'), stagger * 7 + 400);
+  }
 
 function showGundulaInfo() {
   // Remove existing if any
