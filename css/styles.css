@@ -1737,7 +1737,209 @@ a:active { opacity: 0.7; }
   color: var(--text-faint);
 }
 
-/* (Balance bars removed) */
+/* ---- Feed Cards ---- */
+
+.feed-container {
+  margin-top: 8px;
+}
+
+.feed-card {
+  background: var(--bg-paper);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(120, 100, 70, 0.06);
+}
+
+.feed-card-header {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.feed-card-stats {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--text-body);
+  margin-bottom: 6px;
+}
+
+.feed-card-emojis {
+  font-size: 14px;
+  margin-bottom: 6px;
+  letter-spacing: 1px;
+}
+
+.feed-card-topletter {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+
+/* Quatschi in feed cards */
+.feed-quatschi {
+  padding-top: 10px;
+  border-top: 1px solid rgba(0,0,0,0.04);
+}
+
+.feed-quatschi-tag {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.feed-quatschi-text {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  font-style: italic;
+  color: var(--gold-warm);
+  display: block;
+  line-height: 1.5;
+}
+
+/* Gundula in feed cards */
+.feed-gundula {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 8px;
+  line-height: 1.4;
+}
+
+/* Pause card */
+.feed-pause-title {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  color: var(--text-body);
+  margin-bottom: 12px;
+}
+
+/* Milestone card — gold tint */
+.feed-milestone {
+  background: rgba(212, 168, 67, 0.08);
+  border: 1px solid rgba(212, 168, 67, 0.15);
+}
+
+.feed-milestone-icon {
+  font-size: 28px;
+  margin-bottom: 6px;
+}
+
+.feed-milestone-name {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.feed-milestone-date {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
+/* Stage direction (K10, E6) */
+.feed-stage-direction {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-style: italic;
+  color: var(--text-secondary);
+  margin-top: 8px;
+}
+
+/* Empty feed */
+.feed-empty {
+  text-align: center;
+  padding: 28px 20px;
+}
+
+.feed-empty-text {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  color: var(--text-secondary);
+  margin-bottom: 14px;
+}
+
+.feed-empty-cta {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--gold-warm);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* Month collapse */
+.feed-month-collapse {
+  margin-bottom: 12px;
+}
+
+.feed-month-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 18px;
+  background: var(--bg-paper);
+  border-radius: var(--radius);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(120, 100, 70, 0.06);
+}
+
+.feed-month-chevron {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.feed-month-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.feed-month-label {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.feed-month-stats {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.feed-month-points {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--gold-warm);
+  font-weight: 600;
+}
+
+.feed-month-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s ease-out;
+  padding: 0 4px;
+}
+
+.feed-month-collapse.open .feed-month-content {
+  padding-top: 12px;
+}
 
 /* ---- Detail Popup ---- */
 .detail-popup-overlay {

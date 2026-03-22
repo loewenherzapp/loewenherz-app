@@ -59,6 +59,63 @@ export const weeklyQuatschiTexts = {
   }
 };
 
+// --- Meilenstein Display-Namen, Icons, Texte ---
+
+export const milestoneDisplayNames = {
+  P1: "Dein erster bewusster Moment",
+  P2: "Deine erste Reflexion",
+  P3: "Morgens und abends",
+  P4: "Alle fünf an einem Tag",
+  P5: "Deine erste Woche",
+  K1: "10 bewusste Momente",
+  K2: "25 bewusste Momente",
+  K3: "50 bewusste Momente",
+  K4: "100 bewusste Momente",
+  K5: "250 bewusste Momente",
+  K6: "500 bewusste Momente",
+  K7: "1.000 bewusste Momente",
+  K8: "2.500 bewusste Momente",
+  K9: "5.000 bewusste Momente",
+  K10: "10.000 bewusste Momente",
+  E1: "Dein erster Löwenherz-Moment",
+  E2: "5 Wochen dabei",
+  E3: "10 Wochen dabei",
+  E4: "20 Wochen dabei",
+  E5: "30 Wochen dabei",
+  E6: "Ein ganzes Jahr"
+};
+
+export const milestoneIcons = {
+  P1: "🌱", P2: "🌱", P3: "🌱", P4: "🌱", P5: "🌱",
+  K1: "🏔", K2: "🏔", K3: "🏔", K4: "🏔", K5: "🏔",
+  K6: "🏔", K7: "🏔", K8: "🏔", K9: "🏔", K10: "🏔",
+  E1: "🦁", E2: "🦁", E3: "🦁", E4: "🦁", E5: "🦁", E6: "🦁"
+};
+
+export const milestoneTexts = {
+  P1: { q: "Einer. Das ist kein Moment, das ist ein Zufall.", g: "Gundula hat ihn sich gemerkt." },
+  P2: { q: "Na toll, jetzt redest du auch noch mit dir selbst.", g: "Gundula hört hin." },
+  P3: { q: "Morgens UND abends? Das hält keine Woche.", g: "Gundula kennt keine Woche. Nur heute." },
+  P4: { q: "Alle fünf an einem Tag? Anfängerglück.", g: "Gundula braucht kein Glück. Nur Wiederholung." },
+  P5: { q: "Eine Woche. Meld dich in einem Jahr nochmal.", g: "Gundula meldet sich jetzt schon." },
+  K1: { q: "Zehn? Andere machen das vor dem Frühstück.", g: "Gundula vergleicht nicht. Sie addiert." },
+  K2: { q: "Statistisch noch irrelevant.", g: "Gundula kennt keine Statistik. Nur Erfahrung." },
+  K3: { q: "Okay, fünfzig. Aber das beweist noch gar nichts.", g: null },
+  K4: { q: "Hundert? Wahrscheinlich hast du falsch gezählt.", g: null },
+  K5: { q: "Ich sage nicht, dass ich nervös werde. Ich sage nur: das ist ungewöhnlich.", g: null },
+  K6: { q: "Fünfhundert. Das muss ein technischer Fehler sein.", g: null },
+  K7: { q: "…", g: null },
+  K8: { q: "Ich hätte da noch was zu sagen. Aber ich lass es mal.", g: null },
+  K9: { q: "Ich bin noch da. Falls du dich gefragt hast.", g: null },
+  K10: { q: null, g: null },
+  E1: { q: "Löwenherz-Mood? Bisschen übertrieben, findest du nicht?", g: "Gundula übertreibt nie." },
+  E2: { q: "Fünf Wochen. Anfängerglück hält normalerweise drei.", g: null },
+  E3: { q: "Ich dachte, du hörst längst wieder auf.", g: null },
+  E4: { q: "Das ist fast… nein. Nein, ich sag jetzt nichts.", g: null },
+  E5: { q: "Ich hab ehrlich gesagt nichts mehr vorbereitet ab hier.", g: null },
+  E6: { q: null, g: "Gundula auch." }
+};
+
 const earlyGundulaLines = [
   "Gundula nickt.",
   "Gundula hört hin.",

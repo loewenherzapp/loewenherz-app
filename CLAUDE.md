@@ -8,6 +8,12 @@
 | **r** auf [Datei/Thema] | Reflexion aus 4 passenden Perspektiven auf das genannte Objekt |
 | **m** oder **ja** oder **los** | Sofort umsetzen, nicht nochmal nachfragen |
 
+## Arbeitsweise
+
+- **Prompts immer erst "r", dann umsetzen** — Bei jedem neuen Prompt: kurz reflektieren (Architektur-Fit, potentielle Probleme, Optimierungen), dann umsetzen. Nicht blind abarbeiten.
+- **Nach jedem Durchgang reflektieren** — Was wurde gelernt? Gibt es Muster, Fallstricke, Konventionen die in CLAUDE.md oder Memory gehören? Wenn ja: eigenständig eintragen.
+- **Textarbeit: Varianten vorstellen** — Bei Quatschi/Gundula-Texten oder UI-Copy: Optionen zeigen, Patrick entscheidet. Nie direkt einbauen ohne Freigabe.
+
 ## Autonomie
 
 - **Committen & Pushen: JA** — Eigenständig committen und `git push origin main` ohne nachzufragen. Commit-Messages auf Deutsch, kurz, prägnant.
