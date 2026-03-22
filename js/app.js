@@ -171,9 +171,12 @@ async function switchTab(tab) {
 
   const contentEl = document.getElementById('main-content');
 
-  // Tab crossfade: fade out → render → fade in
+  // Tab crossfade: fade out old content → render new → fade in
+  // Skip fade-out on initial load (no content yet) or reduced motion
   const skipAnim = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (!skipAnim) {
+  const hasContent = contentEl.innerHTML.trim().length > 0;
+
+  if (!skipAnim && hasContent) {
     contentEl.classList.add('tab-fade-out');
     await new Promise(r => setTimeout(r, 150));
   }
@@ -186,8 +189,7 @@ async function switchTab(tab) {
     await renderHistory(contentEl, profile);
   }
 
-  if (!skipAnim) {
-    // Force reflow, then fade in
+  if (!skipAnim && hasContent) {
     void contentEl.offsetHeight;
     contentEl.classList.remove('tab-fade-out');
   }
