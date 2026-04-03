@@ -86,10 +86,9 @@ export default async function handler(req, res) {
   }
 
   // ============================================================
-  // SMALL-REMINDER
-  // Sendet an alle User mit small_enabled=true,
-  // ABER nur wenn currentSlot zwischen morning_utc und evening_utc liegt
-  // und nicht gleich morning_utc oder evening_utc ist (kein Doppel).
+  // SMALL-REMINDER (5 individual slots)
+  // Each user has up to 5 tags: small_1_utc .. small_5_utc
+  // Send to anyone whose ANY slot matches currentSlot
   // ============================================================
   const smallTexts = [
     "Kurzer Check: Schultern unten? Atem fließt?",
@@ -103,24 +102,17 @@ export default async function handler(req, res) {
   ];
 
   try {
+    // OR-combined: match if ANY of the 5 slots equals currentSlot
+    const smallFilters = [];
+    for (let i = 1; i <= 5; i++) {
+      if (i > 1) smallFilters.push({ operator: 'OR' });
+      smallFilters.push({ field: 'tag', key: `small_${i}_utc`, relation: '=', value: currentSlot });
+    }
+
     const smallResult = await sendNotification({
       appId: ONESIGNAL_APP_ID,
       apiKey: ONESIGNAL_API_KEY,
-      filters: [
-        { field: 'tag', key: 'small_enabled', relation: '=', value: 'true' },
-        { operator: 'AND' },
-        // Nicht senden wenn dieser Slot = morning_utc (Doppel vermeiden)
-        { field: 'tag', key: 'morning_utc', relation: '!=', value: currentSlot },
-        { operator: 'AND' },
-        // Nicht senden wenn dieser Slot = evening_utc (Doppel vermeiden)
-        { field: 'tag', key: 'evening_utc', relation: '!=', value: currentSlot },
-        { operator: 'AND' },
-        // Nur senden wenn currentSlot NACH morning_utc liegt
-        { field: 'tag', key: 'morning_utc', relation: '<', value: currentSlot },
-        { operator: 'AND' },
-        // Nur senden wenn currentSlot VOR evening_utc liegt
-        { field: 'tag', key: 'evening_utc', relation: '>', value: currentSlot }
-      ],
+      filters: smallFilters,
       title: 'SMALL-Reminder',
       body: smallTexts[(dayOfYear + parseInt(currentSlot.replace(':', ''), 10)) % smallTexts.length],
       url: 'https://loewenherz-app.vercel.app/?tab=heute'

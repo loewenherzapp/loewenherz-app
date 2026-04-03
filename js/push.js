@@ -76,8 +76,8 @@ export function localTimeToUTC(timeStr) {
   return `${String(utcH).padStart(2, '0')}:${String(utcM).padStart(2, '0')}`;
 }
 
-// --- Tag Sync: NUR 3 Tags (Free Plan Limit) ---
-// morning_utc, evening_utc, small_enabled
+// --- Tag Sync: 7 Tags ---
+// morning_utc, evening_utc, small_1_utc .. small_5_utc
 // push_enabled entfällt — wenn Push aus: alle Tags löschen
 
 function buildTags() {
@@ -85,11 +85,9 @@ function buildTags() {
 
   // Push deaktiviert → alle Tags löschen (leerer String = Tag wird gelöscht)
   if (!pushEnabled) {
-    return {
-      morning_utc: '',
-      evening_utc: '',
-      small_enabled: ''
-    };
+    const tags = { morning_utc: '', evening_utc: '' };
+    for (let i = 1; i <= 5; i++) tags[`small_${i}_utc`] = '';
+    return tags;
   }
 
   const morningRaw = localStorage.getItem('loewenherz_morning_time') || '07:00';
@@ -98,13 +96,24 @@ function buildTags() {
   const evening = roundTo15Min(eveningRaw);
   const morningUTC = localTimeToUTC(morning);
   const eveningUTC = localTimeToUTC(evening);
-  const smallEnabled = localStorage.getItem('loewenherz_small_reminders') !== 'false';
 
-  return {
+  const tags = {
     morning_utc: morningUTC,
-    evening_utc: eveningUTC,
-    small_enabled: smallEnabled ? 'true' : 'false'
+    evening_utc: eveningUTC
   };
+
+  // 5 SMALL slots: enabled → UTC time, disabled → '' (delete tag)
+  for (let i = 1; i <= 5; i++) {
+    const enabled = localStorage.getItem(`loewenherz_small_${i}_enabled`) !== 'false';
+    if (enabled) {
+      const raw = localStorage.getItem(`loewenherz_small_${i}_time`) || '12:00';
+      tags[`small_${i}_utc`] = localTimeToUTC(roundTo15Min(raw));
+    } else {
+      tags[`small_${i}_utc`] = '';
+    }
+  }
+
+  return tags;
 }
 
 function syncTagsToOneSignal() {
@@ -208,8 +217,19 @@ export function showPushSoftAsk() {
     if (!localStorage.getItem('loewenherz_evening_time')) {
       localStorage.setItem('loewenherz_evening_time', '20:30');
     }
-    if (!localStorage.getItem('loewenherz_small_reminders')) {
-      localStorage.setItem('loewenherz_small_reminders', 'true');
+    // Initialize 5 SMALL slots (3 on, 2 off) if not yet set
+    const defaultSlots = [
+      { id: 1, time: '09:30', enabled: true },
+      { id: 2, time: '12:30', enabled: true },
+      { id: 3, time: '15:30', enabled: true },
+      { id: 4, time: '11:00', enabled: false },
+      { id: 5, time: '17:00', enabled: false }
+    ];
+    for (const s of defaultSlots) {
+      if (!localStorage.getItem(`loewenherz_small_${s.id}_time`)) {
+        localStorage.setItem(`loewenherz_small_${s.id}_time`, s.time);
+        localStorage.setItem(`loewenherz_small_${s.id}_enabled`, String(s.enabled));
+      }
     }
 
     if (window.OneSignal && OneSignal.Slidedown) {

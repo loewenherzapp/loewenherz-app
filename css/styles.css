@@ -2323,6 +2323,34 @@ a:active { opacity: 0.7; }
   pointer-events: none;
 }
 
+.push-small-header {
+  margin-top: 4px;
+  margin-bottom: 0;
+}
+
+.push-small-sublabel {
+  margin-bottom: 8px;
+}
+
+.push-small-slot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+  min-height: 44px;
+  gap: 12px;
+}
+
+.push-small-slot .reminder-time {
+  width: auto;
+  flex: 1;
+}
+
+.push-settings-disabled .push-small-slot {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
 .push-blocked-hint {
   font-size: 12px;
   color: var(--crisis-red);

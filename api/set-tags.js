@@ -15,8 +15,8 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'ONESIGNAL_API_KEY not configured' });
   }
 
-  // Nur erlaubte Tags durchlassen (max 3 — Free Plan Limit!)
-  const allowedKeys = ['morning_utc', 'evening_utc', 'small_enabled'];
+  // Erlaubte Tags: morning, evening + 5 SMALL slots
+  const allowedKeys = ['morning_utc', 'evening_utc', 'small_1_utc', 'small_2_utc', 'small_3_utc', 'small_4_utc', 'small_5_utc'];
   const safeTags = {};
   for (const key of allowedKeys) {
     if (tags[key] !== undefined) {

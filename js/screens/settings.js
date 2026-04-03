@@ -1,64 +1,68 @@
 // ============================================================
-// Settings Screen — v2 (8 fixed alarm slots, morning ritual, evening reflection)
+// Settings Screen — v3 (unified push settings, 5 SMALL slots)
 // ============================================================
 
 import { TEXTS } from '../../content/de.js';
-import { getProfile, saveProfile, clearAllData, migrateToV2, saveRemindersV2, saveMorningRitual, saveEveningReflection } from '../db.js';
+import { getProfile, saveProfile, clearAllData, migrateToV2 } from '../db.js';
 import { openCrisis } from '../components/crisis-modal.js';
 import { syncOneSignalTags } from '../push.js';
 
-/**
- * Sort reminders by time (earliest first).
- */
-function sortByTime(reminders) {
-  return [...reminders].sort((a, b) => a.time.localeCompare(b.time));
+// Default SMALL reminder slots (3 enabled, 2 disabled)
+const DEFAULT_SMALL_SLOTS = [
+  { id: 1, time: '09:30', enabled: true },
+  { id: 2, time: '12:30', enabled: true },
+  { id: 3, time: '15:30', enabled: true },
+  { id: 4, time: '11:00', enabled: false },
+  { id: 5, time: '17:00', enabled: false }
+];
+
+function initSmallSlotsIfNeeded() {
+  for (const slot of DEFAULT_SMALL_SLOTS) {
+    if (localStorage.getItem(`loewenherz_small_${slot.id}_time`) === null) {
+      localStorage.setItem(`loewenherz_small_${slot.id}_time`, slot.time);
+      localStorage.setItem(`loewenherz_small_${slot.id}_enabled`, String(slot.enabled));
+    }
+  }
 }
 
-/**
- * Render a single alarm slot: time + toggle. Identical for all 8.
- */
-function renderAlarmSlot(r) {
-  return `<div class="reminder-slot reminder-slot-managed" data-slot-id="${r.id}">
-    <div class="reminder-left">
-      <input type="time" class="reminder-time" data-field="time" value="${r.time}">
-    </div>
-    <div class="reminder-right">
-      <label class="toggle">
-        <input type="checkbox" data-field="toggle" ${r.enabled ? 'checked' : ''}>
-        <span class="toggle-slider"></span>
-      </label>
-    </div>
-  </div>`;
+function getSmallSlots() {
+  return DEFAULT_SMALL_SLOTS.map(slot => ({
+    id: slot.id,
+    time: localStorage.getItem(`loewenherz_small_${slot.id}_time`) || slot.time,
+    enabled: localStorage.getItem(`loewenherz_small_${slot.id}_enabled`) !== 'false'
+  }));
 }
 
-/**
- * Render a single-line section (Morgenritual or Abendreflexion): time + toggle + description.
- */
-function renderRitualSlot(data, sectionId) {
-  return `<div class="reminder-slot" id="${sectionId}-slot">
-    <div class="reminder-left">
-      <input type="time" class="reminder-time" data-field="time" value="${data.time}">
-    </div>
-    <div class="reminder-right">
-      <label class="toggle">
-        <input type="checkbox" data-field="toggle" ${data.enabled ? 'checked' : ''}>
-        <span class="toggle-slider"></span>
-      </label>
-    </div>
+function renderSmallSlot(slot) {
+  return `<div class="push-small-slot" data-slot-id="${slot.id}">
+    <input type="time" class="reminder-time" data-field="time" step="900" value="${slot.time}">
+    <label class="toggle">
+      <input type="checkbox" data-field="toggle" ${slot.enabled ? 'checked' : ''}>
+      <span class="toggle-slider"></span>
+    </label>
   </div>`;
 }
 
 export async function renderSettings(container, profile, onBack, onDataDeleted) {
   const t = TEXTS.ui.settings;
 
-  // Run v2 migration if needed
+  // Run v2 migration if needed (keeps DB clean)
   profile = await migrateToV2(profile);
 
-  const reminders = profile.remindersV2;
-  const morningRitual = profile.morningRitual;
-  const eveningReflection = profile.eveningReflection;
+  // Initialize SMALL slots in localStorage if first time
+  initSmallSlotsIfNeeded();
 
-  const sorted = sortByTime(reminders);
+  // Migrate old push defaults if needed
+  if (!localStorage.getItem('loewenherz_morning_time')) {
+    localStorage.setItem('loewenherz_morning_time', '07:00');
+  }
+  if (!localStorage.getItem('loewenherz_evening_time')) {
+    localStorage.setItem('loewenherz_evening_time', '20:30');
+  }
+
+  const pushEnabled = localStorage.getItem('loewenherz_push_enabled') === 'true';
+  const smallSlots = getSmallSlots();
+  const sortedSlots = [...smallSlots].sort((a, b) => a.time.localeCompare(b.time));
 
   container.innerHTML = `
     <header class="app-header">
@@ -77,52 +81,27 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
         </div>
       </div>
 
-      <!-- Erinnerungen (8 fixed alarm slots) -->
-      <div class="settings-section">
-        <div class="settings-label">${t.remindersLabel}</div>
-        <div class="settings-card" id="reminders-card">
-          <div id="reminders-list">
-            ${sorted.map(r => renderAlarmSlot(r)).join('')}
-          </div>
-          <p class="settings-hint">Zeiten für deine SMALL-Erinnerungen.</p>
-        </div>
-      </div>
-
-      <!-- Morgenritual -->
-      <div class="settings-section">
-        <div class="settings-label">${t.morningRitualLabel}</div>
-        <div class="settings-card" id="morning-ritual-card">
-          ${renderRitualSlot(morningRitual, 'morning-ritual')}
-          <p class="settings-hint">${t.morningRitualHint}</p>
-        </div>
-      </div>
-
-      <!-- Abendreflexion -->
-      <div class="settings-section">
-        <div class="settings-label">${t.reflectionTimeLabel}</div>
-        <div class="settings-card" id="evening-reflection-card">
-          ${renderRitualSlot(eveningReflection, 'evening-reflection')}
-          <p class="settings-hint">${t.eveningReflectionHint}</p>
-        </div>
-      </div>
-
-      <!-- Push-Benachrichtigungen -->
+      <!-- Push-Benachrichtigungen (unified) -->
       <div class="settings-section" id="push-settings-section">
         <div class="settings-label">Erinnerungen</div>
         <div class="settings-card" id="push-settings-card">
+          <!-- Master Toggle -->
           <div class="push-setting-row">
             <div class="push-setting-labels">
               <div class="push-setting-label">Push-Benachrichtigungen</div>
-              <div class="push-setting-sublabel">Erinnerungen an Reflexion und SMALL-Momente</div>
+              <div class="push-setting-sublabel">Morgen- & Abendreflexion, SMALL-Reminder</div>
             </div>
             <label class="toggle">
-              <input type="checkbox" id="push-main-toggle" ${localStorage.getItem('loewenherz_push_enabled') === 'true' ? 'checked' : ''}>
+              <input type="checkbox" id="push-main-toggle" ${pushEnabled ? 'checked' : ''}>
               <span class="toggle-slider"></span>
             </label>
           </div>
           <div class="push-blocked-hint hidden" id="push-blocked-hint">Push-Benachrichtigungen sind im Browser blockiert. Bitte aktiviere sie in deinen Browser-Einstellungen.</div>
-          <div id="push-sub-settings" class="${localStorage.getItem('loewenherz_push_enabled') !== 'true' ? 'push-settings-disabled' : ''}">
+
+          <div id="push-sub-settings" class="${!pushEnabled ? 'push-settings-disabled' : ''}">
             <div class="push-settings-divider"></div>
+
+            <!-- Morning / Evening times (always active when push is on) -->
             <div class="push-setting-time">
               <div class="push-setting-label">Morgenreflexion</div>
               <input type="time" class="reminder-time" id="push-morning-time" step="900" value="${localStorage.getItem('loewenherz_morning_time') || '07:00'}">
@@ -131,15 +110,14 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
               <div class="push-setting-label">Abendreflexion</div>
               <input type="time" class="reminder-time" id="push-evening-time" step="900" value="${localStorage.getItem('loewenherz_evening_time') || '20:30'}">
             </div>
-            <div class="push-setting-row">
-              <div class="push-setting-labels">
-                <div class="push-setting-label">SMALL-Reminder tagsüber</div>
-                <div class="push-setting-sublabel">8 kurze Impulse zwischen Morgen und Abend</div>
-              </div>
-              <label class="toggle">
-                <input type="checkbox" id="push-small-toggle" ${localStorage.getItem('loewenherz_small_reminders') !== 'false' ? 'checked' : ''}>
-                <span class="toggle-slider"></span>
-              </label>
+
+            <div class="push-settings-divider"></div>
+
+            <!-- SMALL Reminder Slots -->
+            <div class="push-setting-label push-small-header">SMALL-Reminder</div>
+            <div class="push-setting-sublabel push-small-sublabel">Kurze Impulse zwischen Morgen und Abend</div>
+            <div id="push-small-slots">
+              ${sortedSlots.map(s => renderSmallSlot(s)).join('')}
             </div>
           </div>
         </div>
@@ -217,120 +195,10 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
     }, 500);
   });
 
-  // ---- Alarm slots: event delegation on #reminders-card ----
-  const remindersCard = document.getElementById('reminders-card');
-  let timeDebounceTimers = {};
-
-  remindersCard.addEventListener('change', async (e) => {
-    const slot = e.target.closest('.reminder-slot-managed');
-    if (!slot) return;
-    const id = parseInt(slot.dataset.slotId, 10);
-    const field = e.target.dataset.field;
-    if (!id || !field) return;
-
-    const reminder = reminders.find(r => r.id === id);
-    if (!reminder) return;
-
-    if (field === 'toggle') {
-      reminder.enabled = e.target.checked;
-      await saveRemindersV2(reminders);
-    }
-  });
-
-  // Time picker: debounce 1.5s on change (iOS closes picker on change)
-  remindersCard.addEventListener('change', (e) => {
-    if (e.target.dataset.field !== 'time') return;
-    const slot = e.target.closest('.reminder-slot-managed');
-    if (!slot) return;
-    const id = parseInt(slot.dataset.slotId, 10);
-
-    clearTimeout(timeDebounceTimers[id]);
-    timeDebounceTimers[id] = setTimeout(async () => {
-      const reminder = reminders.find(r => r.id === id);
-      if (!reminder) return;
-      reminder.time = e.target.value;
-      await saveRemindersV2(reminders);
-      reRenderList();
-    }, 1500);
-  });
-
-  // Also save on blur (reliable on desktop/Android)
-  remindersCard.addEventListener('focusout', (e) => {
-    if (e.target.dataset.field !== 'time') return;
-    const slot = e.target.closest('.reminder-slot-managed');
-    if (!slot) return;
-    const id = parseInt(slot.dataset.slotId, 10);
-
-    // Cancel the debounce timer if blur fires first
-    clearTimeout(timeDebounceTimers[id]);
-
-    const reminder = reminders.find(r => r.id === id);
-    if (!reminder || reminder.time === e.target.value) return;
-
-    reminder.time = e.target.value;
-    saveRemindersV2(reminders);
-    reRenderList();
-  });
-
-  // ---- Morning Ritual ----
-  const morningCard = document.getElementById('morning-ritual-card');
-  let morningTimeTimer;
-
-  morningCard.addEventListener('change', async (e) => {
-    const field = e.target.dataset.field;
-    if (field === 'toggle') {
-      morningRitual.enabled = e.target.checked;
-      await saveMorningRitual(morningRitual);
-    } else if (field === 'time') {
-      clearTimeout(morningTimeTimer);
-      morningTimeTimer = setTimeout(async () => {
-        morningRitual.time = e.target.value;
-        await saveMorningRitual(morningRitual);
-      }, 1500);
-    }
-  });
-
-  morningCard.addEventListener('focusout', (e) => {
-    if (e.target.dataset.field !== 'time') return;
-    clearTimeout(morningTimeTimer);
-    if (morningRitual.time === e.target.value) return;
-    morningRitual.time = e.target.value;
-    saveMorningRitual(morningRitual);
-  });
-
-  // ---- Evening Reflection ----
-  const eveningCard = document.getElementById('evening-reflection-card');
-  let eveningTimeTimer;
-
-  eveningCard.addEventListener('change', async (e) => {
-    const field = e.target.dataset.field;
-    if (field === 'toggle') {
-      eveningReflection.enabled = e.target.checked;
-      await saveEveningReflection(eveningReflection);
-    } else if (field === 'time') {
-      clearTimeout(eveningTimeTimer);
-      eveningTimeTimer = setTimeout(async () => {
-        eveningReflection.time = e.target.value;
-        await saveEveningReflection(eveningReflection);
-      }, 1500);
-    }
-  });
-
-  eveningCard.addEventListener('focusout', (e) => {
-    if (e.target.dataset.field !== 'time') return;
-    clearTimeout(eveningTimeTimer);
-    if (eveningReflection.time === e.target.value) return;
-    eveningReflection.time = e.target.value;
-    saveEveningReflection(eveningReflection);
-  });
-
-  // ---- Push Settings ----
+  // ---- Push Master Toggle ----
   const pushMainToggle = document.getElementById('push-main-toggle');
   const pushSubSettings = document.getElementById('push-sub-settings');
   const pushBlockedHint = document.getElementById('push-blocked-hint');
-  const pushMorningTime = document.getElementById('push-morning-time');
-  const pushEveningTime = document.getElementById('push-evening-time');
-  const pushSmallToggle = document.getElementById('push-small-toggle');
 
   function updatePushSubState() {
     const enabled = localStorage.getItem('loewenherz_push_enabled') === 'true';
@@ -343,7 +211,6 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
 
   pushMainToggle.addEventListener('change', () => {
     if (pushMainToggle.checked) {
-      // Einschalten
       if (typeof Notification !== 'undefined' && Notification.permission === 'denied') {
         pushBlockedHint.classList.remove('hidden');
         pushMainToggle.checked = false;
@@ -352,7 +219,6 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
       pushBlockedHint.classList.add('hidden');
 
       if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
-        // Browser-Permission-Dialog
         if (window.OneSignal && OneSignal.Slidedown) {
           OneSignal.Slidedown.promptPush();
         } else {
@@ -373,15 +239,16 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
       localStorage.setItem('loewenherz_push_enabled', 'true');
       updatePushSubState();
       syncOneSignalTags();
-      scheduleReminders();
     } else {
-      // Ausschalten
       localStorage.setItem('loewenherz_push_enabled', 'false');
       updatePushSubState();
       syncOneSignalTags();
-      scheduleReminders();
     }
   });
+
+  // ---- Morning / Evening time pickers ----
+  const pushMorningTime = document.getElementById('push-morning-time');
+  const pushEveningTime = document.getElementById('push-evening-time');
 
   let pushMorningTimer;
   pushMorningTime.addEventListener('change', () => {
@@ -389,14 +256,12 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
     pushMorningTimer = setTimeout(() => {
       localStorage.setItem('loewenherz_morning_time', pushMorningTime.value);
       syncOneSignalTags();
-      scheduleReminders();
     }, 1500);
   });
   pushMorningTime.addEventListener('focusout', () => {
     clearTimeout(pushMorningTimer);
     localStorage.setItem('loewenherz_morning_time', pushMorningTime.value);
     syncOneSignalTags();
-    scheduleReminders();
   });
 
   let pushEveningTimer;
@@ -405,21 +270,53 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
     pushEveningTimer = setTimeout(() => {
       localStorage.setItem('loewenherz_evening_time', pushEveningTime.value);
       syncOneSignalTags();
-      scheduleReminders();
     }, 1500);
   });
   pushEveningTime.addEventListener('focusout', () => {
     clearTimeout(pushEveningTimer);
     localStorage.setItem('loewenherz_evening_time', pushEveningTime.value);
     syncOneSignalTags();
-    scheduleReminders();
   });
 
-  pushSmallToggle.addEventListener('change', () => {
-    localStorage.setItem('loewenherz_small_reminders', pushSmallToggle.checked ? 'true' : 'false');
-    syncOneSignalTags();
-    scheduleReminders();
+  // ---- SMALL Slots: event delegation ----
+  const smallSlotsEl = document.getElementById('push-small-slots');
+  let smallTimers = {};
+
+  smallSlotsEl.addEventListener('change', (e) => {
+    const slotEl = e.target.closest('.push-small-slot');
+    if (!slotEl) return;
+    const id = slotEl.dataset.slotId;
+    const field = e.target.dataset.field;
+
+    if (field === 'toggle') {
+      localStorage.setItem(`loewenherz_small_${id}_enabled`, e.target.checked ? 'true' : 'false');
+      syncOneSignalTags();
+    } else if (field === 'time') {
+      clearTimeout(smallTimers[id]);
+      smallTimers[id] = setTimeout(() => {
+        localStorage.setItem(`loewenherz_small_${id}_time`, e.target.value);
+        syncOneSignalTags();
+        reRenderSmallSlots();
+      }, 1500);
+    }
   });
+
+  smallSlotsEl.addEventListener('focusout', (e) => {
+    if (e.target.dataset.field !== 'time') return;
+    const slotEl = e.target.closest('.push-small-slot');
+    if (!slotEl) return;
+    const id = slotEl.dataset.slotId;
+    clearTimeout(smallTimers[id]);
+    localStorage.setItem(`loewenherz_small_${id}_time`, e.target.value);
+    syncOneSignalTags();
+    reRenderSmallSlots();
+  });
+
+  function reRenderSmallSlots() {
+    const slots = getSmallSlots();
+    const sorted = [...slots].sort((a, b) => a.time.localeCompare(b.time));
+    smallSlotsEl.innerHTML = sorted.map(s => renderSmallSlot(s)).join('');
+  }
 
   // Crisis
   document.getElementById('settings-crisis').addEventListener('click', openCrisis);
@@ -438,13 +335,6 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
   document.getElementById('settings-delete').addEventListener('click', () => {
     showDeleteConfirm(t, onDataDeleted);
   });
-
-  // ---- Helper: re-render alarm list (sorted) ----
-  function reRenderList() {
-    const listEl = document.getElementById('reminders-list');
-    const sorted = sortByTime(reminders);
-    listEl.innerHTML = sorted.map(r => renderAlarmSlot(r)).join('');
-  }
 }
 
 const LEGAL_CONTENT = {
@@ -520,7 +410,6 @@ function showLegalPage(key, title) {
   `;
   document.body.appendChild(el);
 
-  // Animate in
   requestAnimationFrame(() => {
     requestAnimationFrame(() => el.classList.add('active'));
   });
