@@ -81,7 +81,7 @@ export function localTimeToUTC(timeStr) {
 // push_enabled entfällt — wenn Push aus: alle Tags löschen
 
 function buildTags() {
-  const pushEnabled = localStorage.getItem('loewenherz_push_enabled') === 'true';
+  const pushEnabled = localStorage.getItem('loewenherz_push_enabled') !== 'false';
 
   // Push deaktiviert → alle Tags löschen (leerer String = Tag wird gelöscht)
   if (!pushEnabled) {

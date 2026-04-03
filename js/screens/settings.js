@@ -60,7 +60,7 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
     localStorage.setItem('loewenherz_evening_time', '20:30');
   }
 
-  const pushEnabled = localStorage.getItem('loewenherz_push_enabled') === 'true';
+  const pushEnabled = localStorage.getItem('loewenherz_push_enabled') !== 'false';
   const smallSlots = getSmallSlots();
   const sortedSlots = [...smallSlots].sort((a, b) => a.time.localeCompare(b.time));
 
@@ -201,7 +201,7 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
   const pushBlockedHint = document.getElementById('push-blocked-hint');
 
   function updatePushSubState() {
-    const enabled = localStorage.getItem('loewenherz_push_enabled') === 'true';
+    const enabled = localStorage.getItem('loewenherz_push_enabled') !== 'false';
     if (enabled) {
       pushSubSettings.classList.remove('push-settings-disabled');
     } else {
