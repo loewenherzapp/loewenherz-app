@@ -5,7 +5,7 @@
 import { TEXTS } from '../../content/de.js';
 import { getProfile, saveProfile, clearAllData, migrateToV2 } from '../db.js';
 import { openCrisis } from '../components/crisis-modal.js';
-import { syncOneSignalTags } from '../push.js';
+import { syncOneSignalTags, roundTo15Min } from '../push.js';
 
 // Default SMALL reminder slots (3 enabled, 2 disabled)
 const DEFAULT_SMALL_SLOTS = [
@@ -250,32 +250,31 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
   const pushMorningTime = document.getElementById('push-morning-time');
   const pushEveningTime = document.getElementById('push-evening-time');
 
+  function saveTime(inputEl, storageKey) {
+    const rounded = roundTo15Min(inputEl.value);
+    inputEl.value = rounded;
+    localStorage.setItem(storageKey, rounded);
+    syncOneSignalTags();
+  }
+
   let pushMorningTimer;
   pushMorningTime.addEventListener('change', () => {
     clearTimeout(pushMorningTimer);
-    pushMorningTimer = setTimeout(() => {
-      localStorage.setItem('loewenherz_morning_time', pushMorningTime.value);
-      syncOneSignalTags();
-    }, 1500);
+    pushMorningTimer = setTimeout(() => saveTime(pushMorningTime, 'loewenherz_morning_time'), 1500);
   });
   pushMorningTime.addEventListener('focusout', () => {
     clearTimeout(pushMorningTimer);
-    localStorage.setItem('loewenherz_morning_time', pushMorningTime.value);
-    syncOneSignalTags();
+    saveTime(pushMorningTime, 'loewenherz_morning_time');
   });
 
   let pushEveningTimer;
   pushEveningTime.addEventListener('change', () => {
     clearTimeout(pushEveningTimer);
-    pushEveningTimer = setTimeout(() => {
-      localStorage.setItem('loewenherz_evening_time', pushEveningTime.value);
-      syncOneSignalTags();
-    }, 1500);
+    pushEveningTimer = setTimeout(() => saveTime(pushEveningTime, 'loewenherz_evening_time'), 1500);
   });
   pushEveningTime.addEventListener('focusout', () => {
     clearTimeout(pushEveningTimer);
-    localStorage.setItem('loewenherz_evening_time', pushEveningTime.value);
-    syncOneSignalTags();
+    saveTime(pushEveningTime, 'loewenherz_evening_time');
   });
 
   // ---- SMALL Slots: event delegation ----
@@ -294,7 +293,9 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
     } else if (field === 'time') {
       clearTimeout(smallTimers[id]);
       smallTimers[id] = setTimeout(() => {
-        localStorage.setItem(`loewenherz_small_${id}_time`, e.target.value);
+        const rounded = roundTo15Min(e.target.value);
+        e.target.value = rounded;
+        localStorage.setItem(`loewenherz_small_${id}_time`, rounded);
         syncOneSignalTags();
         reRenderSmallSlots();
       }, 1500);
@@ -307,7 +308,9 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
     if (!slotEl) return;
     const id = slotEl.dataset.slotId;
     clearTimeout(smallTimers[id]);
-    localStorage.setItem(`loewenherz_small_${id}_time`, e.target.value);
+    const rounded = roundTo15Min(e.target.value);
+    e.target.value = rounded;
+    localStorage.setItem(`loewenherz_small_${id}_time`, rounded);
     syncOneSignalTags();
     reRenderSmallSlots();
   });
