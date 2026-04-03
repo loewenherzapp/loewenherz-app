@@ -43,7 +43,7 @@ export default async function handler(req, res) {
   const players = playersData?.players || [];
 
   // ============================================================
-  // Schritt 3: Force-Tags setzen (nur 3 Tags — Free Plan!)
+  // Schritt 3: Force-Tags setzen (7 Tags: morning, evening, 5 SMALL slots)
   // Nur wenn ?force_tags=true
   // ============================================================
   const forceTagResults = [];
@@ -52,7 +52,11 @@ export default async function handler(req, res) {
     const testTags = {
       morning_utc: '05:00',
       evening_utc: '18:30',
-      small_enabled: 'true'
+      small_1_utc: '07:30',
+      small_2_utc: '10:30',
+      small_3_utc: '13:30',
+      small_4_utc: '',
+      small_5_utc: ''
     };
 
     for (const player of players) {
@@ -168,7 +172,7 @@ export default async function handler(req, res) {
 
     force_tag_results: forceTagResults.length > 0
       ? forceTagResults
-      : 'Add ?force_tags=true to set test tags (3 tags: morning_utc, evening_utc, small_enabled)',
+      : 'Add ?force_tags=true to set test tags (7 tags: morning_utc, evening_utc, small_1_utc..small_5_utc)',
 
     hints: {
       notification_types: '1=subscribed, -2=unsubscribed',
