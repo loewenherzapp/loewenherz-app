@@ -3,7 +3,7 @@
 // ============================================================
 
 import { TEXTS } from '../../content/de.js';
-import { getProfile, saveProfile, clearAllData, migrateToV2 } from '../db.js';
+import { saveProfile, clearAllData, migrateToV2 } from '../db.js';
 import { openCrisis } from '../components/crisis-modal.js';
 import { syncOneSignalTags, roundTo15Min } from '../push.js';
 
