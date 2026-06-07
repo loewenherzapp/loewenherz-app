@@ -187,7 +187,7 @@ async function switchTab(tab) {
   } else {
     appEl.classList.remove('reflexion-mode');
     appEl.removeAttribute('data-mood');
-    setThemeColor('#f5efe3');
+    setThemeColor('#f7ead8');
   }
 
   // Re-fetch profile in case name changed
@@ -229,7 +229,7 @@ async function showSettings() {
   const appEl = document.getElementById('app');
   appEl.classList.remove('reflexion-mode');
   appEl.removeAttribute('data-mood');
-  setThemeColor('#f5efe3');
+  setThemeColor('#f7ead8');
 
   profile = await getProfile();
 

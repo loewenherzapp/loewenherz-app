@@ -58,12 +58,13 @@
 
 /* ---- CSS Variables ---- */
 :root {
-  /* Hintergrund-Stufen */
-  --bg-page:      #f5efe3;
-  --bg-paper:     #faf6ed;
-  --bg-card:      #eee7d8;
-  --bg-inset:     rgba(120,100,70,0.05);
-  --bg-hover:     rgba(120,100,70,0.08);
+  /* Hintergrund-Stufen — Peach-Cream (an Buchcover angeglichen) */
+  --bg-page:      #f7ead8;
+  --bg-page-end:  #f0d8b8;          /* unteres Ende des Verlaufs */
+  --bg-paper:     #fbf2e2;
+  --bg-card:      #f1e2c9;
+  --bg-inset:     rgba(120,90,50,0.05);
+  --bg-hover:     rgba(120,90,50,0.08);
 
   /* Text-Hierarchie */
   --text-primary:   #2c2418;
@@ -96,10 +97,14 @@
   --color-L2-bg:    rgba(190,90,90,0.09);
   --color-L2-border: rgba(190,90,90,0.12);
 
-  /* Akzent & Glow */
-  --gold:       #b8922e;
-  --gold-warm:  #d4a843;
-  --gold-glow:  rgba(212,168,67,0.35);
+  /* Akzent & Glow — Bronze-Champagner (an Buchcover angeglichen) */
+  --gold:       #a87445;             /* Bronze für Flächen/Buttons */
+  --gold-text:  #8c5d35;             /* dunkleres Gold für Text/Links (AA-konform) */
+  --gold-warm:  #d4a070;
+  --gold-glow:  rgba(212,160,112,0.35);
+
+  /* Cover-Akzent — Wortmarke + Splash */
+  --ink-teal:   #3e6e78;
 
   /* Radius */
   --radius:    14px;
@@ -158,6 +163,7 @@ html {
 body {
   font-family: var(--font-sans);
   background: var(--bg-page);
+  background: linear-gradient(180deg, var(--bg-page) 0%, var(--bg-page-end) 100%) fixed;
   color: var(--text-body);
   line-height: 1.5;
   min-height: 100dvh;
@@ -213,7 +219,7 @@ a:active { opacity: 0.7; }
 .header-title {
   font-family: var(--font-serif);
   font-size: 19px;
-  color: var(--text-secondary);
+  color: var(--ink-teal);            /* Cover-Akzent: Wortmarke trägt Teal */
   transition: font-size 0.2s ease;
 }
 
@@ -292,7 +298,7 @@ a:active { opacity: 0.7; }
   padding: 8px 0;
   padding-bottom: calc(28px + var(--safe-bottom));
   border-top: 1px solid var(--divider);
-  background: var(--bg-page);
+  background: var(--bg-page-end);  /* matcht das Verlauf-Ende — keine Stufe sichtbar */
   position: fixed;
   bottom: 0;
   left: 50%;
@@ -652,24 +658,35 @@ a:active { opacity: 0.7; }
   gap: 7px;
 }
 
+/* SMALL-Tasten — Cream-Verlauf mit weichem 3D-Effekt (Variante 1) */
 .small-btn {
   flex: 1;
   height: 72px;
   border-radius: var(--radius);
-  background: var(--bg-paper);
-  border: 1.5px solid;
+  background: linear-gradient(180deg, #fef5e6 0%, #f4e5cd 100%);
+  border: 1px solid rgba(120,90,50,0.20);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 6px;
   cursor: pointer;
-  transition: transform 0.15s ease, background 0.2s ease;
   padding: 0;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.95),
+    inset 0 -1px 0 rgba(120,90,50,0.08),
+    0 3px 0 rgba(120,90,50,0.18),
+    0 4px 8px rgba(120,90,50,0.10);
+  transition: transform 0.12s ease-out, box-shadow 0.12s ease-out;
 }
 
 .small-btn:active {
-  transform: scale(0.93);
+  transform: translateY(3px);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.6),
+    inset 0 -1px 0 rgba(120,90,50,0.08),
+    0 0 0 rgba(120,90,50,0.18),
+    0 1px 3px rgba(120,90,50,0.12);
 }
 
 .btn-dot {
@@ -2135,7 +2152,7 @@ button.settings-link, .settings-link-btn {
 .legal-page {
   position: fixed;
   inset: 0;
-  background: var(--bg-page);
+  background: linear-gradient(180deg, var(--bg-page) 0%, var(--bg-page-end) 100%);
   z-index: 300;
   display: flex;
   flex-direction: column;
@@ -2608,9 +2625,9 @@ button.settings-link, .settings-link-btn {
   animation: dotGlow 600ms var(--ease-out);
 }
 @keyframes dotGlow {
-  0% { box-shadow: 0 0 0 0 rgba(200, 168, 78, 0); }
-  40% { box-shadow: 0 0 0 8px rgba(200, 168, 78, 0.35); }
-  100% { box-shadow: 0 0 0 0 rgba(200, 168, 78, 0); }
+  0% { box-shadow: 0 0 0 0 rgba(212, 160, 112, 0); }
+  40% { box-shadow: 0 0 0 8px rgba(212, 160, 112, 0.35); }
+  100% { box-shadow: 0 0 0 0 rgba(212, 160, 112, 0); }
 }
 
 /* Checkmark-Overlay im Dot */

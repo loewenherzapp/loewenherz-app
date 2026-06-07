@@ -163,7 +163,7 @@ export async function renderDashboard(container, profile, { animate = true } = {
     const colors = LETTER_COLORS[letter];
     const btn = document.createElement('button');
     btn.className = 'small-btn';
-    btn.style.borderColor = colors.border;
+    // Cover-Angleichung V1: Tastenfläche einheitlich (Cream), nur Dot trägt Farbe.
 
     const dot = document.createElement('div');
     dot.className = 'btn-dot';
