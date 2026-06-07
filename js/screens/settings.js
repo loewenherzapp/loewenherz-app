@@ -6,6 +6,7 @@ import { TEXTS } from '../../content/de.js';
 import { saveProfile, clearAllData, migrateToV2 } from '../db.js';
 import { openCrisis } from '../components/crisis-modal.js';
 import { syncOneSignalTags, roundTo15Min, ensureOneSignalLoaded } from '../push.js';
+import { downloadBackup, importBackup } from '../data-export.js';
 
 // Default SMALL reminder slots (3 enabled, 2 disabled)
 const DEFAULT_SMALL_SLOTS = [
@@ -127,6 +128,21 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
       <div class="settings-section">
         <div class="settings-label">${t.dataLabel}</div>
         <div class="settings-disclaimer">${t.dataHint}</div>
+      </div>
+
+      <!-- Backup (Export / Import) -->
+      <div class="settings-section">
+        <div class="settings-label">${t.backupLabel}</div>
+        <div class="settings-disclaimer">${t.backupHint}</div>
+        <div class="settings-card">
+          <button class="settings-link settings-link-btn" id="settings-export" type="button">
+            <span class="settings-link-text">↓ ${t.exportBtn}</span>
+          </button>
+          <button class="settings-link settings-link-btn" id="settings-import" type="button">
+            <span class="settings-link-text">↑ ${t.importBtn}</span>
+          </button>
+        </div>
+        <input type="file" id="settings-import-file" accept="application/json,.json" style="display:none">
       </div>
 
       <!-- Crisis -->
@@ -339,10 +355,86 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
     showLegalPage('datenschutz', t.datenschutz);
   });
 
+  // Backup: Export
+  document.getElementById('settings-export').addEventListener('click', async () => {
+    try {
+      await downloadBackup();
+      showToast(t.exportSuccess);
+    } catch (e) {
+      console.warn('[Settings] Export failed:', e);
+      alert(t.importError + ' ' + (e.message || e));
+    }
+  });
+
+  // Backup: Import
+  const importFileInput = document.getElementById('settings-import-file');
+  document.getElementById('settings-import').addEventListener('click', () => {
+    importFileInput.click();
+  });
+  importFileInput.addEventListener('change', async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    // File-Input zurücksetzen, sodass der gleiche File nochmal auswählbar bleibt
+    importFileInput.value = '';
+
+    showImportConfirm(t, async () => {
+      try {
+        const text = await file.text();
+        await importBackup(text);
+        showToast(t.importSuccess);
+        setTimeout(() => window.location.reload(), 1200);
+      } catch (err) {
+        console.warn('[Settings] Import failed:', err);
+        alert(t.importError + ' ' + (err.message || err));
+      }
+    });
+  });
+
   // Delete
   document.getElementById('settings-delete').addEventListener('click', () => {
     showDeleteConfirm(t, onDataDeleted);
   });
+}
+
+function showImportConfirm(t, onConfirm) {
+  const el = document.createElement('div');
+  el.innerHTML = `
+    <div class="confirm-overlay" id="confirm-overlay-import">
+      <div class="confirm-dialog">
+        <p class="confirm-text">${t.importConfirm}</p>
+        <div class="confirm-buttons">
+          <button class="btn-secondary" id="confirm-import-no">${t.deleteNo}</button>
+          <button class="btn-danger" id="confirm-import-yes">${t.importYes}</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const ov = document.getElementById('confirm-overlay-import');
+      if (ov) ov.classList.add('active');
+    });
+  });
+  document.getElementById('confirm-import-no').addEventListener('click', () => el.remove());
+  document.getElementById('confirm-import-yes').addEventListener('click', () => {
+    el.remove();
+    onConfirm();
+  });
+}
+
+function showToast(message) {
+  const toast = document.createElement('div');
+  toast.className = 'settings-toast';
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => toast.classList.add('visible'));
+  });
+  setTimeout(() => {
+    toast.classList.remove('visible');
+    setTimeout(() => toast.remove(), 300);
+  }, 2200);
 }
 
 const LEGAL_CONTENT = {
