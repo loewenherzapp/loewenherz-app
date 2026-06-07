@@ -455,7 +455,7 @@ export const TEXTS = {
       version: "Version 1.0",
       madeBy: "Ein Werkzeug von Der AngstDoc",
       bookLink: "Zum Buch",
-      bookUrl: "https://löwenherz-buch.de",
+      bookUrl: "https://buch.angstdoc.de/",
       disclaimer: "Diese App ersetzt keine Therapie. Sie ist ein Begleitwerkzeug zum Buch 'Löwenherz' und unterstützt dich bei der Umsetzung des SMALL-Systems im Alltag. Bei akuten psychischen Krisen wende dich bitte an die Telefonseelsorge oder einen Krisendienst.",
       impressum: "Impressum",
       impressumText: "impressum",
