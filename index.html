@@ -31,8 +31,6 @@ if ((location.pathname === '/install.html' || location.pathname === '/install')
 <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png">
 
 <link rel="stylesheet" href="css/styles.css">
-
-<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 </head>
 <body>
   <div id="app">
@@ -71,6 +69,19 @@ if ((location.pathname === '/install.html' || location.pathname === '/install')
     </div>
     <div id="crisis-modal"></div>
   </div>
+  <script>
+    // App-Cache-SW registrieren (kein OneSignal-Import → keine CDN-Anfrage vor Opt-in).
+    // Sobald der User Push aktiviert, ersetzt OneSignal-SDK den SW durch OneSignalSDKWorker.js.
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.getRegistration().then(function(reg) {
+          if (!reg || (reg.active && reg.active.scriptURL.indexOf('OneSignalSDKWorker') === -1)) {
+            navigator.serviceWorker.register('sw.js', { scope: '/' }).catch(function() {});
+          }
+        });
+      });
+    }
+  </script>
   <script type="module" src="js/app.js"></script>
   <script type="module">
     import { inject } from 'https://cdn.jsdelivr.net/npm/@vercel/analytics@1/dist/index.mjs';

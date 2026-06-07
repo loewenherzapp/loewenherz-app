@@ -1,34 +1,75 @@
 // ============================================================
 // Löwenherz PWA — Push Notifications (Server-Side Scheduling)
 // ============================================================
+//
+// DSGVO: Das OneSignal-SDK lädt NICHT mehr beim App-Start.
+// Es wird erst geladen, wenn der User Push aktiviert ODER wenn ein
+// Bestandsuser die App öffnet, der Push schon mal aktiviert hatte
+// (loewenherz_push_asked === 'true' && loewenherz_push_enabled !== 'false').
+// Damit fließt keine IP-Adresse an OneSignal/USA vor Einwilligung.
+// ============================================================
 
-// --- OneSignal Initialization ---
+const ONESIGNAL_SDK_URL = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';
+let oneSignalLoadPromise = null;
 
-window.OneSignalDeferred = window.OneSignalDeferred || [];
-OneSignalDeferred.push(async function(OneSignal) {
-  await OneSignal.init({
-    appId: "1aeeca68-13c9-400a-a243-dd749527c49f",
-    serviceWorkerParam: { scope: "/" },
-    serviceWorkerPath: "OneSignalSDKWorker.js",
-    notifyButton: { enable: false },
-    welcomeNotification: { disable: true }
-  });
+/**
+ * Lädt das OneSignal-SDK dynamisch nach und initialisiert es.
+ * Idempotent: weitere Aufrufe geben das gleiche Promise zurück.
+ */
+export function ensureOneSignalLoaded() {
+  if (oneSignalLoadPromise) return oneSignalLoadPromise;
 
-  console.log('[Push] OneSignal initialized');
-  console.log('[Push] OptedIn:', OneSignal.User.PushSubscription.optedIn);
-  console.log('[Push] PushSubscription.id:', OneSignal.User.PushSubscription.id);
+  oneSignalLoadPromise = new Promise((resolve) => {
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    window.OneSignalDeferred.push(async function(OneSignal) {
+      await OneSignal.init({
+        appId: "1aeeca68-13c9-400a-a243-dd749527c49f",
+        serviceWorkerParam: { scope: "/" },
+        serviceWorkerPath: "OneSignalSDKWorker.js",
+        notifyButton: { enable: false },
+        welcomeNotification: { disable: true }
+      });
 
-  // Auf Subscription-Änderung lauschen
-  OneSignal.User.PushSubscription.addEventListener('change', function(event) {
-    console.log('[Push] Subscription changed:', event.current);
-    if (event.current.optedIn) {
+      console.log('[Push] OneSignal initialized');
+      console.log('[Push] OptedIn:', OneSignal.User.PushSubscription.optedIn);
+      console.log('[Push] PushSubscription.id:', OneSignal.User.PushSubscription.id);
+
+      OneSignal.User.PushSubscription.addEventListener('change', function(event) {
+        console.log('[Push] Subscription changed:', event.current);
+        if (event.current.optedIn) {
+          attemptTagSync(0);
+        }
+      });
+
       attemptTagSync(0);
-    }
+      resolve(OneSignal);
+    });
+
+    // Script erst nach OneSignalDeferred-Setup injizieren
+    const script = document.createElement('script');
+    script.src = ONESIGNAL_SDK_URL;
+    script.defer = true;
+    document.head.appendChild(script);
   });
 
-  // Tags synchen — mit Polling bis PushSubscription.id bereit
-  attemptTagSync(0);
-});
+  return oneSignalLoadPromise;
+}
+
+// --- Auto-load für Bestandsuser ---
+// Wer Push schon mal aktiviert hat und nicht explizit deaktiviert hat,
+// braucht das SDK direkt (sonst keine Tag-Syncs, keine Subscription-Pflege).
+(function autoLoadForExistingUsers() {
+  try {
+    const asked = localStorage.getItem('loewenherz_push_asked') === 'true';
+    const enabled = localStorage.getItem('loewenherz_push_enabled') !== 'false';
+    const permitted = typeof Notification !== 'undefined' && Notification.permission === 'granted';
+    if (asked && enabled && permitted) {
+      ensureOneSignalLoaded();
+    }
+  } catch (e) {
+    // Silent — kein Push-Fail darf App-Start blockieren
+  }
+})();
 
 // --- Polling: Warte bis PushSubscription.id bereit ist ---
 
@@ -232,16 +273,19 @@ export function showPushSoftAsk() {
       }
     }
 
-    if (window.OneSignal && OneSignal.Slidedown) {
-      OneSignal.Slidedown.promptPush();
-    } else if (typeof Notification !== 'undefined') {
-      Notification.requestPermission().then(permission => {
-        if (permission === 'granted') {
-          localStorage.setItem('loewenherz_push_enabled', 'true');
-          attemptTagSync(0);
-        }
-      });
-    }
+    // SDK lazy nachladen, dann Permission-Prompt zeigen
+    ensureOneSignalLoaded().then(() => {
+      if (window.OneSignal && OneSignal.Slidedown) {
+        OneSignal.Slidedown.promptPush();
+      } else if (typeof Notification !== 'undefined') {
+        Notification.requestPermission().then(permission => {
+          if (permission === 'granted') {
+            localStorage.setItem('loewenherz_push_enabled', 'true');
+            attemptTagSync(0);
+          }
+        });
+      }
+    });
   });
 
   document.getElementById('push-later').addEventListener('click', () => {

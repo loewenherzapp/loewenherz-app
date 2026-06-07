@@ -5,7 +5,7 @@
 import { TEXTS } from '../../content/de.js';
 import { saveProfile, clearAllData, migrateToV2 } from '../db.js';
 import { openCrisis } from '../components/crisis-modal.js';
-import { syncOneSignalTags, roundTo15Min } from '../push.js';
+import { syncOneSignalTags, roundTo15Min, ensureOneSignalLoaded } from '../push.js';
 
 // Default SMALL reminder slots (3 enabled, 2 disabled)
 const DEFAULT_SMALL_SLOTS = [
@@ -219,26 +219,31 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
       pushBlockedHint.classList.add('hidden');
 
       if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
-        if (window.OneSignal && OneSignal.Slidedown) {
-          OneSignal.Slidedown.promptPush();
-        } else {
-          Notification.requestPermission().then(permission => {
-            if (permission === 'granted') {
-              localStorage.setItem('loewenherz_push_enabled', 'true');
-              updatePushSubState();
-              syncOneSignalTags();
-            } else {
-              pushMainToggle.checked = false;
-              localStorage.setItem('loewenherz_push_enabled', 'false');
-              updatePushSubState();
-            }
-          });
-        }
+        // SDK lazy nachladen (erster Push-Opt-in)
+        ensureOneSignalLoaded().then(() => {
+          if (window.OneSignal && OneSignal.Slidedown) {
+            OneSignal.Slidedown.promptPush();
+          } else {
+            Notification.requestPermission().then(permission => {
+              if (permission === 'granted') {
+                localStorage.setItem('loewenherz_push_enabled', 'true');
+                updatePushSubState();
+                syncOneSignalTags();
+              } else {
+                pushMainToggle.checked = false;
+                localStorage.setItem('loewenherz_push_enabled', 'false');
+                updatePushSubState();
+              }
+            });
+          }
+        });
       }
 
       localStorage.setItem('loewenherz_push_enabled', 'true');
+      localStorage.setItem('loewenherz_push_asked', 'true');
       updatePushSubState();
-      syncOneSignalTags();
+      // SDK ggf. nachladen (falls Permission schon granted aber SDK noch nicht da)
+      ensureOneSignalLoaded().then(() => syncOneSignalTags());
     } else {
       localStorage.setItem('loewenherz_push_enabled', 'false');
       updatePushSubState();
