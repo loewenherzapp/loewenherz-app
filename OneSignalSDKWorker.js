@@ -8,7 +8,7 @@ importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
 
 // === Cache Service Worker ===
 
-const CACHE_NAME = 'loewenherz-v59';
+const CACHE_NAME = 'loewenherz-v60';
 
 const URLS_TO_CACHE = [
   './',
@@ -38,7 +38,13 @@ const URLS_TO_CACHE = [
   './assets/gundula/gundula-entspannt-112.png',
   './assets/gundula/gundula-ruhig-112.png',
   './assets/gundula/gundula-wachsam-112.png',
-  './assets/gundula/gundula-tense-112.png'
+  './assets/gundula/gundula-tense-112.png',
+  './assets/fonts/dm-sans-latin.woff2',
+  './assets/fonts/dm-sans-latin-ext.woff2',
+  './assets/fonts/instrument-serif-regular-latin.woff2',
+  './assets/fonts/instrument-serif-regular-latin-ext.woff2',
+  './assets/fonts/instrument-serif-italic-latin.woff2',
+  './assets/fonts/instrument-serif-italic-latin-ext.woff2'
 ];
 
 // Install — cache all app files
