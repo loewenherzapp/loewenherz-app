@@ -364,7 +364,7 @@ const LEGAL_CONTENT = {
   `,
   datenschutz: `
     <h2>Datenschutzerklärung</h2>
-    <p class="legal-meta">Stand: März 2026</p>
+    <p class="legal-meta">Stand: Juni 2026</p>
 
     <h3>1. Verantwortlicher</h3>
     <p>Der AngstDoc und Kollegen S.R.L.<br>
@@ -374,8 +374,17 @@ const LEGAL_CONTENT = {
     E-Mail: <a href="mailto:pe@angstdoc.de">pe@angstdoc.de</a></p>
 
     <h3>2. Datenverarbeitung in der App</h3>
-    <p>Diese App speichert deine Daten (Reflexionen, Stimmungen, SMALL-Punkte, Einstellungen) ausschließlich lokal auf deinem Gerät (IndexedDB/LocalStorage). Es werden keine personenbezogenen Daten an unsere Server übertragen. Wir haben keinen Zugriff auf deine Eingaben.</p>
-    <p>Wenn du die App oder deine Browserdaten löschst, werden alle gespeicherten Daten unwiderruflich entfernt.</p>
+    <p>Diese App speichert deine Daten ausschließlich lokal auf deinem Gerät. Es werden keine Inhalte an unsere Server übertragen. Wir haben keinen Zugriff auf deine Eingaben.</p>
+    <p>Im Detail werden folgende Daten lokal gespeichert:</p>
+    <ul>
+      <li><strong>Profildaten:</strong> Dein Vorname, Erinnerungszeiten, Morgenritual- und Abendreflexions-Einstellungen</li>
+      <li><strong>SMALL-Punkte:</strong> Jeder Tap inkl. Datum und gewähltem Buchstabe</li>
+      <li><strong>Reflexionen:</strong> Deine täglichen Reflexionstexte und Stimmungseinträge</li>
+      <li><strong>Meilensteine:</strong> Erreichte Stufen und Fortschritts-Markierungen</li>
+      <li><strong>App-Einstellungen:</strong> Push-Schalter, Reminder-Zeiten</li>
+    </ul>
+    <p><strong>Wichtig — kein Cloud-Backup:</strong> Wenn du die App deinstallierst, deine Browserdaten löschst oder dein Gerät verlierst, sind alle Daten unwiderruflich weg. Du kannst sie jederzeit über den Export-Button in den Einstellungen als JSON-Datei sichern und später wieder importieren.</p>
+    <p>Rechtsgrundlage: Vertragserfüllung (Art. 6 Abs. 1 lit. b DSGVO).</p>
 
     <h3>3. Hosting</h3>
     <p>Die App wird über Vercel Inc. (440 N Barranca Ave #4133, Covina, CA 91723, USA) gehostet. Beim Aufruf der App werden automatisch technische Daten (u.a. IP-Adresse, Zeitpunkt des Zugriffs, Browsertyp) an Vercel-Server übermittelt. Diese Verarbeitung erfolgt auf Grundlage unseres berechtigten Interesses an der technischen Bereitstellung der App (Art. 6 Abs. 1 lit. f DSGVO).</p>
@@ -386,17 +395,30 @@ const LEGAL_CONTENT = {
     <p>Wir nutzen Vercel Web Analytics zur statistischen Auswertung der App-Nutzung. Dabei werden ausschließlich aggregierte, anonyme Daten erhoben — keine Cookies, keine persönlichen Daten, keine Nutzerprofile. Es ist keine Identifizierung einzelner Nutzer möglich.</p>
     <p>Rechtsgrundlage: Berechtigtes Interesse (Art. 6 Abs. 1 lit. f DSGVO).</p>
 
-    <h3>5. Cookies</h3>
-    <p>Diese App verwendet keine Cookies.</p>
+    <h3>5. Push-Benachrichtigungen (OneSignal)</h3>
+    <p>Für tägliche Erinnerungen (Morgenintention, Abendreflexion, SMALL-Reminder) nutzen wir den Push-Dienst von OneSignal Inc., 2194 Esperanca Avenue, Santa Clara, CA 95054, USA.</p>
+    <p><strong>OneSignal wird erst geladen, wenn du Push-Benachrichtigungen aktiv einschaltest.</strong> Vor deiner Einwilligung fließen keine Daten an OneSignal.</p>
+    <p>Nach deiner Aktivierung werden folgende Daten an OneSignal übertragen:</p>
+    <ul>
+      <li>Eine technische Push-Subscription-ID (kein Klarname, keine E-Mail)</li>
+      <li>Deine gewünschten Erinnerungszeiten in UTC-Format (z.B. "06:00") für bis zu 7 Tags: morning_utc, evening_utc, small_1_utc bis small_5_utc</li>
+      <li>Technische Verbindungsdaten (IP-Adresse, Browser-Typ) beim Laden des OneSignal-SDK von cdn.onesignal.com</li>
+    </ul>
+    <p>OneSignal verarbeitet Daten in den USA. Die Übermittlung erfolgt auf Basis von EU-Standardvertragsklauseln.</p>
+    <p>Rechtsgrundlage: Einwilligung (Art. 6 Abs. 1 lit. a DSGVO). Du kannst die Einwilligung jederzeit widerrufen — entweder über den Push-Schalter in den Einstellungen oder über die Benachrichtigungs-Einstellungen deines Geräts. Beim Widerruf werden alle Tags bei OneSignal gelöscht.</p>
+    <p>Mehr Informationen: <a href="https://onesignal.com/privacy_policy" target="_blank" rel="noopener noreferrer">onesignal.com/privacy_policy</a></p>
 
-    <h3>6. Keine Weitergabe an Dritte</h3>
-    <p>Deine Daten werden nicht an Dritte weitergegeben, verkauft oder für Werbezwecke genutzt.</p>
+    <h3>6. Cookies und lokale Speicher</h3>
+    <p>Diese App verwendet keine Cookies. Zur Speicherung deiner Daten nutzen wir IndexedDB und LocalStorage — beides lokale Browser-Speicher, die ausschließlich auf deinem Gerät verbleiben. Es findet keine Übertragung dieser Daten an unsere Server oder Dritte statt.</p>
 
-    <h3>7. Deine Rechte</h3>
-    <p>Du hast das Recht auf Auskunft, Berichtigung, Löschung und Einschränkung der Verarbeitung deiner Daten sowie das Recht auf Datenübertragbarkeit und Widerspruch. Da alle Daten lokal auf deinem Gerät gespeichert werden, hast du jederzeit volle Kontrolle — du kannst sie über die Browsereinstellungen oder durch Löschen der App entfernen.</p>
+    <h3>7. Keine Weitergabe an Dritte</h3>
+    <p>Deine Inhalte (Reflexionen, SMALL-Punkte, Profildaten) werden nicht an Dritte weitergegeben, verkauft oder für Werbezwecke genutzt. Die einzigen Drittanbieter, die technische Daten verarbeiten, sind Vercel (Hosting/Analytics) und — nach deiner Einwilligung — OneSignal (Push).</p>
+
+    <h3>8. Deine Rechte</h3>
+    <p>Du hast das Recht auf Auskunft, Berichtigung, Löschung und Einschränkung der Verarbeitung deiner Daten sowie das Recht auf Datenübertragbarkeit und Widerspruch. Da alle Inhalte lokal auf deinem Gerät gespeichert werden, hast du jederzeit volle Kontrolle — du kannst sie exportieren, importieren oder über den "Alle Daten löschen"-Button in den Einstellungen entfernen.</p>
     <p>Bei Fragen zum Datenschutz: <a href="mailto:pe@angstdoc.de">pe@angstdoc.de</a></p>
 
-    <h3>8. Beschwerderecht</h3>
+    <h3>9. Beschwerderecht</h3>
     <p>Du hast das Recht, dich bei einer Datenschutz-Aufsichtsbehörde zu beschweren. Die zuständige Behörde in Rumänien ist:</p>
     <p>Autoritatea Națională de Supraveghere a Prelucrării Datelor cu Caracter Personal (ANSPDCP)<br>
     B-dul G-ral. Gheorghe Magheru 28-30, Sector 1, București<br>
