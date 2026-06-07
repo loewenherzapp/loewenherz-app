@@ -405,7 +405,7 @@ export const TEXTS = {
         { key: "lion", emoji: "🦁", label: "Löwentag" }
       ],
       helpedTitle: "Was hat heute geholfen?",
-      helpedDontKnow: "Weiß nicht",
+      helpedDontKnow: "Etwas anderes / weiß nicht",
       helpedSurvived: "Hab überlebt",
       gratitudeTitle: "Wofür bist du gerade dankbar?",
       gratitudePlaceholder: "Ein Satz reicht...",
