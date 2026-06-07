@@ -12,6 +12,16 @@ import { checkMilestones } from '../milestones.js';
 const MOOD_MAP = {};
 TEXTS.ui.reflection.moods.forEach(m => { MOOD_MAP[m.key] = m; });
 
+// Vor 5 Uhr morgens gehört die Abendreflexion noch zum gestrigen Tag —
+// das Hub-Window erlaubt Abendreflexion bis 04:59 (hour <= 4).
+function getEveningReflectionDate() {
+  const now = new Date();
+  if (now.getHours() < 5) {
+    now.setDate(now.getDate() - 1);
+  }
+  return formatDate(now);
+}
+
 // B2: Animate step entrance (slideIn from right)
 function animateStepEntrance(container) {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -82,10 +92,11 @@ const WENN_DANN_TEXTS = {
 export async function renderReflection(container, profile) {
   const todayStr = formatDate(new Date());
   const hour = new Date().getHours();
+  const eveningDateStr = getEveningReflectionDate();
 
   // Check statuses
   const morningDone = isMorningReflectionDone(todayStr);
-  const eveningReflection = await getReflectionByDate(todayStr);
+  const eveningReflection = await getReflectionByDate(eveningDateStr);
   const eveningDone = !!eveningReflection;
 
   // Time windows
@@ -488,13 +499,14 @@ function startReflectionFlow(container, profile) {
   }
 
   async function finishReflection() {
-    const todayStr = formatDate(new Date());
+    // Vor 5 Uhr morgens: Reflexion und ihre Punkte gehören zum gestrigen Tag
+    const reflectionDateStr = getEveningReflectionDate();
     const helped = helpedAlt ? [helpedAlt] : selectedHelped;
 
     const endComment = getReflectionEndComment(selectedMood, name);
 
     await saveReflection({
-      date: todayStr,
+      date: reflectionDateStr,
       mood: selectedMood,
       helped: helped,
       gratitude: gratitudeText,
@@ -504,8 +516,8 @@ function startReflectionFlow(container, profile) {
     // Add 2 Gundula points for evening reflection
     const now = new Date();
     const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-    await addSmallPoint({ date: todayStr, time: timeStr, letter: 'S', category: 'reflection', categoryLabel: 'Abendreflexion' });
-    await addSmallPoint({ date: todayStr, time: timeStr, letter: 'M', category: 'reflection', categoryLabel: 'Abendreflexion' });
+    await addSmallPoint({ date: reflectionDateStr, time: timeStr, letter: 'S', category: 'reflection', categoryLabel: 'Abendreflexion' });
+    await addSmallPoint({ date: reflectionDateStr, time: timeStr, letter: 'M', category: 'reflection', categoryLabel: 'Abendreflexion' });
 
     // Milestone check (async, non-blocking)
     checkMilestones().catch(() => {});
