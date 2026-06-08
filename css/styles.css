@@ -235,9 +235,9 @@ a:active { opacity: 0.7; }
   border: none;
   padding: 8px;
   cursor: pointer;
-  opacity: 0.4;
+  opacity: 0.85;
   font-size: 14px;
-  color: var(--text-secondary);
+  color: var(--ink-teal);
   line-height: 1;
   flex-shrink: 0;
   min-width: 30px;
@@ -249,7 +249,7 @@ a:active { opacity: 0.7; }
 }
 
 .header-info-btn:active {
-  opacity: 0.8;
+  opacity: 1;
 }
 
 .header-info-btn.hidden {
@@ -296,8 +296,8 @@ a:active { opacity: 0.7; }
 .bottom-nav {
   display: flex;
   justify-content: space-around;
-  padding: 8px 0;
-  padding-bottom: calc(28px + var(--safe-bottom));
+  padding: 6px 0;
+  padding-bottom: calc(8px + var(--safe-bottom));   /* safe-bottom regelt iOS Home-Indikator selbst */
   border-top: 1px solid var(--divider);
   background: var(--bg-page-end);  /* matcht das Verlauf-Ende — keine Stufe sichtbar */
   position: fixed;
@@ -317,7 +317,8 @@ a:active { opacity: 0.7; }
   padding: 6px 18px;
   font-family: var(--font-sans);
   font-size: 15px;
-  color: var(--text-muted);
+  color: var(--ink-teal);            /* Cover-Akzent einheitlich */
+  opacity: 0.55;                      /* inactive: gedimmt */
   background: none;
   border: none;
   cursor: pointer;
@@ -328,7 +329,8 @@ a:active { opacity: 0.7; }
 }
 
 .nav-tab.active {
-  color: var(--text-primary);
+  opacity: 1;                         /* active: voll */
+  font-weight: 600;
 }
 
 .nav-tab::before {
@@ -402,7 +404,7 @@ a:active { opacity: 0.7; }
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding-bottom: calc(64px + var(--safe-bottom));
+  padding-bottom: calc(48px + var(--safe-bottom));   /* an verkleinerte Bottom-Nav angepasst */
   overflow-y: auto;
 }
 
@@ -576,7 +578,8 @@ a:active { opacity: 0.7; }
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  color: var(--text-muted);
+  color: var(--ink-teal);
+  opacity: 0.7;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -596,7 +599,7 @@ a:active { opacity: 0.7; }
   font-family: var(--font-serif);
   font-size: 24px;
   font-style: italic;
-  color: var(--text-primary);
+  color: var(--ink-teal);            /* Cover-Akzent einheitlich */
   line-height: 1.4;
 }
 
@@ -619,13 +622,13 @@ a:active { opacity: 0.7; }
 .stats-left .stats-number {
   font-family: var(--font-serif);
   font-size: 38px;
-  color: var(--text-primary);
+  color: var(--ink-teal);            /* Cover-Akzent einheitlich */
   line-height: 1;
 }
 .stats-left .stats-label {
   font-family: var(--font-sans);
   font-size: 11px;
-  color: var(--text-muted);
+  color: var(--ink-teal);
   margin-top: 2px;
 }
 
@@ -635,17 +638,17 @@ a:active { opacity: 0.7; }
 .stats-right .stats-value {
   font-family: var(--font-sans);
   font-size: 14px;
-  color: var(--text-body);
+  color: var(--ink-teal);
   line-height: 1;
 }
 .stats-right .stats-value-suffix {
   font-size: 14px;
-  color: var(--text-muted);
+  color: var(--ink-teal);
 }
 .stats-right .stats-label {
   font-family: var(--font-sans);
   font-size: 11px;
-  color: var(--text-muted);
+  color: var(--ink-teal);
   margin-top: 3px;
 }
 
@@ -711,7 +714,7 @@ a:active { opacity: 0.7; }
   font-family: var(--font-sans);
   font-size: 11px;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: var(--ink-teal);
 }
 
 /* Balance Bar — horizontal 5-segment */
@@ -770,7 +773,7 @@ a:active { opacity: 0.7; }
 .gundula-text {
   font-family: var(--font-sans);
   font-size: 14px;
-  color: var(--text-secondary);
+  color: var(--ink-teal);            /* Cover-Akzent einheitlich */
   flex: 1;
 }
 
@@ -794,9 +797,9 @@ a:active { opacity: 0.7; }
   border: none;
   padding: 8px;
   cursor: pointer;
-  opacity: 0.4;
+  opacity: 0.85;
   font-size: 14px;
-  color: var(--text-secondary);
+  color: var(--ink-teal);
   line-height: 1;
   flex-shrink: 0;
   min-width: 30px;
@@ -808,7 +811,7 @@ a:active { opacity: 0.7; }
 }
 
 .gundula-info-btn:active {
-  opacity: 0.8;
+  opacity: 1;
 }
 
 /* Info Sheet (Gundula) */
@@ -950,7 +953,7 @@ a:active { opacity: 0.7; }
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: var(--text-body);
+  color: var(--ink-teal);
 }
 
 /* Wochengesamtzahl inline neben dem Label */
@@ -976,7 +979,7 @@ a:active { opacity: 0.7; }
   cursor: pointer;
   opacity: 0.85;
   font-size: 14px;
-  color: var(--text-body);
+  color: var(--ink-teal);
   line-height: 1;
   flex-shrink: 0;
   min-width: 28px;
@@ -1077,7 +1080,7 @@ a:active { opacity: 0.7; }
   font-family: var(--font-sans);
   font-size: 12px;
   font-weight: 600;
-  color: var(--text-body);
+  color: var(--ink-teal);
 }
 
 /* Mantra */
@@ -1097,7 +1100,7 @@ a:active { opacity: 0.7; }
   font-family: var(--font-serif);
   font-size: 15px;
   font-style: italic;
-  color: var(--text-secondary);
+  color: var(--ink-teal);            /* Cover-Akzent einheitlich */
   line-height: 1.5;
 }
 
