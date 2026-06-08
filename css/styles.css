@@ -901,6 +901,21 @@ a:active { opacity: 0.7; }
   flex-shrink: 0;
 }
 
+/* Gundula-Variante: Icon + Dot + Text in einer Zeile */
+.info-states-gundula { gap: 10px; }
+.info-states-gundula .info-state {
+  gap: 12px;
+  padding: 4px 0;
+}
+.info-state-icon {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+.info-state-text { flex: 1; line-height: 1.4; }
+.info-state-text strong { color: var(--text-primary); }
+
 .info-sheet-close {
   width: 100%;
   padding: 14px;
@@ -925,6 +940,13 @@ a:active { opacity: 0.7; }
   margin-bottom: 12px;
 }
 
+.week-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
 .week-label {
   font-family: var(--font-sans);
   font-size: 11px;
@@ -932,7 +954,71 @@ a:active { opacity: 0.7; }
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--text-muted);
-  margin-bottom: 10px;
+}
+
+.week-info-btn {
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  cursor: pointer;
+  opacity: 0.4;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1;
+  flex-shrink: 0;
+  min-width: 28px;
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: manipulation;
+}
+.week-info-btn:active { opacity: 0.8; }
+
+/* Mini-Beispiele im Wochen-Info-Sheet (Stand-ins für week-circle) */
+.info-states-week { gap: 10px; }
+.info-states-week .info-state {
+  gap: 14px;
+  padding: 2px 0;
+}
+.week-info-glyph {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-family: var(--font-sans);
+  font-weight: 600;
+}
+.week-info-glyph.empty {
+  background: var(--bg-paper);
+  border: 1.5px solid var(--bg-card);
+}
+.week-info-glyph.points {
+  background: rgba(212,168,67,0.10);
+  border: 1.5px solid rgba(212,168,67,0.20);
+}
+.week-info-glyph.half {
+  background: rgba(200,168,78,0.15);
+  border: 1.5px solid rgba(200,168,78,0.30);
+}
+.week-info-glyph.full {
+  background: var(--gold-warm);
+  color: #fff;
+  border: 1.5px solid var(--gold-warm);
+  font-weight: 700;
+}
+.week-info-glyph.today {
+  background: var(--bg-paper);
+  border: 1.5px dashed var(--text-secondary);
+}
+.week-info-glyph.future {
+  background: var(--bg-paper);
+  border: 1.5px solid var(--bg-card);
+  opacity: 0.45;
 }
 
 .week-circles {

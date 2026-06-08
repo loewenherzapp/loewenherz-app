@@ -142,7 +142,10 @@ export async function renderDashboard(container, profile, { animate = true } = {
       </div>
 
       <div class="week-block">
-        <div class="week-label">DIESE WOCHE</div>
+        <div class="week-header">
+          <div class="week-label">DIESE WOCHE</div>
+          <button class="week-info-btn" id="week-info" aria-label="Wochenanzeige Info">ⓘ</button>
+        </div>
         <div class="week-circles" id="dashboard-week-circles"></div>
       </div>
 
@@ -252,6 +255,12 @@ export async function renderDashboard(container, profile, { animate = true } = {
     showGundulaInfo();
   });
 
+  // Wochenanzeige info button
+  document.getElementById('week-info').addEventListener('click', (e) => {
+    e.stopPropagation();
+    showWeekInfo();
+  });
+
   // Morning nudge tap -> navigate to reflection tab
   const nudgeEl = document.getElementById('quatschi-nudge');
   if (nudgeEl) {
@@ -322,11 +331,27 @@ function showGundulaInfo() {
       <p>Gundula ist dein Nervensystem — uralt, gut gemeint, manchmal etwas übervorsichtig.</p>
       <p>Sie reagiert auf deinen Biochemie-Cocktail: Schlaf, Bewegung, Stress, Ernährung. Je besser du für dich sorgst, desto ruhiger wird sie.</p>
       <p><strong>Gundula hat vier Zustände:</strong></p>
-      <div class="info-states">
-        <div class="info-state"><span class="info-dot" style="background:var(--color-M)"></span> Entspannt — Alles im grünen Bereich</div>
-        <div class="info-state"><span class="info-dot" style="background:var(--color-M);opacity:0.7"></span> Ruhig — Wachsam, aber gelassen</div>
-        <div class="info-state"><span class="info-dot" style="background:var(--gold)"></span> Wachsam — Aufmerksamkeit erhöht</div>
-        <div class="info-state"><span class="info-dot" style="background:var(--color-L2)"></span> Angespannt — Alarmstufe</div>
+      <div class="info-states info-states-gundula">
+        <div class="info-state">
+          <img src="assets/gundula/gundula-entspannt-56.png" alt="" class="info-state-icon" width="40" height="40">
+          <span class="info-dot" style="background:var(--color-M)"></span>
+          <span class="info-state-text"><strong>Entspannt</strong> — Alles im grünen Bereich</span>
+        </div>
+        <div class="info-state">
+          <img src="assets/gundula/gundula-ruhig-56.png" alt="" class="info-state-icon" width="40" height="40">
+          <span class="info-dot" style="background:var(--color-M);opacity:0.7"></span>
+          <span class="info-state-text"><strong>Ruhig</strong> — Wachsam, aber gelassen</span>
+        </div>
+        <div class="info-state">
+          <img src="assets/gundula/gundula-wachsam-56.png" alt="" class="info-state-icon" width="40" height="40">
+          <span class="info-dot" style="background:var(--gold)"></span>
+          <span class="info-state-text"><strong>Wachsam</strong> — Aufmerksamkeit erhöht</span>
+        </div>
+        <div class="info-state">
+          <img src="assets/gundula/gundula-tense-56.png" alt="" class="info-state-icon" width="40" height="40">
+          <span class="info-dot" style="background:var(--color-L2)"></span>
+          <span class="info-state-text"><strong>Angespannt</strong> — Alarmstufe</span>
+        </div>
       </div>
       <p>Ihr Zustand berechnet sich aus deinen SMALL-Punkten und deiner Aktivität der letzten Tage. Jeder Tap auf einen SMALL-Buchstaben hilft ihr, runterzukommen.</p>
       <button class="info-sheet-close">Verstanden</button>
@@ -341,6 +366,72 @@ function showGundulaInfo() {
   });
 
   // Close handlers
+  const close = () => {
+    overlay.classList.remove('active');
+    setTimeout(() => overlay.remove(), 300);
+  };
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) close();
+  });
+  overlay.querySelector('.info-sheet-close').addEventListener('click', close);
+}
+
+function showWeekInfo() {
+  const existing = document.getElementById('week-sheet-overlay');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'week-sheet-overlay';
+  overlay.className = 'info-sheet-overlay';
+
+  overlay.innerHTML = `
+    <div class="info-sheet">
+      <div class="info-sheet-grip"></div>
+      <h3>Deine Woche auf einen Blick</h3>
+      <p>Die sieben Kreise zeigen dir, was du an jedem Wochentag gemacht hast — Montag bis Sonntag.</p>
+      <p><strong>Die Zeichen bedeuten:</strong></p>
+      <div class="info-states info-states-week">
+        <div class="info-state">
+          <span class="week-info-glyph empty"></span>
+          <span class="info-state-text">Noch nichts gemacht</span>
+        </div>
+        <div class="info-state">
+          <span class="week-info-glyph points"></span>
+          <span class="info-state-text">SMALL-Punkte gesammelt</span>
+        </div>
+        <div class="info-state">
+          <span class="week-info-glyph half">☀️</span>
+          <span class="info-state-text"><strong>Morgenreflexion</strong> erledigt</span>
+        </div>
+        <div class="info-state">
+          <span class="week-info-glyph half">🌙</span>
+          <span class="info-state-text"><strong>Abendreflexion</strong> erledigt</span>
+        </div>
+        <div class="info-state">
+          <span class="week-info-glyph full">✓</span>
+          <span class="info-state-text"><strong>Beides</strong> — Morgen und Abend</span>
+        </div>
+        <div class="info-state">
+          <span class="week-info-glyph today"></span>
+          <span class="info-state-text">Heute (gestrichelter Rand)</span>
+        </div>
+        <div class="info-state">
+          <span class="week-info-glyph future"></span>
+          <span class="info-state-text">Tag liegt noch vor dir</span>
+        </div>
+      </div>
+      <p>Tippe auf einen vergangenen Tag, um Details zu sehen.</p>
+      <button class="info-sheet-close">Verstanden</button>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => overlay.classList.add('active'));
+  });
+
   const close = () => {
     overlay.classList.remove('active');
     setTimeout(() => overlay.remove(), 300);

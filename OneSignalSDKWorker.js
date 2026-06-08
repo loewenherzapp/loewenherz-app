@@ -8,7 +8,7 @@ importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
 
 // === Cache Service Worker ===
 
-const CACHE_NAME = 'loewenherz-v67';
+const CACHE_NAME = 'loewenherz-v68';
 
 const URLS_TO_CACHE = [
   './',
@@ -40,6 +40,10 @@ const URLS_TO_CACHE = [
   './assets/gundula/gundula-ruhig-112.png',
   './assets/gundula/gundula-wachsam-112.png',
   './assets/gundula/gundula-tense-112.png',
+  './assets/gundula/gundula-entspannt-56.png',
+  './assets/gundula/gundula-ruhig-56.png',
+  './assets/gundula/gundula-wachsam-56.png',
+  './assets/gundula/gundula-tense-56.png',
   './assets/fonts/dm-sans-latin.woff2',
   './assets/fonts/dm-sans-latin-ext.woff2',
   './assets/fonts/instrument-serif-regular-latin.woff2',
