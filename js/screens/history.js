@@ -128,7 +128,10 @@ export async function showDayDetail(dateStr) {
     html += `<div class="detail-popup-section"><div class="detail-popup-section-title">SMALL Punkte</div>`;
     points.forEach(p => {
       const ld = p.letter === 'L1' ? 'L₁' : p.letter === 'L2' ? 'L₂' : p.letter;
-      html += `<div class="detail-popup-item"><strong>${ld}</strong> ${p.categoryLabel || p.category}</div>`;
+      // Legacy-Daten: 'Morgenreflexion' wurde umbenannt zu 'Morgenkompass'
+      const rawLabel = p.categoryLabel || p.category;
+      const catLabel = rawLabel === 'Morgenreflexion' ? 'Morgenkompass' : rawLabel;
+      html += `<div class="detail-popup-item"><strong>${ld}</strong> ${catLabel}</div>`;
     });
     html += `</div>`;
   }

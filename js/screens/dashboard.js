@@ -13,7 +13,7 @@ import { getDashboardQuatschiText, getTapFeedback, showTapToast } from '../quats
 
 const MORNING_NUDGE_TEXTS = [
   "Quatschi fragt, ob du heute einen Plan hast?",
-  "Gundula wartet auf deine Morgenreflexion.",
+  "Gundula wartet auf deinen Morgenkompass.",
   "Wie willst du heute sein? Quatschi hat schon Vorschläge. Ignoriere sie.",
   "Die Weiche stellt sich nicht von allein."
 ];
@@ -398,7 +398,7 @@ function showWeekInfo() {
         </div>
         <div class="info-state">
           <span class="week-info-glyph small-points">3</span>
-          <span class="info-state-text"><strong>Morgenreflexion</strong> = 3 Punkte</span>
+          <span class="info-state-text"><strong>Morgenkompass</strong> = 3 Punkte</span>
         </div>
         <div class="info-state">
           <span class="week-info-glyph small-points">2</span>

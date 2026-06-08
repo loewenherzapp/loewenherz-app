@@ -104,7 +104,7 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
 
             <!-- Morning / Evening times (always active when push is on) -->
             <div class="push-setting-time">
-              <div class="push-setting-label">Morgenreflexion</div>
+              <div class="push-setting-label">Morgenkompass</div>
               <input type="time" class="reminder-time" id="push-morning-time" step="900" value="${localStorage.getItem('loewenherz_morning_time') || '07:00'}">
             </div>
             <div class="push-setting-time">

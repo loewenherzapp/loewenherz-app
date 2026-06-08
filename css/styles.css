@@ -1541,8 +1541,8 @@ a:active { opacity: 0.7; }
   padding: 12px;
   border: none;
   border-radius: var(--radius-sm);
-  background: var(--gold-warm);
-  color: #1a1714;
+  background: var(--gold);            /* Marken-Akzent (Teal) */
+  color: #fff;
   font-family: var(--font-sans);
   font-size: 14px;
   font-weight: 600;

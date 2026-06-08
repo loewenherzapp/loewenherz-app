@@ -39,7 +39,7 @@ const MORNING_DONE_QUATSCHI = [
   "Erledigt. Quatschi ist noch nicht mal wach.",
   "Weiche gestellt. Der Rest ist Bonus.",
   "Quatschi wollte moderieren. Zu spät.",
-  "Morgenreflexion gemacht. Quatschi ist irritiert."
+  "Morgenkompass gemacht. Quatschi ist irritiert."
 ];
 
 const EVENING_DONE_QUATSCHI = [
@@ -116,7 +116,7 @@ export async function renderReflection(container, profile) {
   // === Morning Card ===
   const morningClass = morningDone ? 'done' : (!morningActive ? 'inactive' : '');
   html += `<div class="ref-hub-card ref-card-morning ${morningClass}">`;
-  html += `<div class="ref-card-header"><span class="ref-card-icon">☀️</span><span class="ref-card-title">Morgenreflexion</span></div>`;
+  html += `<div class="ref-card-header"><span class="ref-card-icon">☀️</span><span class="ref-card-title">Morgenkompass</span></div>`;
 
   if (morningDone) {
     html += `<div class="ref-card-sub done-quatschi">${randomFrom(MORNING_DONE_QUATSCHI)}</div>`;
@@ -305,9 +305,9 @@ function startMorningFlow(container, profile) {
       // Gundula-Score is day-based (unique days with ≥1 point in last 7 days)
       // Adding 3 points increases today's total but thresholds are day-based, not point-based
       // TODO: Schwellenwerte prüfen falls nötig — neuer theoretischer Max-Tagesscore ist 10 statt 5 (3 Morgen + 5 SMALL + 2 Abend)
-      await addSmallPoint({ date: todayStr, time: timeStr, letter: 'S', category: 'morning-reflection', categoryLabel: 'Morgenreflexion' });
-      await addSmallPoint({ date: todayStr, time: timeStr, letter: 'M', category: 'morning-reflection', categoryLabel: 'Morgenreflexion' });
-      await addSmallPoint({ date: todayStr, time: timeStr, letter: 'A', category: 'morning-reflection', categoryLabel: 'Morgenreflexion' });
+      await addSmallPoint({ date: todayStr, time: timeStr, letter: 'S', category: 'morning-reflection', categoryLabel: 'Morgenkompass' });
+      await addSmallPoint({ date: todayStr, time: timeStr, letter: 'M', category: 'morning-reflection', categoryLabel: 'Morgenkompass' });
+      await addSmallPoint({ date: todayStr, time: timeStr, letter: 'A', category: 'morning-reflection', categoryLabel: 'Morgenkompass' });
 
       // Save to localStorage
       saveMorningReflectionDone(todayStr, selectedChip, customText);
