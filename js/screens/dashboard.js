@@ -48,7 +48,7 @@ const GUNDULA_TEXTS = {
 
 const GUNDULA_PIP_COLORS = {
   tense: 'var(--color-L2)',
-  wachsam: 'var(--gold)',
+  wachsam: 'var(--gold-warm)',   /* warm-warn-Semantik: bewusst Gold, nicht Marken-Teal */
   ruhig: 'var(--color-M)',
   entspannt: 'var(--color-M)'
 };
@@ -344,7 +344,7 @@ function showGundulaInfo() {
         </div>
         <div class="info-state">
           <img src="assets/gundula/gundula-wachsam-56.png" alt="" class="info-state-icon" width="40" height="40">
-          <span class="info-dot" style="background:var(--gold)"></span>
+          <span class="info-dot" style="background:var(--gold-warm)"></span>
           <span class="info-state-text"><strong>Wachsam</strong> — Aufmerksamkeit erhöht</span>
         </div>
         <div class="info-state">

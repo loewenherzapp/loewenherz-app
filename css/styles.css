@@ -97,14 +97,15 @@
   --color-L2-bg:    rgba(190,90,90,0.09);
   --color-L2-border: rgba(190,90,90,0.12);
 
-  /* Akzent & Glow — Bronze-Champagner (an Buchcover angeglichen) */
-  --gold:       #a87445;             /* Bronze für Flächen/Buttons */
-  --gold-text:  #8c5d35;             /* dunkleres Gold für Text/Links (AA-konform) */
+  /* Cover-Akzent — Wortmarke + Splash + Marken-CTA-Farbe */
+  --ink-teal:   #3e6e78;
+
+  /* Marken-Akzent (war früher Bronze, jetzt Teal — überall im Light Mode) */
+  --gold:       var(--ink-teal);     /* Primärer Akzent: Buttons, Links, Active-States, Focus */
+
+  /* Warmer Sekundär-Akzent — bleibt warm für Glow/Wachsam/Reflexion-Dark-Mode */
   --gold-warm:  #d4a070;
   --gold-glow:  rgba(212,160,112,0.35);
-
-  /* Cover-Akzent — Wortmarke + Splash */
-  --ink-teal:   #3e6e78;
 
   /* Radius */
   --radius:    14px;
@@ -922,8 +923,8 @@ a:active { opacity: 0.7; }
   margin-top: 16px;
   border: none;
   border-radius: var(--radius-sm);
-  background: var(--gold-warm);
-  color: #1a1714;
+  background: var(--gold);                /* Marken-Akzent (Teal) */
+  color: #fff;
   font-family: var(--font-sans);
   font-size: 15px;
   font-weight: 600;
