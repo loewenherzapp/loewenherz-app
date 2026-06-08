@@ -956,6 +956,22 @@ a:active { opacity: 0.7; }
   color: var(--text-muted);
 }
 
+/* Wochengesamtzahl inline neben dem Label */
+.week-total {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  background: var(--gold-warm);
+  color: #fff;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  vertical-align: middle;
+  line-height: 1.4;
+}
+
 .week-info-btn {
   background: none;
   border: none;
@@ -975,15 +991,15 @@ a:active { opacity: 0.7; }
 }
 .week-info-btn:active { opacity: 0.8; }
 
-/* Mini-Beispiele im Wochen-Info-Sheet (Stand-ins für week-circle) */
+/* Mini-Beispiele im Wochen-Info-Sheet */
 .info-states-week { gap: 10px; }
 .info-states-week .info-state {
   gap: 14px;
   padding: 2px 0;
 }
 .week-info-glyph {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   flex-shrink: 0;
   display: flex;
@@ -991,34 +1007,12 @@ a:active { opacity: 0.7; }
   justify-content: center;
   font-size: 13px;
   font-family: var(--font-sans);
-  font-weight: 600;
+  font-weight: 700;
 }
-.week-info-glyph.empty {
-  background: var(--bg-paper);
-  border: 1.5px solid var(--bg-card);
-}
-.week-info-glyph.points {
-  background: rgba(212,168,67,0.10);
-  border: 1.5px solid rgba(212,168,67,0.20);
-}
-.week-info-glyph.half {
-  background: rgba(200,168,78,0.15);
-  border: 1.5px solid rgba(200,168,78,0.30);
-}
-.week-info-glyph.full {
+.week-info-glyph.small-points {
   background: var(--gold-warm);
   color: #fff;
   border: 1.5px solid var(--gold-warm);
-  font-weight: 700;
-}
-.week-info-glyph.today {
-  background: var(--bg-paper);
-  border: 1.5px dashed var(--text-secondary);
-}
-.week-info-glyph.future {
-  background: var(--bg-paper);
-  border: 1.5px solid var(--bg-card);
-  opacity: 0.45;
 }
 
 .week-circles {
@@ -1042,50 +1036,44 @@ a:active { opacity: 0.7; }
   align-items: center;
   justify-content: center;
   font-family: var(--font-sans);
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 700;
   transition: all 0.3s ease;
   cursor: default;
 }
 
-/* Stufe 1: Nichts gemacht */
+/* 0 Punkte: leerer Kreis */
 .week-circle.empty {
   background: var(--bg-paper);
   border: 1.5px solid var(--bg-card);
   color: var(--text-muted);
 }
 
-/* Hat nur SMALL-Punkte, keine Reflexion */
-.week-circle.dot-points {
-  background: rgba(212,168,67,0.10);
-  border: 1.5px solid rgba(212,168,67,0.20);
-}
-
-/* Stufe 2: Nur Morgen oder nur Abend */
-.week-circle.dot-half {
-  background: rgba(200, 168, 78, 0.15);
-  border: 1.5px solid rgba(200, 168, 78, 0.30);
-  font-size: 16px;
-  line-height: 1;
-}
-
-/* Stufe 3: Beides erledigt */
-.week-circle.dot-both {
+/* 1+ Punkte: Zahl auf Bronze */
+.week-circle.has-points {
   background: var(--gold-warm);
   color: #fff;
   border: 1.5px solid var(--gold-warm);
-  box-shadow: 0 0 8px rgba(212,168,67,0.25);
-  font-size: 15px;
-  font-weight: 700;
+  box-shadow: 0 0 8px rgba(212,160,112,0.25);
 }
 
-/* Heutiger Tag: gestrichelter Rand */
+/* Zweistellig: Schrift etwas kleiner damit alles reinpasst */
+.week-circle.two-digit {
+  font-size: 13px;
+}
+
+/* Heute: gestrichelter Rand (überschreibt auch has-points-Border) */
 .week-circle.today {
   border-style: dashed;
   border-color: var(--text-secondary);
 }
-.week-circle.today.dot-both {
+.week-circle.today.has-points {
   border-color: var(--gold-warm);
+}
+
+/* Zukunft: verblasst */
+.week-circle.future {
+  opacity: 0.4;
 }
 
 .week-day-label {

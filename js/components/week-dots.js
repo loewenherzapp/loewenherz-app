@@ -134,6 +134,31 @@ function renderDot(dotClass, dateStr, todayStr, today, status, hasPoints, useEmo
 }
 
 /**
+ * Render a single dot for the Heute-Tab week view:
+ * shows the SMALL-point count of the day (including reflection bonuses).
+ * 0 points = empty circle, 1+ = circle with number + bronze fill.
+ */
+function renderDotWithCount(dotClass, dateStr, todayStr, today, pointCount) {
+  const dot = document.createElement('div');
+  dot.className = dotClass;
+
+  const isFuture = new Date(dateStr + 'T12:00:00') > today && dateStr !== todayStr;
+  if (dateStr === todayStr) dot.classList.add('today');
+  if (isFuture) dot.classList.add('future');
+
+  if (pointCount > 0) {
+    dot.classList.add('has-points');
+    dot.textContent = String(pointCount);
+    // Schrift für zweistellige Zahlen leicht reduzieren
+    if (pointCount >= 10) dot.classList.add('two-digit');
+  } else {
+    dot.classList.add('empty');
+  }
+
+  return dot;
+}
+
+/**
  * Render week circles for the dashboard (current week).
  */
 export function renderWeekCircles(container, points, reflections, onDayClick) {
@@ -142,7 +167,6 @@ export function renderWeekCircles(container, points, reflections, onDayClick) {
   const monday = getMonday(today);
 
   const pointsByDay = groupByDate(points);
-  const reflectionsByDay = groupReflectionsByDate(reflections);
 
   container.innerHTML = '';
 
@@ -155,11 +179,11 @@ export function renderWeekCircles(container, points, reflections, onDayClick) {
     wrap.className = 'week-circle-wrap';
 
     const dayPoints = pointsByDay[dateStr] || [];
-    const status = getReflectionStatus(dateStr, reflectionsByDay);
+    const count = dayPoints.length;
 
-    const circle = renderDot('week-circle', dateStr, todayStr, today, status, dayPoints.length > 0, true);
+    const circle = renderDotWithCount('week-circle', dateStr, todayStr, today, count);
 
-    if (dayPoints.length > 0 || status.morning || status.evening) {
+    if (count > 0) {
       circle.style.cursor = 'pointer';
       circle.addEventListener('click', () => onDayClick && onDayClick(dateStr));
     }
