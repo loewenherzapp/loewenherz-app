@@ -173,10 +173,10 @@ async function switchTab(tab) {
     btn.classList.toggle('active', btn.dataset.tab === tab);
   });
 
-  // Header: prominent title + info button on dashboard only
+  // Header: prominent title on Heute + Verlauf, info button nur auf Heute
   const headerTitle = document.querySelector('.header-title');
   const headerInfoBtn = document.getElementById('header-info-btn');
-  if (headerTitle) headerTitle.classList.toggle('prominent', tab === 'today');
+  if (headerTitle) headerTitle.classList.toggle('prominent', tab === 'today' || tab === 'history');
   if (headerInfoBtn) headerInfoBtn.classList.toggle('hidden', tab !== 'today');
 
   // Reflexion mode: toggle dark class on #app
