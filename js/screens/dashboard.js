@@ -406,7 +406,7 @@ function showWeekInfo() {
         </div>
       </div>
       <p><strong>Die kleine Zahl oben</strong> neben „Diese Woche" ist deine Wochensumme — alle Punkte der laufenden Woche zusammen.</p>
-      <p><strong>Kreis-Stil:</strong> Bronze gefüllt = aktiver Tag · Leer = nichts gemacht · Gestrichelt = heute · Verblasst = liegt noch vor dir.</p>
+      <p><strong>Kreis-Stil:</strong> Teal gefüllt = aktiver Tag · Leer = nichts gemacht · Gestrichelt = heute · Verblasst = liegt noch vor dir.</p>
       <p>Tippe auf einen vergangenen Tag, um Details zu sehen.</p>
       <button class="info-sheet-close">Verstanden</button>
     </div>
