@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Bestätigt — Löwenherz</title>
+  <meta name="description" content="Deine E-Mail ist bestätigt. Du bist dabei.">
+  <link rel="icon" type="image/png" href="/assets/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="/assets/icons/icon-180.png">
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: linear-gradient(180deg, #f7ead8 0%, #f0d8b8 100%) fixed;
+      color: #2c2418;
+      line-height: 1.6;
+      min-height: 100vh;
+      min-height: 100dvh;
+      -webkit-font-smoothing: antialiased;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .card {
+      max-width: 440px;
+      width: 100%;
+      background: #fbf2e2;
+      border-radius: 24px;
+      padding: 48px 32px 40px;
+      box-shadow: 0 4px 24px rgba(120, 100, 70, 0.12);
+      text-align: center;
+    }
+
+    .checkmark {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 24px;
+      border-radius: 50%;
+      background: #b8922e;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      font-weight: 600;
+      line-height: 1;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 16px;
+      color: #2c2418;
+    }
+
+    .lead {
+      font-size: 17px;
+      color: #4a3f30;
+      margin-bottom: 8px;
+    }
+
+    .lead-sub {
+      font-size: 17px;
+      color: #4a3f30;
+      margin-bottom: 32px;
+    }
+
+    .app-btn {
+      display: inline-block;
+      padding: 14px 28px;
+      background: #3e6e78;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+      text-decoration: none;
+      border-radius: 12px;
+      transition: background 0.2s, transform 0.1s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .app-btn:active {
+      transform: scale(0.98);
+      background: #2d5560;
+    }
+
+    .desktop-hint {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid rgba(120, 100, 70, 0.12);
+      font-size: 14px;
+      color: #8a7d6a;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="checkmark" aria-hidden="true">✓</div>
+    <h1>Bestätigt!</h1>
+    <p class="lead">Danke — du bist dabei.</p>
+    <p class="lead-sub">Ab jetzt bekommst du ab und zu einen Impuls von mir.</p>
+    <a href="https://app.angstdoc.de" class="app-btn">Zur App →</a>
+    <p class="desktop-hint">
+      Du hast am Desktop bestätigt? Alles gut —<br>
+      die App auf deinem Handy ist ready.
+    </p>
+  </main>
+</body>
+</html>

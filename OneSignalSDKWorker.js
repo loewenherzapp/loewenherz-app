@@ -8,7 +8,7 @@ importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
 
 // === Cache Service Worker ===
 
-const CACHE_NAME = 'loewenherz-v77';
+const CACHE_NAME = 'loewenherz-v78';
 
 const URLS_TO_CACHE = [
   './',
@@ -81,6 +81,9 @@ self.addEventListener('fetch', (event) => {
 
   // install.html ist eigenständig — immer vom Netzwerk laden, nie cachen
   if (event.request.url.includes('install.html')) return;
+
+  // confirmed.html ist eigenständig (Brevo-DOI-Redirect) — immer Netzwerk, nie cachen
+  if (event.request.url.includes('confirmed.html')) return;
 
   event.respondWith(
     caches.match(event.request).then((cached) => {
