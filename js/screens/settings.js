@@ -7,6 +7,7 @@ import { saveProfile, clearAllData, migrateToV2 } from '../db.js';
 import { openCrisis } from '../components/crisis-modal.js';
 import { syncOneSignalTags, roundTo15Min, ensureOneSignalLoaded } from '../push.js';
 import { downloadBackup, importBackup } from '../data-export.js';
+import { isValidEmail, subscribeEmail, lockButton } from '../emailSignup.js';
 
 // Default SMALL reminder slots (3 enabled, 2 disabled)
 const DEFAULT_SMALL_SLOTS = [
@@ -170,6 +171,11 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
       <!-- Disclaimer -->
       <div class="settings-section">
         <div class="settings-disclaimer">${t.disclaimer}</div>
+      </div>
+
+      <!-- E-Mail -->
+      <div class="settings-section">
+        <div class="settings-card" id="settings-email-card"></div>
       </div>
 
       <!-- Legal -->
@@ -342,6 +348,9 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
     smallSlotsEl.innerHTML = sorted.map(s => renderSmallSlot(s)).join('');
   }
 
+  // E-Mail (Anzeige oder Eintragen-Formular)
+  renderEmailCard(t);
+
   // Crisis
   document.getElementById('settings-crisis').addEventListener('click', openCrisis);
 
@@ -393,6 +402,90 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
   // Delete
   document.getElementById('settings-delete').addEventListener('click', () => {
     showDeleteConfirm(t, onDataDeleted);
+  });
+}
+
+// ---- E-Mail-Signup (gemeinsames Modul, gleiche Logik wie Gate-Screen) ----
+function renderEmailCard(t) {
+  const card = document.getElementById('settings-email-card');
+  if (!card) return;
+  const tg = TEXTS.ui.emailGate;
+  const email = localStorage.getItem('userEmail');
+
+  if (email) {
+    card.innerHTML = `
+      <div class="settings-email-display">
+        <span class="settings-link-text"></span>
+        <span class="settings-email-check">✓</span>
+      </div>
+    `;
+    card.querySelector('.settings-link-text').textContent = `E-Mail: ${email}`;
+    return;
+  }
+
+  card.innerHTML = `
+    <div class="settings-link" id="settings-email-add">
+      <span class="settings-link-text">${tg.settingsAdd}</span>
+    </div>
+    <form class="settings-email-form hidden" id="settings-email-form" novalidate>
+      <input type="email" class="settings-input" id="settings-email-input"
+             placeholder="${tg.placeholder}" autocomplete="email" inputmode="email" maxlength="254">
+      <div class="email-gate-error hidden" id="settings-email-error"></div>
+      <label class="email-gate-consent">
+        <input type="checkbox" id="settings-email-consent">
+        <span>${tg.consentPre} <a href="#" id="settings-email-privacy">${tg.consentLink}</a> ${tg.consentPost}</span>
+      </label>
+      <button type="submit" class="btn-primary" id="settings-email-submit">${tg.settingsSubmit}</button>
+    </form>
+  `;
+
+  const addLink = document.getElementById('settings-email-add');
+  const form = document.getElementById('settings-email-form');
+  const input = document.getElementById('settings-email-input');
+  const consent = document.getElementById('settings-email-consent');
+  const errorEl = document.getElementById('settings-email-error');
+  const submitBtn = document.getElementById('settings-email-submit');
+
+  addLink.addEventListener('click', () => {
+    form.classList.toggle('hidden');
+    if (!form.classList.contains('hidden')) input.focus();
+  });
+
+  document.getElementById('settings-email-privacy').addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    showLegalPage('datenschutz', t.datenschutz);
+  });
+
+  function showError(msg) {
+    errorEl.textContent = msg;
+    errorEl.classList.remove('hidden');
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorEl.classList.add('hidden');
+
+    const email = input.value.trim();
+    if (!email) { showError(tg.errEmpty); return; }
+    if (!isValidEmail(email)) { showError(tg.errInvalid); return; }
+    if (!consent.checked) { showError(tg.errConsent); return; }
+
+    lockButton(submitBtn, 60);
+    submitBtn.textContent = tg.sending;
+
+    const result = await subscribeEmail(email);
+
+    if (result.ok) {
+      localStorage.setItem('userEmail', email);
+      localStorage.removeItem('emailSkipped');
+      localStorage.setItem('emailGateComplete', 'true');
+      showToast(tg.success);
+      renderEmailCard(t);
+    } else {
+      showError(result.error);
+      submitBtn.textContent = tg.settingsSubmit;
+    }
   });
 }
 
@@ -518,7 +611,7 @@ const LEGAL_CONTENT = {
   `
 };
 
-function showLegalPage(key, title) {
+export function showLegalPage(key, title) {
   const el = document.createElement('div');
   el.className = 'legal-page';
   el.innerHTML = `

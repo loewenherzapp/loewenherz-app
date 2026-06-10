@@ -479,6 +479,23 @@ export const TEXTS = {
       footer: "Wenn du professionelle Hilfe brauchst, ist das ein Zeichen von Stärke.",
       close: "Schließen"
     },
+    emailGate: {
+      headline: "Willkommen bei Löwenherz.",
+      copy: "Schön, dass du hier bist. Trag dich ein und ich schicke dir ab und zu einen Impuls — kein Spam, versprochen.",
+      placeholder: "Deine E-Mail-Adresse",
+      consentPre: "Ich stimme der",
+      consentLink: "Datenschutzerklärung",
+      consentPost: "zu.",
+      submit: "Los geht's",
+      sending: "Wird gesendet…",
+      success: "Check dein Postfach ✓",
+      skip: "Erstmal ohne →",
+      errEmpty: "Bitte E-Mail-Adresse eingeben",
+      errInvalid: "Das sieht nicht wie eine E-Mail-Adresse aus",
+      errConsent: "Bitte Datenschutzerklärung bestätigen",
+      settingsAdd: "E-Mail für Updates eintragen →",
+      settingsSubmit: "Eintragen"
+    },
     landing: {
       title: "Löwenherz installieren",
       subtitle: "Damit alles funktioniert, füge Löwenherz zu deinem Homescreen hinzu:",

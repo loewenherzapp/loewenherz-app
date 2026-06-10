@@ -503,6 +503,38 @@ a:active { opacity: 0.7; }
 .onboarding-reminder-title { font-family: var(--font-serif); font-size: 20px; margin-bottom: 8px; text-align: center; color: var(--text-primary); }
 .onboarding-reminder-hint { color: var(--text-secondary); font-size: 12px; text-align: center; margin-bottom: 28px; }
 
+/* ---- E-Mail-Gate + E-Mail-Signup (Settings) ---- */
+.email-gate-lion { font-size: 48px; text-align: center; margin-bottom: 16px; }
+.email-gate-copy {
+  color: var(--text-body); font-size: 15px; line-height: 1.6;
+  text-align: center; margin-bottom: 28px;
+}
+.email-gate-consent {
+  display: flex; align-items: flex-start; gap: 10px;
+  margin-top: 12px; min-height: 44px; padding: 8px 0;
+  cursor: pointer; color: var(--text-secondary);
+  font-size: 14px; line-height: 1.5;
+}
+.email-gate-consent input[type="checkbox"] {
+  width: 18px; height: 18px; margin-top: 2px;
+  accent-color: var(--gold); flex-shrink: 0;
+}
+.email-gate-consent a { color: var(--gold); }
+.email-gate-error { color: var(--color-L2); font-size: 14px; margin-top: 8px; }
+.email-gate-skip {
+  display: block; margin: 24px auto 0;
+  background: none; border: none;
+  color: var(--text-muted); font-size: 14px;
+  cursor: pointer; min-height: 44px; padding: 8px 16px;
+}
+.settings-email-display {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 0; min-height: 44px;
+}
+.settings-email-check { color: var(--gold); font-weight: 600; }
+.settings-email-form { padding: 8px 0 14px; }
+.settings-email-form .btn-primary { margin-top: 12px; }
+
 .reminder-slot {
   display: flex; align-items: center; justify-content: space-between;
   background: var(--bg-paper); border-radius: var(--radius-sm);

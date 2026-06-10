@@ -3,13 +3,14 @@
 // ============================================================
 
 import { TEXTS } from '../content/de.js';
-import { initDB, getProfile } from './db.js';
+import { initDB, getProfile, getAllPoints, getAllReflections } from './db.js';
 import { initMilestones, markMilestonesSeen, getUnseenMilestoneCount } from './milestones.js';
 import { milestoneDisplayNames, milestoneIcons, milestoneTexts } from './weekly-cards.js';
 import { initBottomSheet } from './components/bottom-sheet.js';
 import { initCrisisModal, openCrisis } from './components/crisis-modal.js';
 import { renderLanding } from './screens/landing.js';
 import { renderOnboarding } from './screens/onboarding.js';
+import { renderEmailGate } from './screens/emailGate.js';
 import { renderDashboard } from './screens/dashboard.js';
 import { renderReflection } from './screens/reflection.js';
 import { renderHistory } from './screens/history.js';
@@ -55,12 +56,32 @@ async function init() {
   // Check profile
   profile = await getProfile();
 
+  // E-Mail-Gate: Bestandsuser dürfen ihn nie sehen.
+  // emailGateSeen unterscheidet "Bestandsuser von vor dem Feature" (nie gesehen
+  // → still als erledigt markieren) von "neuer User hat den Gate offen gelassen"
+  // (gesehen, nicht abgeschlossen → beim nächsten Start erneut zeigen).
+  if (!localStorage.getItem('emailGateComplete')) {
+    if (profile && profile.onboardingComplete && !localStorage.getItem('emailGateSeen')) {
+      localStorage.setItem('emailGateComplete', 'true');
+    } else if (!profile || !profile.onboardingComplete) {
+      // Edge: kein (vollständiges) Profil, aber Nutzerdaten in der DB → Bestandsuser
+      try {
+        const [points, reflections] = await Promise.all([getAllPoints(), getAllReflections()]);
+        if (points.length > 0 || reflections.length > 0) {
+          localStorage.setItem('emailGateComplete', 'true');
+        }
+      } catch (e) { /* DB-Fehler → wie neuer User behandeln */ }
+    }
+  }
+
   if (!profile || !profile.onboardingComplete) {
     if (!isStandalone()) {
       showLanding();
     } else {
       showOnboarding();
     }
+  } else if (!localStorage.getItem('emailGateComplete')) {
+    showEmailGate();
   } else {
     showApp();
   }
@@ -69,6 +90,7 @@ async function init() {
 function hideAll() {
   document.getElementById('landing-container').classList.add('hidden');
   document.getElementById('onboarding-container').classList.add('hidden');
+  document.getElementById('email-gate-container').classList.add('hidden');
   document.getElementById('app-shell').classList.add('hidden');
   document.getElementById('settings-container').classList.add('hidden');
 }
@@ -98,8 +120,20 @@ function showOnboarding() {
   container.classList.remove('hidden');
   renderOnboarding(container, (savedProfile) => {
     profile = savedProfile;
-    showApp();
+    if (!localStorage.getItem('emailGateComplete')) {
+      showEmailGate();
+    } else {
+      showApp();
+    }
   });
+}
+
+function showEmailGate() {
+  hideAll();
+  const container = document.getElementById('email-gate-container');
+  container.classList.remove('hidden');
+  localStorage.setItem('emailGateSeen', 'true');
+  renderEmailGate(container, () => showApp());
 }
 
 function showApp() {
