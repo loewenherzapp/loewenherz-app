@@ -1,6 +1,10 @@
 // ============================================================
 // E-Mail-Gate — Erststart-Screen nach Onboarding, vor Dashboard
 // ============================================================
+// Keine Consent-Checkbox: Die Einwilligung ist das Absenden selbst,
+// der gerichtsfeste Nachweis ist Brevos Double-Opt-in-Protokoll.
+// Info-Zeile unterm Button erklärt DOI + verlinkt die DSE.
+// ============================================================
 
 import { TEXTS } from '../../content/de.js';
 import { isValidEmail, subscribeEmail, lockButton } from '../emailSignup.js';
@@ -19,13 +23,10 @@ export function renderEmailGate(container, onDone) {
         <input type="email" class="onboarding-input" id="email-gate-input"
                placeholder="${t.placeholder}" autocomplete="email" inputmode="email" maxlength="254">
         <div class="email-gate-error hidden" id="email-gate-error"></div>
-        <label class="email-gate-consent">
-          <input type="checkbox" id="email-gate-consent">
-          <span>${t.consentPre} <a href="#" id="email-gate-privacy">${t.consentLink}</a> ${t.consentPost}</span>
-        </label>
         <div class="mt-24">
           <button type="submit" class="btn-primary" id="email-gate-submit">${t.submit}</button>
         </div>
+        <p class="email-gate-info">${t.infoPre} <a href="#" id="email-gate-privacy">${t.infoLink}</a></p>
       </form>
       <button type="button" class="email-gate-skip" id="email-gate-skip">${t.skip}</button>
     </div>
@@ -33,7 +34,6 @@ export function renderEmailGate(container, onDone) {
 
   const form = document.getElementById('email-gate-form');
   const input = document.getElementById('email-gate-input');
-  const consent = document.getElementById('email-gate-consent');
   const errorEl = document.getElementById('email-gate-error');
   const submitBtn = document.getElementById('email-gate-submit');
 
@@ -42,14 +42,26 @@ export function renderEmailGate(container, onDone) {
     errorEl.classList.remove('hidden');
   }
 
-  function clearError() {
-    errorEl.classList.add('hidden');
+  // Success-State bleibt stehen, bis der User weiterklickt —
+  // ein Auto-Redirect würde die DOI-Anweisung unter der App begraben.
+  function renderSuccess() {
+    container.innerHTML = `
+      <div class="onboarding-screen">
+        <div class="email-gate-lion">📬</div>
+        <h1 class="onboarding-welcome">${t.successTitle}</h1>
+        <p class="email-gate-copy">${t.successText}</p>
+        <p class="email-gate-hint">${t.successHint}</p>
+        <div class="mt-24">
+          <button type="button" class="btn-primary" id="email-gate-continue">${t.successCta}</button>
+        </div>
+      </div>
+    `;
+    document.getElementById('email-gate-continue').addEventListener('click', () => onDone());
   }
 
   // Datenschutz-Link → bestehende Legal-Seite (Modal)
   document.getElementById('email-gate-privacy').addEventListener('click', (e) => {
     e.preventDefault();
-    e.stopPropagation();
     showLegalPage('datenschutz', ts.datenschutz);
   });
 
@@ -61,12 +73,11 @@ export function renderEmailGate(container, onDone) {
   // Enter im Input = Submit (form-submit deckt das ab)
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    clearError();
+    errorEl.classList.add('hidden');
 
     const email = input.value.trim();
     if (!email) { showError(t.errEmpty); return; }
     if (!isValidEmail(email)) { showError(t.errInvalid); return; }
-    if (!consent.checked) { showError(t.errConsent); return; }
 
     // 60-Sek-Sperre + Ladestate
     lockButton(submitBtn, 60);
@@ -77,8 +88,7 @@ export function renderEmailGate(container, onDone) {
     if (result.ok) {
       localStorage.setItem('userEmail', email);
       localStorage.setItem('emailGateComplete', 'true');
-      submitBtn.textContent = t.success;
-      setTimeout(() => onDone(), 1500);
+      renderSuccess();
     } else {
       // emailGateComplete NICHT setzen — User soll es erneut versuchen können.
       showError(result.error);

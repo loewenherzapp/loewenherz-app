@@ -431,18 +431,14 @@ function renderEmailCard(t) {
       <input type="email" class="settings-input" id="settings-email-input"
              placeholder="${tg.placeholder}" autocomplete="email" inputmode="email" maxlength="254">
       <div class="email-gate-error hidden" id="settings-email-error"></div>
-      <label class="email-gate-consent">
-        <input type="checkbox" id="settings-email-consent">
-        <span>${tg.consentPre} <a href="#" id="settings-email-privacy">${tg.consentLink}</a> ${tg.consentPost}</span>
-      </label>
       <button type="submit" class="btn-primary" id="settings-email-submit">${tg.settingsSubmit}</button>
+      <p class="email-gate-info">${tg.infoPre} <a href="#" id="settings-email-privacy">${tg.infoLink}</a></p>
     </form>
   `;
 
   const addLink = document.getElementById('settings-email-add');
   const form = document.getElementById('settings-email-form');
   const input = document.getElementById('settings-email-input');
-  const consent = document.getElementById('settings-email-consent');
   const errorEl = document.getElementById('settings-email-error');
   const submitBtn = document.getElementById('settings-email-submit');
 
@@ -469,7 +465,6 @@ function renderEmailCard(t) {
     const email = input.value.trim();
     if (!email) { showError(tg.errEmpty); return; }
     if (!isValidEmail(email)) { showError(tg.errInvalid); return; }
-    if (!consent.checked) { showError(tg.errConsent); return; }
 
     lockButton(submitBtn, 60);
     submitBtn.textContent = tg.sending;
@@ -480,7 +475,7 @@ function renderEmailCard(t) {
       localStorage.setItem('userEmail', email);
       localStorage.removeItem('emailSkipped');
       localStorage.setItem('emailGateComplete', 'true');
-      showToast(tg.success);
+      showToast(tg.settingsSuccess);
       renderEmailCard(t);
     } else {
       showError(result.error);
@@ -558,29 +553,42 @@ const LEGAL_CONTENT = {
     011082 Bukarest, Rumänien<br>
     E-Mail: <a href="mailto:pe@angstdoc.de">pe@angstdoc.de</a></p>
 
-    <h3>2. Datenverarbeitung in der App</h3>
-    <p>Diese App speichert deine Daten ausschließlich lokal auf deinem Gerät. Es werden keine Inhalte an unsere Server übertragen. Wir haben keinen Zugriff auf deine Eingaben.</p>
-    <p>Im Detail werden folgende Daten lokal gespeichert:</p>
+    <h3>2. Das Wichtigste zuerst</h3>
+    <p>Diese App ist bewusst so gebaut, dass deine Inhalte bei dir bleiben: Reflexionen, SMALL-Punkte und dein Profil werden ausschließlich lokal auf deinem Gerät gespeichert und nie an unsere Server übertragen. Wir haben keinen Zugriff auf deine Eingaben.</p>
+    <p>Es gibt genau eine Ausnahme: Wenn du dich freiwillig für E-Mail-Impulse anmeldest, verarbeiten wir deine E-Mail-Adresse (siehe Abschnitt 4).</p>
+
+    <h3>3. Lokale Datenspeicherung in der App</h3>
+    <p>Folgende Daten liegen nur auf deinem Gerät (IndexedDB und LocalStorage):</p>
     <ul>
       <li><strong>Profildaten:</strong> Dein Vorname, Erinnerungszeiten, Morgenritual- und Abendreflexions-Einstellungen</li>
       <li><strong>SMALL-Punkte:</strong> Jeder Tap inkl. Datum und gewähltem Buchstabe</li>
       <li><strong>Reflexionen:</strong> Deine täglichen Reflexionstexte und Stimmungseinträge</li>
       <li><strong>Meilensteine:</strong> Erreichte Stufen und Fortschritts-Markierungen</li>
       <li><strong>App-Einstellungen:</strong> Push-Schalter, Reminder-Zeiten</li>
+      <li><strong>E-Mail-Adresse:</strong> Falls du sie eingetragen hast, zur Anzeige in den Einstellungen</li>
     </ul>
-    <p><strong>Wichtig — kein Cloud-Backup:</strong> Wenn du die App deinstallierst, deine Browserdaten löschst oder dein Gerät verlierst, sind alle Daten unwiderruflich weg. Du kannst sie jederzeit über den Export-Button in den Einstellungen als JSON-Datei sichern und später wieder importieren.</p>
-    <p>Rechtsgrundlage: Vertragserfüllung (Art. 6 Abs. 1 lit. b DSGVO).</p>
+    <p><strong>Wichtig — kein Cloud-Backup:</strong> Wenn du die App deinstallierst, deine Browserdaten löschst oder dein Gerät verlierst, sind diese Daten unwiderruflich weg. Du kannst sie jederzeit über den Export-Button in den Einstellungen als JSON-Datei sichern und später wieder importieren.</p>
+    <p>Rechtsgrundlage: Vertragserfüllung (Art. 6 Abs. 1 lit. b DSGVO). Das Speichern und Auslesen auf deinem Gerät ist für die Bereitstellung der App zwingend erforderlich (§ 25 Abs. 2 Nr. 2 TDDDG).</p>
 
-    <h3>3. Hosting</h3>
+    <h3>4. E-Mail-Impulse (Newsletter) über Brevo</h3>
+    <p>Wenn du dich in der App mit deiner E-Mail-Adresse anmeldest, schicken wir dir gelegentlich Impulse rund um das Buch und die App. Die Anmeldung ist freiwillig und für die Nutzung der App nicht erforderlich — du kannst sie jederzeit überspringen.</p>
+    <p>Die Anmeldung läuft im <strong>Double-Opt-in-Verfahren:</strong> Du bekommst zunächst eine Bestätigungsmail — erst nach deinem Klick auf den Bestätigungslink bist du angemeldet. So stellen wir sicher, dass niemand fremde Adressen einträgt.</p>
+    <p>Dafür nutzen wir <strong>Brevo</strong> (Sendinblue GmbH, Köpenicker Str. 126, 10179 Berlin, Teil der Brevo-Gruppe mit Sitz in Paris) als Auftragsverarbeiter (Art. 28 DSGVO). Die Daten werden auf Servern in der EU verarbeitet. Verarbeitet werden: deine E-Mail-Adresse sowie Zeitpunkt und IP-Adresse von Anmeldung und Bestätigung — Letzteres zum gesetzlichen Nachweis deiner Einwilligung (Art. 7 Abs. 1 DSGVO).</p>
+    <p><strong>Erfolgsmessung:</strong> Wir messen nicht, ob oder wann du unsere E-Mails öffnest — Öffnungs-Tracking ist deaktiviert. Links in unseren E-Mails enthalten eine Klick-Messung; so sehen wir, welche Inhalte ankommen. Daraus entstehen keine Persönlichkeitsprofile.</p>
+    <p>Rechtsgrundlage: deine Einwilligung (Art. 6 Abs. 1 lit. a DSGVO). Du kannst sie jederzeit widerrufen — über den Abmeldelink in jeder E-Mail oder formlos an <a href="mailto:pe@angstdoc.de">pe@angstdoc.de</a>. Nach dem Widerruf wird deine Adresse aus der Verteilerliste entfernt. Deine Adresse bleibt gespeichert, bis du dich abmeldest.</p>
+    <p>Mehr Informationen: <a href="https://www.brevo.com/de/legal/privacypolicy/" target="_blank" rel="noopener noreferrer">brevo.com/de/legal/privacypolicy</a></p>
+
+    <h3>5. Hosting</h3>
     <p>Die App wird über Vercel Inc. (440 N Barranca Ave #4133, Covina, CA 91723, USA) gehostet. Beim Aufruf der App werden automatisch technische Daten (u.a. IP-Adresse, Zeitpunkt des Zugriffs, Browsertyp) an Vercel-Server übermittelt. Diese Verarbeitung erfolgt auf Grundlage unseres berechtigten Interesses an der technischen Bereitstellung der App (Art. 6 Abs. 1 lit. f DSGVO).</p>
+    <p>Wenn du dich für E-Mail-Impulse anmeldest, nimmt eine Server-Funktion bei Vercel deine Adresse entgegen und leitet sie direkt an Brevo weiter — sie wird dort nicht dauerhaft gespeichert; in technischen Protokollen erscheint sie nur maskiert, und diese werden automatisch nach kurzer Zeit gelöscht.</p>
     <p>Vercel verarbeitet Daten teilweise in den USA. Die Übermittlung erfolgt auf Basis von EU-Standardvertragsklauseln.</p>
     <p>Mehr Informationen: <a href="https://vercel.com/legal/privacy-policy" target="_blank" rel="noopener noreferrer">vercel.com/legal/privacy-policy</a></p>
 
-    <h3>4. Webanalyse (Vercel Web Analytics)</h3>
-    <p>Wir nutzen Vercel Web Analytics zur statistischen Auswertung der App-Nutzung. Dabei werden ausschließlich aggregierte, anonyme Daten erhoben — keine Cookies, keine persönlichen Daten, keine Nutzerprofile. Es ist keine Identifizierung einzelner Nutzer möglich.</p>
+    <h3>6. Webanalyse (Vercel Web Analytics)</h3>
+    <p>Wir nutzen Vercel Web Analytics zur statistischen Auswertung der App-Nutzung. Dabei werden ausschließlich aggregierte, anonyme Daten erhoben — keine Cookies, keine persönlichen Daten, keine Nutzerprofile. Es ist keine Identifizierung einzelner Nutzer möglich. Das Analyse-Skript wird direkt von unserer eigenen Domain geladen, ohne Dritt-CDN.</p>
     <p>Rechtsgrundlage: Berechtigtes Interesse (Art. 6 Abs. 1 lit. f DSGVO).</p>
 
-    <h3>5. Push-Benachrichtigungen (OneSignal)</h3>
+    <h3>7. Push-Benachrichtigungen (OneSignal)</h3>
     <p>Für tägliche Erinnerungen (Morgenintention, Abendreflexion, SMALL-Reminder) nutzen wir den Push-Dienst von OneSignal Inc., 2194 Esperanca Avenue, Santa Clara, CA 95054, USA.</p>
     <p><strong>OneSignal wird erst geladen, wenn du Push-Benachrichtigungen aktiv einschaltest.</strong> Vor deiner Einwilligung fließen keine Daten an OneSignal.</p>
     <p>Nach deiner Aktivierung werden folgende Daten an OneSignal übertragen:</p>
@@ -593,21 +601,28 @@ const LEGAL_CONTENT = {
     <p>Rechtsgrundlage: Einwilligung (Art. 6 Abs. 1 lit. a DSGVO). Du kannst die Einwilligung jederzeit widerrufen — entweder über den Push-Schalter in den Einstellungen oder über die Benachrichtigungs-Einstellungen deines Geräts. Beim Widerruf werden alle Tags bei OneSignal gelöscht.</p>
     <p>Mehr Informationen: <a href="https://onesignal.com/privacy_policy" target="_blank" rel="noopener noreferrer">onesignal.com/privacy_policy</a></p>
 
-    <h3>6. Cookies und lokale Speicher</h3>
+    <h3>8. Cookies und lokale Speicher</h3>
     <p>Diese App verwendet keine Cookies. Zur Speicherung deiner Daten nutzen wir IndexedDB und LocalStorage — beides lokale Browser-Speicher, die ausschließlich auf deinem Gerät verbleiben. Es findet keine Übertragung dieser Daten an unsere Server oder Dritte statt.</p>
 
-    <h3>7. Keine Weitergabe an Dritte</h3>
-    <p>Deine Inhalte (Reflexionen, SMALL-Punkte, Profildaten) werden nicht an Dritte weitergegeben, verkauft oder für Werbezwecke genutzt. Die einzigen Drittanbieter, die technische Daten verarbeiten, sind Vercel (Hosting/Analytics) und — nach deiner Einwilligung — OneSignal (Push).</p>
+    <h3>9. Keine Weitergabe an Dritte</h3>
+    <p>Deine Inhalte (Reflexionen, SMALL-Punkte, Profildaten) werden nicht an Dritte weitergegeben, verkauft oder für Werbezwecke genutzt. Die einzigen Drittanbieter, die Daten verarbeiten, sind Vercel (Hosting/Analytics) sowie — jeweils nach deiner Einwilligung — OneSignal (Push) und Brevo (E-Mail-Impulse).</p>
 
-    <h3>8. Deine Rechte</h3>
-    <p>Du hast das Recht auf Auskunft, Berichtigung, Löschung und Einschränkung der Verarbeitung deiner Daten sowie das Recht auf Datenübertragbarkeit und Widerspruch. Da alle Inhalte lokal auf deinem Gerät gespeichert werden, hast du jederzeit volle Kontrolle — du kannst sie exportieren, importieren oder über den "Alle Daten löschen"-Button in den Einstellungen entfernen.</p>
+    <h3>10. Deine Rechte</h3>
+    <p>Du hast das Recht auf Auskunft, Berichtigung, Löschung und Einschränkung der Verarbeitung deiner Daten sowie das Recht auf Datenübertragbarkeit und Widerspruch. Erteilte Einwilligungen kannst du jederzeit mit Wirkung für die Zukunft widerrufen (Art. 7 Abs. 3 DSGVO) — für E-Mail-Impulse über den Abmeldelink in jeder Mail oder per Nachricht an uns.</p>
+    <p>Da deine Inhalte lokal auf deinem Gerät gespeichert werden, hast du jederzeit volle Kontrolle — du kannst sie exportieren, importieren oder über den "Alle Daten löschen"-Button in den Einstellungen entfernen.</p>
     <p>Bei Fragen zum Datenschutz: <a href="mailto:pe@angstdoc.de">pe@angstdoc.de</a></p>
 
-    <h3>9. Beschwerderecht</h3>
-    <p>Du hast das Recht, dich bei einer Datenschutz-Aufsichtsbehörde zu beschweren. Die zuständige Behörde in Rumänien ist:</p>
+    <h3>11. Keine automatisierte Entscheidungsfindung</h3>
+    <p>Wir treffen keine automatisierten Entscheidungen im Sinne von Art. 22 DSGVO und erstellen keine Nutzerprofile.</p>
+
+    <h3>12. Beschwerderecht</h3>
+    <p>Du hast das Recht, dich bei einer Datenschutz-Aufsichtsbehörde zu beschweren — bei der Behörde deines Wohnorts (in Deutschland: die Landesdatenschutzbehörde deines Bundeslands) oder bei der für uns zuständigen Behörde in Rumänien:</p>
     <p>Autoritatea Națională de Supraveghere a Prelucrării Datelor cu Caracter Personal (ANSPDCP)<br>
     B-dul G-ral. Gheorghe Magheru 28-30, Sector 1, București<br>
     <a href="https://www.dataprotection.ro" target="_blank" rel="noopener noreferrer">www.dataprotection.ro</a></p>
+
+    <h3>13. Änderungen dieser Erklärung</h3>
+    <p>Wir passen diese Erklärung an, wenn sich die App oder die Rechtslage ändert. Es gilt die jeweils hier veröffentlichte Fassung.</p>
   `
 };
 
@@ -636,11 +651,16 @@ export function showLegalPage(key, title) {
 }
 
 function showDeleteConfirm(t, onConfirm) {
+  // Newsletter läuft serverseitig bei Brevo weiter — Abmeldung nur über den Mail-Link
+  const emailHint = localStorage.getItem('userEmail')
+    ? `<p class="confirm-text" style="font-size:13px;color:var(--text-secondary);">${t.deleteEmailHint}</p>`
+    : '';
   const el = document.createElement('div');
   el.innerHTML = `
     <div class="confirm-overlay" id="confirm-overlay">
       <div class="confirm-dialog">
         <p class="confirm-text">${t.deleteConfirm}</p>
+        ${emailHint}
         <div class="confirm-buttons">
           <button class="btn-secondary" id="confirm-no">${t.deleteNo}</button>
           <button class="btn-danger" id="confirm-yes">${t.deleteYes}</button>
@@ -657,6 +677,9 @@ function showDeleteConfirm(t, onConfirm) {
   document.getElementById('confirm-yes').addEventListener('click', async () => {
     el.remove();
     await clearAllData();
+    // Auch localStorage leeren (E-Mail, Push-Zeiten, Flags) —
+    // "Alle Daten löschen" muss alle lokalen Daten meinen.
+    localStorage.clear();
     onConfirm();
   });
 }

@@ -18,6 +18,13 @@ const ALLOWED_ORIGINS = [
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_EMAIL_LEN = 254;
 
+// Datenminimierung: E-Mail in Logs maskieren (p***@beispiel.de)
+function maskEmail(email) {
+  const at = email.indexOf('@');
+  if (at < 1) return '***';
+  return email[0] + '***' + email.slice(at);
+}
+
 function applyCors(req, res) {
   const origin = req.headers.origin;
   if (origin && ALLOWED_ORIGINS.includes(origin)) {
@@ -72,7 +79,7 @@ export default async function handler(req, res) {
       })
     });
   } catch (e) {
-    console.error(`[Subscribe] ${email} → Brevo nicht erreichbar:`, e.message);
+    console.error(`[Subscribe] ${maskEmail(email)} → Brevo nicht erreichbar:`, e.message);
     return res.status(500).json({ success: false, error: 'Gerade nicht möglich — versuch es später nochmal' });
   }
 
@@ -85,7 +92,7 @@ export default async function handler(req, res) {
     try { brevoBody = JSON.parse(rawBody); } catch { brevoBody = rawBody; }
   }
 
-  console.log(`[Subscribe] ${email} → Brevo ${brevoStatus}:`, JSON.stringify(brevoBody));
+  console.log(`[Subscribe] ${maskEmail(email)} → Brevo ${brevoStatus}:`, JSON.stringify(brevoBody));
 
   // 201 = neuer Kontakt, DOI-Mail raus | 204 = war schon da → beides Erfolg für User
   if (brevoStatus === 201 || brevoStatus === 204) {

@@ -509,17 +509,18 @@ a:active { opacity: 0.7; }
   color: var(--text-body); font-size: 15px; line-height: 1.6;
   text-align: center; margin-bottom: 28px;
 }
-.email-gate-consent {
-  display: flex; align-items: flex-start; gap: 10px;
-  margin-top: 12px; min-height: 44px; padding: 8px 0;
-  cursor: pointer; color: var(--text-secondary);
-  font-size: 14px; line-height: 1.5;
+.email-gate-info {
+  color: var(--text-secondary); font-size: 13px; line-height: 1.6;
+  text-align: center; margin-top: 14px; padding: 0 4px;
 }
-.email-gate-consent input[type="checkbox"] {
-  width: 18px; height: 18px; margin-top: 2px;
-  accent-color: var(--gold); flex-shrink: 0;
+.email-gate-info a {
+  color: var(--gold);
+  display: inline-block; padding: 4px 2px; margin: -4px -2px;
 }
-.email-gate-consent a { color: var(--gold); }
+.email-gate-hint {
+  color: var(--text-muted); font-size: 13px;
+  text-align: center; margin-top: 10px;
+}
 .email-gate-error { color: var(--color-L2); font-size: 14px; margin-top: 8px; }
 .email-gate-skip {
   display: block; margin: 24px auto 0;

@@ -442,6 +442,11 @@ export function clearAllData() {
     return Promise.resolve();
   }
   return new Promise((resolve, reject) => {
+    // Eigene Verbindung schließen, sonst blockiert deleteDatabase —
+    // betrifft v.a. User mit App in Safari UND als PWA gleichzeitig offen.
+    if (dbInstance) {
+      try { dbInstance.close(); } catch (e) { /* schon zu */ }
+    }
     dbInstance = null;
     const idb = getIDB();
     if (!idb) { resolve(); return; }
