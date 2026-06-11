@@ -219,7 +219,7 @@ async function switchTab(tab) {
   const appEl = document.getElementById('app');
   if (tab === 'reflection') {
     appEl.classList.add('reflexion-mode');
-    setThemeColor('#1a1714');
+    setThemeColor('#17262b');
   } else {
     appEl.classList.remove('reflexion-mode');
     appEl.removeAttribute('data-mood');
