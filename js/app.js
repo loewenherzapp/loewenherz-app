@@ -8,6 +8,7 @@ import { initMilestones, markMilestonesSeen, getUnseenMilestoneCount } from './m
 import { milestoneDisplayNames, milestoneIcons, milestoneTexts } from './weekly-cards.js';
 import { initBottomSheet } from './components/bottom-sheet.js';
 import { initCrisisModal, openCrisis } from './components/crisis-modal.js';
+import { initEmailSoftPrompt, maybeShowEmailSoftPrompt } from './components/email-soft-prompt.js';
 import { renderLanding } from './screens/landing.js';
 import { renderOnboarding } from './screens/onboarding.js';
 import { renderEmailGate } from './screens/emailGate.js';
@@ -35,6 +36,7 @@ async function init() {
   // Init components
   initBottomSheet();
   initCrisisModal();
+  initEmailSoftPrompt();
 
   // Set tab labels from TEXTS
   const tabTexts = TEXTS.ui.tabs;
@@ -241,6 +243,7 @@ async function switchTab(tab) {
 
   if (tab === 'today') {
     await renderDashboard(contentEl, profile);
+    maybeShowEmailSoftPrompt();
   } else if (tab === 'reflection') {
     await renderReflection(contentEl, profile);
   } else if (tab === 'history') {

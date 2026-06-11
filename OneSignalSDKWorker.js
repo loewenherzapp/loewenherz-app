@@ -8,7 +8,7 @@ importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
 
 // === Cache Service Worker ===
 
-const CACHE_NAME = 'loewenherz-v82';
+const CACHE_NAME = 'loewenherz-v83';
 
 const URLS_TO_CACHE = [
   './',
@@ -34,6 +34,7 @@ const URLS_TO_CACHE = [
   './js/components/week-dots.js',
   './js/components/balance-bar.js',
   './js/components/crisis-modal.js',
+  './js/components/email-soft-prompt.js',
   './content/de.js',
   './assets/icons/icon-180.png',
   './assets/icons/icon-192.png',

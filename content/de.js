@@ -499,6 +499,13 @@ export const TEXTS = {
       settingsAdd: "E-Mail für Updates eintragen →",
       settingsSubmit: "Eintragen"
     },
+    softPrompt: {
+      headline: "Du bist schon dabei. 🌱",
+      copy: "Willst du ab und zu einen Impuls von mir bekommen?",
+      submit: "Ja, gerne",
+      decline: "Nein danke",
+      successClose: "Alles klar →"
+    },
     landing: {
       title: "Löwenherz installieren",
       subtitle: "Damit alles funktioniert, füge Löwenherz zu deinem Homescreen hinzu:",

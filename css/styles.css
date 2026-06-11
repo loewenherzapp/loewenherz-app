@@ -2401,6 +2401,37 @@ button.settings-link, .settings-link-btn {
 .confirm-buttons .btn-secondary,
 .confirm-buttons .btn-danger { flex: 1; }
 
+/* ---- E-Mail Soft-Prompt (A3) ---- */
+/* z-index 250: über Inhalt/Toasts (200), unter Legal-Seite (300) + Crisis (400) */
+.soft-prompt-overlay {
+  position: fixed; inset: 0; background: var(--bg-overlay);
+  z-index: 250; display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  opacity: 0; transition: opacity 200ms ease;
+}
+.soft-prompt-overlay.active { opacity: 1; }
+.soft-prompt-modal {
+  position: relative;
+  background: var(--bg-paper); border-radius: var(--radius);
+  padding: 28px 24px 16px; width: 100%; max-width: 360px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+  transform: scale(0.95); transition: transform 200ms ease;
+}
+.soft-prompt-overlay.active .soft-prompt-modal { transform: scale(1); }
+.soft-prompt-close {
+  position: absolute; top: 2px; right: 2px;
+  width: 44px; height: 44px;
+  background: none; border: none; cursor: pointer;
+  color: var(--text-muted); font-size: 17px; line-height: 1;
+}
+.soft-prompt-headline {
+  font-family: var(--font-serif); font-size: 22px;
+  color: var(--text-primary); margin-bottom: 10px; padding-right: 20px;
+}
+.soft-prompt-copy { font-size: 15px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 16px; }
+.soft-prompt-decline { margin-top: 12px; }
+.soft-prompt-success-icon { font-size: 40px; margin-bottom: 12px; }
+
 /* ---- Utilities ---- */
 .hidden { display: none !important; }
 .text-center { text-align: center; }
@@ -2801,6 +2832,9 @@ button.settings-link, .settings-link-btn {
     transition: none !important;
   }
   .mood-btn, .intention-chip, .helped-btn, .helped-alt {
+    transition: none !important;
+  }
+  .soft-prompt-overlay, .soft-prompt-modal {
     transition: none !important;
   }
 }
