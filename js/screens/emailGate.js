@@ -16,7 +16,7 @@ export function renderEmailGate(container, onDone) {
 
   container.innerHTML = `
     <div class="onboarding-screen">
-      <div class="email-gate-lion">🦁</div>
+      <img src="assets/icons/icon-192.png" alt="Löwenherz" class="email-gate-logo" width="72" height="72">
       <h1 class="onboarding-welcome">${t.headline}</h1>
       <p class="email-gate-copy">${t.copy}</p>
       <form id="email-gate-form" novalidate>

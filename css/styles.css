@@ -461,7 +461,7 @@ a:active { opacity: 0.7; }
   justify-content: center;
 }
 
-.landing-lion { font-size: 64px; margin-bottom: 24px; }
+.landing-lion { display: block; width: 96px; height: 96px; margin: 0 auto 24px; border-radius: 22px; box-shadow: 0 6px 18px rgba(120, 100, 70, 0.16); }
 .landing-title { font-family: var(--font-serif); font-size: 24px; font-weight: 400; margin-bottom: 8px; color: var(--text-primary); }
 .landing-subtitle { color: var(--text-secondary); margin-bottom: 32px; line-height: 1.6; }
 
@@ -509,6 +509,7 @@ a:active { opacity: 0.7; }
 
 /* ---- E-Mail-Gate + E-Mail-Signup (Settings) ---- */
 .email-gate-lion { font-size: 48px; text-align: center; margin-bottom: 16px; }
+.email-gate-logo { display: block; width: 72px; height: 72px; margin: 0 auto 16px; border-radius: 16px; box-shadow: 0 4px 14px rgba(120, 100, 70, 0.14); }
 .email-gate-copy {
   color: var(--text-body); font-size: 15px; line-height: 1.6;
   text-align: center; margin-bottom: 28px;

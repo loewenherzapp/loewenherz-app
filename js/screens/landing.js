@@ -24,7 +24,7 @@ export function renderLanding(container) {
 
     container.innerHTML = `
       <div class="landing-screen">
-        <div class="landing-lion">🦁</div>
+        <img src="assets/icons/icon-192.png" alt="Löwenherz" class="landing-lion" width="96" height="96">
         <h1 class="landing-title">${t.title}</h1>
         <p class="landing-subtitle">${t.subtitle}</p>
         <div class="landing-steps">
