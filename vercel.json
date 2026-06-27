@@ -1,6 +1,12 @@
 {
   "headers": [
     {
+      "source": "/.well-known/assetlinks.json",
+      "headers": [
+        { "key": "Content-Type", "value": "application/json" }
+      ]
+    },
+    {
       "source": "/OneSignalSDKWorker.js",
       "headers": [
         { "key": "Service-Worker-Allowed", "value": "/" }
@@ -20,6 +26,9 @@
         { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
       ]
     }
+  ],
+  "rewrites": [
+    { "source": "/datenschutz", "destination": "/datenschutz.html" }
   ],
   "functions": {
     "api/send-notifications.js": {

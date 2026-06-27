@@ -3,6 +3,7 @@
 // ============================================================
 
 import { TEXTS } from '../../content/de.js';
+import { PRIVACY_URL } from '../config.js';
 import { saveProfile, clearAllData, migrateToV2 } from '../db.js';
 import { openCrisis } from '../components/crisis-modal.js';
 import { syncOneSignalTags, roundTo15Min, ensureOneSignalLoaded } from '../push.js';
@@ -168,14 +169,15 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
         </div>
       </div>
 
-      <!-- Disclaimer -->
-      <div class="settings-section">
-        <div class="settings-disclaimer">${t.disclaimer}</div>
-      </div>
-
       <!-- E-Mail -->
       <div class="settings-section">
         <div class="settings-card" id="settings-email-card"></div>
+      </div>
+
+      <!-- Wichtiger Hinweis (Gesundheits-Disclaimer) -->
+      <div class="settings-section">
+        <div class="settings-label">${t.disclaimerTitle}</div>
+        <div class="settings-disclaimer">${t.disclaimer}</div>
       </div>
 
       <!-- Legal -->
@@ -544,7 +546,7 @@ const LEGAL_CONTENT = {
   `,
   datenschutz: `
     <h2>Datenschutzerklärung</h2>
-    <p class="legal-meta">Stand: Juni 2026</p>
+    <p class="legal-meta">Stand: Juni 2026 · Online: <a href="${PRIVACY_URL}" target="_blank" rel="noopener noreferrer">app.angstdoc.de/datenschutz</a></p>
 
     <h3>1. Verantwortlicher</h3>
     <p>Der AngstDoc und Kollegen S.R.L.<br>
