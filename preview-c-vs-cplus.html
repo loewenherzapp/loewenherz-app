@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Löwenherz — Variante C vs. C+</title>
+<style>
+  :root {
+    /* ===== VARIANTE C ===== */
+    --c-bg-page:   #f7ead8;
+    --c-bg-page-grad-end: #f0d8b8;  /* Verlauf in App-Hintergrund */
+    --c-bg-paper:  #fbf2e2;
+    --c-bg-card:   #f1e2c9;
+    --c-text-prim: #2a2218;
+    --c-text-body: #4a3d2c;
+    --c-text-sec:  #8c7d65;
+    --c-gold:      #a87445;   /* Bronze — auch für Text */
+    --c-gold-warm: #d4a070;
+    --c-install:   #b8835a;   /* Bronze-Install */
+    --c-teal:      #2d5f6b;   /* Petrol — nur Wortmarke */
+
+    /* ===== VARIANTE C+ ===== */
+    --cp-bg-page:   #f7ead8;       /* Peach-Shift gleich */
+    --cp-bg-paper:  #fbf2e2;
+    --cp-bg-card:   #f1e2c9;
+    --cp-text-prim: #2a2218;
+    --cp-text-body: #4a3d2c;
+    --cp-text-sec:  #8c7d65;
+    --cp-gold-fill: #a87445;       /* Bronze für Flächen/Button-Akzente */
+    --cp-gold-text: #8c5d35;       /* Text-Gold dunkler → AA-konform */
+    --cp-gold-warm: #d4a070;
+    --cp-install:   #c89858;       /* Warmes Gold, leicht wärmer als jetzt */
+    --cp-teal:      #3e6e78;       /* WEICHER Teal */
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: #ece4d6;
+    color: #2c2418;
+    padding: 28px 18px 60px;
+    min-height: 100vh;
+  }
+
+  h1 {
+    font-family: Georgia, serif;
+    font-weight: 400;
+    font-size: 28px;
+    text-align: center;
+    margin-bottom: 4px;
+    color: #2c2418;
+  }
+  .sub {
+    text-align: center;
+    font-size: 14px;
+    color: #6a5d4a;
+    margin-bottom: 28px;
+  }
+
+  /* Section heading */
+  .section-title {
+    max-width: 920px;
+    margin: 36px auto 14px;
+    font-family: Georgia, serif;
+    font-size: 18px;
+    color: #2c2418;
+    text-align: center;
+  }
+
+  .grid {
+    max-width: 920px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 720px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+
+  .col-label {
+    text-align: center;
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+  .col-label.c  { color: #a87445; }
+  .col-label.cp { color: #3e6e78; }
+
+  /* === Phone === */
+  .phone {
+    border-radius: 32px;
+    padding: 22px 18px 26px;
+    box-shadow: 0 8px 28px rgba(120, 100, 70, 0.18);
+    aspect-ratio: 9 / 16;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* C App-Screen — mit Verlauf */
+  .phone.c-app  { background: linear-gradient(180deg, var(--c-bg-page) 0%, var(--c-bg-page-grad-end) 100%); }
+  /* C Landing — mit Verlauf */
+  .phone.c-land { background: linear-gradient(180deg, var(--c-bg-page) 0%, var(--c-bg-page-grad-end) 100%); }
+  /* C+ App-Screen — FLACH */
+  .phone.cp-app  { background: var(--cp-bg-page); }
+  /* C+ Landing — leichter Verlauf nur hier erlaubt */
+  .phone.cp-land { background: linear-gradient(180deg, var(--cp-bg-page) 0%, #f1d9b5 100%); }
+
+  /* Header */
+  .ph-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+  }
+  .wordmark {
+    font-family: Georgia, serif;
+    font-size: 19px;
+    font-weight: 600;
+    letter-spacing: -0.2px;
+  }
+  .c-app .wordmark,
+  .c-land .wordmark  { color: var(--c-teal); }   /* C: Petrol */
+  .cp-app .wordmark,
+  .cp-land .wordmark { color: var(--cp-teal); }  /* C+: weicher Teal */
+
+  .icons {
+    display: flex;
+    gap: 10px;
+    font-size: 16px;
+  }
+  .c-app .icons,  .c-land .icons  { color: var(--c-text-sec); }
+  .cp-app .icons, .cp-land .icons { color: var(--cp-text-sec); }
+
+  /* Card */
+  .card {
+    border-radius: 14px;
+    padding: 14px 14px 16px;
+    margin-bottom: 14px;
+  }
+  .c-app .card,  .c-land .card  { background: var(--c-bg-paper);  border: 1px solid rgba(120,90,50,0.12); }
+  .cp-app .card, .cp-land .card { background: var(--cp-bg-paper); border: 1px solid rgba(120,90,50,0.12); }
+
+  .card-title {
+    font-family: Georgia, serif;
+    font-size: 15px;
+    margin-bottom: 8px;
+  }
+  .c-app .card-title,  .c-land .card-title  { color: var(--c-text-prim); }
+  .cp-app .card-title, .cp-land .card-title { color: var(--cp-text-prim); }
+
+  .card-body {
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .c-app .card-body,  .c-land .card-body  { color: var(--c-text-body); }
+  .cp-app .card-body, .cp-land .card-body { color: var(--cp-text-body); }
+
+  /* "Mehr erfahren →" Link in card — illustrates text-gold */
+  .card-link {
+    display: inline-block;
+    margin-top: 8px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .c-app .card-link  { color: var(--c-gold); }       /* Bronze — Kontrast knapp */
+  .cp-app .card-link { color: var(--cp-gold-text); } /* dunkles Gold — AA-konform */
+
+  /* SMALL row */
+  .small-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .small-btn {
+    flex: 1;
+    aspect-ratio: 1;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 16px;
+    font-family: Georgia, serif;
+  }
+  .sb-S { background: rgba(196,121,58,0.09); color: #c4793a; border: 1px solid rgba(196,121,58,0.12); }
+  .sb-M { background: rgba(74,158,142,0.09); color: #4a9e8e; border: 1px solid rgba(74,158,142,0.12); }
+  .sb-A { background: rgba(158,109,148,0.09); color: #9e6d94; border: 1px solid rgba(158,109,148,0.12); }
+  .sb-L1.c  { background: rgba(168,116,69,0.10); color: var(--c-gold);       border: 1px solid rgba(168,116,69,0.14); }
+  .sb-L1.cp { background: rgba(168,116,69,0.10); color: var(--cp-gold-fill); border: 1px solid rgba(168,116,69,0.14); }
+  .sb-L2 { background: rgba(190,90,90,0.09); color: #be5a5a; border: 1px solid rgba(190,90,90,0.12); }
+
+  /* Wochendots */
+  .dots {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    margin-bottom: 18px;
+  }
+  .dot {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .c-app .dot.full  { background: var(--c-gold-warm);  color: #fff; }
+  .cp-app .dot.full { background: var(--cp-gold-warm); color: #fff; }
+  .dot.empty { background: transparent; border: 1.5px dashed rgba(120,100,70,0.25); }
+
+  /* Install Button */
+  .install {
+    margin-top: auto;
+    padding: 14px;
+    border-radius: 12px;
+    color: #fff;
+    font-weight: 600;
+    text-align: center;
+    font-size: 14px;
+    box-shadow: 0 2px 8px rgba(120, 100, 70, 0.18);
+  }
+  .c-land .install  { background: var(--c-install); }
+  .cp-land .install { background: var(--cp-install); }
+
+  /* Bottom-Nav */
+  .navstrip {
+    display: flex;
+    justify-content: space-around;
+    padding-top: 10px;
+    border-top: 1px solid rgba(120,100,70,0.08);
+    margin-top: 14px;
+    font-size: 11px;
+  }
+  .c-app  .navstrip .tab { color: var(--c-text-sec); }
+  .cp-app .navstrip .tab { color: var(--cp-text-sec); }
+  .c-app  .navstrip .tab.active { color: var(--c-gold);       font-weight: 600; }
+  .cp-app .navstrip .tab.active { color: var(--cp-gold-fill); font-weight: 600; }
+
+  /* Landing-specific: Logo + Headline */
+  .splash-logo {
+    width: 64px; height: 64px;
+    margin: 16px auto 14px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #c89858, #a87445);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 6px 16px rgba(120, 100, 70, 0.2);
+    color: #fff;
+    font-family: Georgia, serif;
+    font-size: 28px;
+  }
+  .splash-title {
+    font-family: Georgia, serif;
+    font-size: 22px;
+    text-align: center;
+    margin-bottom: 4px;
+  }
+  .c-land .splash-title  { color: var(--c-teal); }      /* C: Wortmarke NUR im Header (Splash bleibt warm) */
+  .cp-land .splash-title { color: var(--cp-teal); }     /* C+: Wortmarke wiederholt sich im Splash */
+  .splash-sub {
+    text-align: center;
+    font-size: 12px;
+    margin-bottom: 20px;
+  }
+  .c-land .splash-sub  { color: var(--c-text-sec); }
+  .cp-land .splash-sub { color: var(--cp-text-sec); }
+
+  /* Annotation chips */
+  .anno {
+    position: absolute;
+    background: rgba(0,0,0,0.78);
+    color: #fff;
+    font-size: 10px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    pointer-events: none;
+    font-family: 'SF Mono', Menlo, monospace;
+  }
+
+  /* Palette */
+  .palette-section {
+    max-width: 920px;
+    margin: 36px auto 0;
+  }
+  .palettes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 720px) { .palettes { grid-template-columns: 1fr; } }
+  .palette {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .swatch {
+    aspect-ratio: 1;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 6px;
+    font-size: 9px;
+    color: rgba(255,255,255,0.95);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+    border: 1px solid rgba(0,0,0,0.06);
+    font-family: 'SF Mono', Menlo, monospace;
+  }
+  .swatch.light { color: #2c2418; text-shadow: none; }
+  .swatch.new { border: 2px solid #fff; box-shadow: 0 0 0 2px #3e6e78; }
+
+  /* Notes */
+  .notes {
+    max-width: 920px;
+    margin: 30px auto 0;
+    background: #faf6ed;
+    border-left: 3px solid #3e6e78;
+    padding: 18px 22px;
+    border-radius: 6px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #4a3f30;
+  }
+  .notes strong { color: #3e6e78; }
+  .notes ul { margin: 8px 0 0 18px; }
+  .notes li { margin-bottom: 6px; }
+  .notes .diff { background: #fdf3e0; padding: 2px 6px; border-radius: 3px; }
+
+  /* Compare table */
+  .compare {
+    max-width: 920px;
+    margin: 28px auto 0;
+    border-collapse: collapse;
+    background: #faf6ed;
+    border-radius: 8px;
+    overflow: hidden;
+    font-size: 13px;
+  }
+  .compare th, .compare td {
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid rgba(120,100,70,0.10);
+  }
+  .compare th { background: #f1e7d3; font-weight: 600; }
+  .compare td.fix { color: #3e6e78; font-weight: 500; }
+</style>
+</head>
+<body>
+
+<h1>Variante C vs. C+ </h1>
+<p class="sub">C+ = C nachgeschärft anhand der 4-Perspektiven-Reflexion</p>
+
+<!-- ============================================================ -->
+<!-- APP-SCREEN VERGLEICH                                          -->
+<!-- ============================================================ -->
+<div class="section-title">📱 App-Screen (Heute-Tab)</div>
+
+<div class="grid">
+  <div>
+    <div class="col-label c">VARIANTE C</div>
+    <div class="phone c-app">
+      <div class="ph-header">
+        <div class="wordmark">Löwenherz</div>
+        <div class="icons">♡ ⚙</div>
+      </div>
+
+      <div class="dots">
+        <div class="dot full">M</div>
+        <div class="dot full">D</div>
+        <div class="dot full">M</div>
+        <div class="dot empty">D</div>
+        <div class="dot empty">F</div>
+        <div class="dot empty">S</div>
+        <div class="dot empty">S</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Heute, ein Schritt.</div>
+        <div class="card-body">Was war das kleinste, was du heute geschafft hast?</div>
+        <a class="card-link">Mehr erfahren →</a>
+      </div>
+
+      <div class="small-row">
+        <div class="small-btn sb-S">S</div>
+        <div class="small-btn sb-M">M</div>
+        <div class="small-btn sb-A">A</div>
+        <div class="small-btn sb-L1 c">L</div>
+        <div class="small-btn sb-L2">L</div>
+      </div>
+
+      <div class="navstrip">
+        <div class="tab active">Heute</div>
+        <div class="tab">Reflexion</div>
+        <div class="tab">Verlauf</div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="col-label cp">VARIANTE C+</div>
+    <div class="phone cp-app">
+      <div class="ph-header">
+        <div class="wordmark">Löwenherz</div>
+        <div class="icons">♡ ⚙</div>
+      </div>
+
+      <div class="dots">
+        <div class="dot full">M</div>
+        <div class="dot full">D</div>
+        <div class="dot full">M</div>
+        <div class="dot empty">D</div>
+        <div class="dot empty">F</div>
+        <div class="dot empty">S</div>
+        <div class="dot empty">S</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Heute, ein Schritt.</div>
+        <div class="card-body">Was war das kleinste, was du heute geschafft hast?</div>
+        <a class="card-link">Mehr erfahren →</a>
+      </div>
+
+      <div class="small-row">
+        <div class="small-btn sb-S">S</div>
+        <div class="small-btn sb-M">M</div>
+        <div class="small-btn sb-A">A</div>
+        <div class="small-btn sb-L1 cp">L</div>
+        <div class="small-btn sb-L2">L</div>
+      </div>
+
+      <div class="navstrip">
+        <div class="tab active">Heute</div>
+        <div class="tab">Reflexion</div>
+        <div class="tab">Verlauf</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- LANDING / INSTALL VERGLEICH                                    -->
+<!-- ============================================================ -->
+<div class="section-title">🚀 Landing / Install-Screen</div>
+
+<div class="grid">
+  <div>
+    <div class="col-label c">VARIANTE C</div>
+    <div class="phone c-land">
+      <div class="splash-logo">L</div>
+      <div class="splash-title" style="color:#2a2218;">Löwenherz</div>
+      <div class="splash-sub">Die Begleit-App zum Buch</div>
+
+      <div class="card" style="margin-top:14px;">
+        <div class="card-title">In 30 Sek. installiert</div>
+        <div class="card-body">Morgenreflexion · Abendreflexion · SMALL-Reminder</div>
+      </div>
+
+      <div class="install">App installieren</div>
+    </div>
+  </div>
+
+  <div>
+    <div class="col-label cp">VARIANTE C+</div>
+    <div class="phone cp-land">
+      <div class="splash-logo">L</div>
+      <div class="splash-title">Löwenherz</div>
+      <div class="splash-sub">Die Begleit-App zum Buch</div>
+
+      <div class="card" style="margin-top:14px;">
+        <div class="card-title">In 30 Sek. installiert</div>
+        <div class="card-body">Morgenreflexion · Abendreflexion · SMALL-Reminder</div>
+      </div>
+
+      <div class="install">App installieren</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- DIFF-TABELLE                                                   -->
+<!-- ============================================================ -->
+<div class="section-title">🔧 Was C+ konkret ändert</div>
+
+<table class="compare">
+  <thead>
+    <tr>
+      <th>Aspekt</th>
+      <th>Variante C</th>
+      <th>Variante C+</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>App-Hintergrund</td>
+      <td>Peach-Verlauf #f7ead8 → #f0d8b8</td>
+      <td class="fix">Peach <strong>flach</strong> #f7ead8 (Verlauf nur auf Landing)</td>
+    </tr>
+    <tr>
+      <td>Gold für Text/Links</td>
+      <td>Bronze #a87445 (Kontrast ~3.8:1 – knapp)</td>
+      <td class="fix">Dunkles Gold <strong>#8c5d35</strong> (AA-konform)</td>
+    </tr>
+    <tr>
+      <td>Gold für Flächen/Akzente</td>
+      <td>Bronze #a87445</td>
+      <td class="fix">Bronze #a87445 (gleich)</td>
+    </tr>
+    <tr>
+      <td>Teal</td>
+      <td>Petrol #2D5F6B (kann klinisch wirken)</td>
+      <td class="fix">Weicher Teal <strong>#3E6E78</strong> (Holz/Tonkrug)</td>
+    </tr>
+    <tr>
+      <td>Teal-Vorkommen</td>
+      <td>Nur 1× (App-Header-Wortmarke)</td>
+      <td class="fix">2× (App-Header <strong>+ Landing-Splash-Wortmarke</strong>)</td>
+    </tr>
+    <tr>
+      <td>Install-Button</td>
+      <td>Bronze #b8835a (Conversion-Risiko)</td>
+      <td class="fix">Warmes Gold <strong>#c89858</strong> (signal-stark)</td>
+    </tr>
+    <tr>
+      <td>SMALL-System</td>
+      <td>Unverändert</td>
+      <td>Unverändert</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ============================================================ -->
+<!-- PALETTE                                                        -->
+<!-- ============================================================ -->
+<div class="section-title">🎨 Token-Vergleich</div>
+<div class="palette-section">
+  <div class="palettes">
+    <div>
+      <div class="col-label c">VARIANTE C</div>
+      <div class="palette">
+        <div class="swatch light" style="background:#f7ead8;">#f7ead8<br>bg-page</div>
+        <div class="swatch light" style="background:#fbf2e2;">#fbf2e2<br>bg-paper</div>
+        <div class="swatch" style="background:#a87445;">#a87445<br>gold (all)</div>
+        <div class="swatch" style="background:#d4a070;">#d4a070<br>gold-warm</div>
+        <div class="swatch" style="background:#b8835a;">#b8835a<br>install</div>
+        <div class="swatch" style="background:#2d5f6b;">#2d5f6b<br>teal</div>
+        <div class="swatch light" style="background:#eee;border:1px dashed #aaa;color:#888;">–</div>
+        <div class="swatch light" style="background:#eee;border:1px dashed #aaa;color:#888;">–</div>
+      </div>
+    </div>
+    <div>
+      <div class="col-label cp">VARIANTE C+</div>
+      <div class="palette">
+        <div class="swatch light" style="background:#f7ead8;">#f7ead8<br>bg-page</div>
+        <div class="swatch light" style="background:#fbf2e2;">#fbf2e2<br>bg-paper</div>
+        <div class="swatch" style="background:#a87445;">#a87445<br>gold-fill</div>
+        <div class="swatch new" style="background:#8c5d35;">#8c5d35<br>gold-text ⭐</div>
+        <div class="swatch" style="background:#d4a070;">#d4a070<br>gold-warm</div>
+        <div class="swatch new" style="background:#c89858;">#c89858<br>install ⭐</div>
+        <div class="swatch new" style="background:#3e6e78;">#3e6e78<br>teal ⭐</div>
+        <div class="swatch light" style="background:#eee;border:1px dashed #aaa;color:#888;">–</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- ERKLÄRUNG                                                      -->
+<!-- ============================================================ -->
+<div class="notes">
+  <strong>4 Korrekturen aus der Reflexion → C+:</strong>
+  <ul>
+    <li><strong>Designerin:</strong> Hintergrund-Verlauf in der App → flach gemacht. Verlauf nur auf der Landing-Page erlaubt. <span class="diff">App bleibt Journal, nicht Hero-Image.</span></li>
+    <li><strong>Designerin:</strong> Teal an einer einzigen Stelle wirkt wie Zufall → jetzt an 2 Stellen (App-Header + Landing-Splash-Wortmarke). <span class="diff">Wird als System lesbar, nicht als Versehen.</span></li>
+    <li><strong>Farblehre:</strong> Bronze als Text-Farbe ist kontrastkritisch (~3.8:1) → eigenes <code>gold-text #8c5d35</code> eingeführt. Bronze bleibt für Buttons/Flächen, dunkles Gold für Links/Text. <span class="diff">WCAG AA für Text gesichert.</span></li>
+    <li><strong>UX:</strong> Bronze-Install-Button kann Conversion drücken → zurück zu warmem Gold #c89858 (leicht wärmer als jetzt, aber gesättigt). <span class="diff">Signal-Stärke bleibt, Cover-Bezug bleibt.</span></li>
+    <li><strong>Klinische Psychologin:</strong> Petrol #2D5F6B kann Krankenhaus-Trigger sein → weicher Teal #3E6E78 (mehr „altes Holz", weniger Klinik). <span class="diff">Cover-Bezug bleibt erkennbar, affektive Last reduziert.</span></li>
+  </ul>
+  <p style="margin-top:12px;"><strong>Was identisch bleibt zu C:</strong> Peach-Cream-Verschiebung, SMALL-System, Card-Hierarchie, Gold-Fläche, gold-warm Wochendots.</p>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Löwenherz — Cover-Angleichung Variante C</title>
+<style>
+  /* ============================================================
+     IST (links) vs. SOLL Variante C (rechts)
+     ============================================================ */
+  :root {
+    /* IST */
+    --ist-bg-page:    #f5efe3;
+    --ist-bg-paper:   #faf6ed;
+    --ist-bg-card:    #eee7d8;
+    --ist-text-prim:  #2c2418;
+    --ist-text-body:  #4a3f30;
+    --ist-text-sec:   #8a7d6a;
+    --ist-gold:       #b8922e;
+    --ist-gold-warm:  #d4a843;
+    --ist-install:    #C8A84E;
+
+    /* SOLL — Variante C: Peach-Cream + Bronze-Champagner + Teal nur auf Wortmarke */
+    --soll-bg-page:   #f7ead8;
+    --soll-bg-paper:  #fbf2e2;
+    --soll-bg-card:   #f1e2c9;
+    --soll-text-prim: #2a2218;
+    --soll-text-body: #4a3d2c;
+    --soll-text-sec:  #8c7d65;
+    --soll-gold:      #a87445;
+    --soll-gold-warm: #d4a070;
+    --soll-install:   #b8835a;
+    --soll-teal:      #2d5f6b;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: #ece4d6;
+    color: #2c2418;
+    padding: 28px 18px 60px;
+    min-height: 100vh;
+  }
+
+  h1 {
+    font-family: Georgia, serif;
+    font-weight: 400;
+    font-size: 28px;
+    text-align: center;
+    margin-bottom: 4px;
+    color: #2c2418;
+  }
+  .sub {
+    text-align: center;
+    font-size: 14px;
+    color: #6a5d4a;
+    margin-bottom: 28px;
+  }
+
+  /* Layout */
+  .grid {
+    max-width: 920px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 720px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+
+  .col-label {
+    text-align: center;
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #8a7d6a;
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+  .col-label.soll { color: #2d5f6b; }
+
+  /* Phone mock */
+  .phone {
+    border-radius: 32px;
+    padding: 22px 18px 26px;
+    box-shadow: 0 8px 28px rgba(120, 100, 70, 0.18);
+    aspect-ratio: 9 / 16;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+  }
+  .phone.ist  { background: var(--ist-bg-page); }
+  .phone.soll {
+    background: linear-gradient(180deg, var(--soll-bg-page) 0%, #f0d8b8 100%);
+  }
+
+  /* Header */
+  .ph-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+  }
+  .wordmark {
+    font-family: Georgia, serif;
+    font-size: 19px;
+    font-weight: 600;
+    letter-spacing: -0.2px;
+  }
+  .ist  .wordmark { color: var(--ist-text-sec); }
+  .soll .wordmark { color: var(--soll-teal); }   /* ⭐ Variante C: Teal nur hier */
+
+  .icons {
+    display: flex;
+    gap: 10px;
+    font-size: 16px;
+  }
+  .ist  .icons { color: var(--ist-text-sec); }
+  .soll .icons { color: var(--soll-text-sec); }
+
+  /* Card */
+  .card {
+    border-radius: 14px;
+    padding: 14px 14px 16px;
+    margin-bottom: 14px;
+  }
+  .ist  .card { background: var(--ist-bg-paper); border: 1px solid rgba(120,100,70,0.10); }
+  .soll .card { background: var(--soll-bg-paper); border: 1px solid rgba(120,90,50,0.12); }
+
+  .card-title {
+    font-family: Georgia, serif;
+    font-size: 15px;
+    margin-bottom: 8px;
+  }
+  .ist  .card-title { color: var(--ist-text-prim); }
+  .soll .card-title { color: var(--soll-text-prim); }
+
+  .card-body {
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .ist  .card-body { color: var(--ist-text-body); }
+  .soll .card-body { color: var(--soll-text-body); }
+
+  /* SMALL buttons row */
+  .small-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+  .small-btn {
+    flex: 1;
+    aspect-ratio: 1;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 16px;
+    font-family: Georgia, serif;
+  }
+  /* SMALL bleibt in beiden gleich — Patrick hat eigene Logik dafür */
+  .sb-S { background: rgba(196,121,58,0.09); color: #c4793a; border: 1px solid rgba(196,121,58,0.12); }
+  .sb-M { background: rgba(74,158,142,0.09); color: #4a9e8e; border: 1px solid rgba(74,158,142,0.12); }
+  .sb-A { background: rgba(158,109,148,0.09); color: #9e6d94; border: 1px solid rgba(158,109,148,0.12); }
+  .sb-L1.ist  { background: rgba(184,146,46,0.09); color: var(--ist-gold);  border: 1px solid rgba(184,146,46,0.12); }
+  .sb-L1.soll { background: rgba(168,116,69,0.10); color: var(--soll-gold); border: 1px solid rgba(168,116,69,0.14); }
+  .sb-L2 { background: rgba(190,90,90,0.09); color: #be5a5a; border: 1px solid rgba(190,90,90,0.12); }
+
+  /* Wochendots */
+  .dots {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    margin-bottom: 18px;
+  }
+  .dot {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .ist  .dot.full { background: var(--ist-gold-warm);  color: #fff; }
+  .soll .dot.full { background: var(--soll-gold-warm); color: #fff; }
+  .dot.empty {
+    background: transparent;
+    border: 1.5px dashed rgba(120,100,70,0.25);
+  }
+
+  /* Install Button */
+  .install {
+    margin-top: auto;
+    padding: 14px;
+    border-radius: 12px;
+    color: #fff;
+    font-weight: 600;
+    text-align: center;
+    font-size: 14px;
+    box-shadow: 0 2px 8px rgba(120, 100, 70, 0.18);
+  }
+  .ist  .install { background: var(--ist-install); }
+  .soll .install { background: var(--soll-install); }
+
+  /* Bottom-Nav strip */
+  .navstrip {
+    display: flex;
+    justify-content: space-around;
+    padding-top: 10px;
+    border-top: 1px solid rgba(120,100,70,0.08);
+    margin-top: 14px;
+    font-size: 11px;
+  }
+  .ist  .navstrip .tab { color: var(--ist-text-sec); }
+  .soll .navstrip .tab { color: var(--soll-text-sec); }
+  .ist  .navstrip .tab.active { color: var(--ist-gold);  font-weight: 600; }
+  .soll .navstrip .tab.active { color: var(--soll-gold); font-weight: 600; }
+
+  /* Palette section */
+  .palette-section {
+    max-width: 920px;
+    margin: 36px auto 0;
+  }
+  .palette-title {
+    font-family: Georgia, serif;
+    font-size: 18px;
+    text-align: center;
+    margin-bottom: 14px;
+    color: #2c2418;
+  }
+  .palettes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 720px) {
+    .palettes { grid-template-columns: 1fr; }
+  }
+  .palette {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .swatch {
+    aspect-ratio: 1;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 6px;
+    font-size: 9px;
+    color: rgba(255,255,255,0.95);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+    border: 1px solid rgba(0,0,0,0.06);
+    font-family: 'SF Mono', Menlo, monospace;
+  }
+  .swatch.light { color: #2c2418; text-shadow: none; }
+
+  /* Cover reference strip */
+  .cover-ref {
+    max-width: 920px;
+    margin: 36px auto 0;
+    text-align: center;
+  }
+  .cover-ref-title {
+    font-family: Georgia, serif;
+    font-size: 16px;
+    color: #2c2418;
+    margin-bottom: 12px;
+  }
+  .cover-strip {
+    display: flex;
+    height: 60px;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  .cover-strip > div {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-family: monospace;
+  }
+
+  /* Notes */
+  .notes {
+    max-width: 920px;
+    margin: 30px auto 0;
+    background: #faf6ed;
+    border-left: 3px solid #2d5f6b;
+    padding: 18px 22px;
+    border-radius: 6px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #4a3f30;
+  }
+  .notes strong { color: #2d5f6b; }
+  .notes ul { margin: 8px 0 0 18px; }
+  .notes li { margin-bottom: 4px; }
+</style>
+</head>
+<body>
+
+<h1>Variante C — Cover-Angleichung</h1>
+<p class="sub">Peach-Cream-Hintergrund · Bronze-Champagner-Gold · Teal nur auf der Wortmarke</p>
+
+<!-- Cover-Referenz-Streifen -->
+<div class="cover-ref">
+  <div class="cover-ref-title">Cover-Farben (Referenz)</div>
+  <div class="cover-strip">
+    <div style="background:#f5dcc4; color:#2c2418;">#F5DCC4</div>
+    <div style="background:#e8b894; color:#fff;">#E8B894</div>
+    <div style="background:#dda079; color:#fff;">#DDA079</div>
+    <div style="background:#d4a070; color:#fff;">#D4A070</div>
+    <div style="background:#a87445; color:#fff;">#A87445</div>
+    <div style="background:#2d5f6b; color:#fff;">#2D5F6B</div>
+  </div>
+</div>
+
+<!-- Phone mockups -->
+<div class="grid" style="margin-top:28px;">
+  <div>
+    <div class="col-label">IST</div>
+    <div class="phone ist">
+      <div class="ph-header">
+        <div class="wordmark">Löwenherz</div>
+        <div class="icons">♡ ⚙</div>
+      </div>
+
+      <div class="dots">
+        <div class="dot full">M</div>
+        <div class="dot full">D</div>
+        <div class="dot full">M</div>
+        <div class="dot empty">D</div>
+        <div class="dot empty">F</div>
+        <div class="dot empty">S</div>
+        <div class="dot empty">S</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Heute, ein Schritt.</div>
+        <div class="card-body">Was war das kleinste, was du heute geschafft hast?</div>
+      </div>
+
+      <div class="small-row">
+        <div class="small-btn sb-S">S</div>
+        <div class="small-btn sb-M">M</div>
+        <div class="small-btn sb-A">A</div>
+        <div class="small-btn sb-L1 ist">L</div>
+        <div class="small-btn sb-L2">L</div>
+      </div>
+
+      <div class="install">App installieren</div>
+
+      <div class="navstrip">
+        <div class="tab active">Heute</div>
+        <div class="tab">Reflexion</div>
+        <div class="tab">Verlauf</div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="col-label soll">SOLL · Variante C</div>
+    <div class="phone soll">
+      <div class="ph-header">
+        <div class="wordmark">Löwenherz</div>
+        <div class="icons">♡ ⚙</div>
+      </div>
+
+      <div class="dots">
+        <div class="dot full">M</div>
+        <div class="dot full">D</div>
+        <div class="dot full">M</div>
+        <div class="dot empty">D</div>
+        <div class="dot empty">F</div>
+        <div class="dot empty">S</div>
+        <div class="dot empty">S</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Heute, ein Schritt.</div>
+        <div class="card-body">Was war das kleinste, was du heute geschafft hast?</div>
+      </div>
+
+      <div class="small-row">
+        <div class="small-btn sb-S">S</div>
+        <div class="small-btn sb-M">M</div>
+        <div class="small-btn sb-A">A</div>
+        <div class="small-btn sb-L1 soll">L</div>
+        <div class="small-btn sb-L2">L</div>
+      </div>
+
+      <div class="install">App installieren</div>
+
+      <div class="navstrip">
+        <div class="tab active">Heute</div>
+        <div class="tab">Reflexion</div>
+        <div class="tab">Verlauf</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Paletten-Vergleich -->
+<div class="palette-section">
+  <div class="palette-title">Farbtoken — IST vs. SOLL</div>
+  <div class="palettes">
+    <div>
+      <div class="col-label">IST</div>
+      <div class="palette">
+        <div class="swatch light" style="background:#f5efe3;">#f5efe3<br>bg-page</div>
+        <div class="swatch light" style="background:#faf6ed;">#faf6ed<br>bg-paper</div>
+        <div class="swatch light" style="background:#eee7d8;">#eee7d8<br>bg-card</div>
+        <div class="swatch" style="background:#8a7d6a;">#8a7d6a<br>text-sec</div>
+        <div class="swatch" style="background:#b8922e;">#b8922e<br>gold</div>
+        <div class="swatch" style="background:#d4a843;">#d4a843<br>gold-warm</div>
+        <div class="swatch" style="background:#C8A84E;">#C8A84E<br>install-btn</div>
+        <div class="swatch light" style="background:#eee;border:1px dashed #aaa;color:#888;">— kein<br>Teal</div>
+      </div>
+    </div>
+    <div>
+      <div class="col-label soll">SOLL</div>
+      <div class="palette">
+        <div class="swatch light" style="background:#f7ead8;">#f7ead8<br>bg-page</div>
+        <div class="swatch light" style="background:#fbf2e2;">#fbf2e2<br>bg-paper</div>
+        <div class="swatch light" style="background:#f1e2c9;">#f1e2c9<br>bg-card</div>
+        <div class="swatch" style="background:#8c7d65;">#8c7d65<br>text-sec</div>
+        <div class="swatch" style="background:#a87445;">#a87445<br>gold</div>
+        <div class="swatch" style="background:#d4a070;">#d4a070<br>gold-warm</div>
+        <div class="swatch" style="background:#b8835a;">#b8835a<br>install-btn</div>
+        <div class="swatch" style="background:#2d5f6b;">#2d5f6b<br>ink-teal ⭐</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Notes -->
+<div class="notes">
+  <strong>Was sich ändert (Variante C, minimal-invasiv):</strong>
+  <ul>
+    <li><strong>Hintergrund:</strong> Sand-Cream → Peach-Cream. Im Mock zusätzlich ein sanfter Verlauf nach unten (wie das Cover) — optional.</li>
+    <li><strong>Gold:</strong> Gelb-olivig → Bronze-Champagner. Wärmer, weniger Senf.</li>
+    <li><strong>Install-Button:</strong> Bronze statt Gelb-Gold. Passt zum Cover-Buchtitel.</li>
+    <li><strong>Wortmarke „Löwenherz" im Header:</strong> Teal #2D5F6B. <em>Das einzige neue Farbsignal.</em> Sonst nirgends — kein Teal in Buttons, Icons, Tabs.</li>
+    <li><strong>L1-SMALL-Button:</strong> Mit der Gold-Verschiebung leicht nachzogen, damit der Abstand zum Akzent-Gold erhalten bleibt.</li>
+    <li><strong>SMALL S/M/A/L2:</strong> Unverändert. Eigene Logik, eigene Signalfarben.</li>
+  </ul>
+</div>
+
+</body>
+</html>

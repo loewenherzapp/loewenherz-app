@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Löwenherz — SMALL-Button-Varianten</title>
+<style>
+  :root {
+    /* Finale Welt (C + C+-Teal) */
+    --bg-page-top:    #f7ead8;
+    --bg-page-bot:    #f0d8b8;
+    --bg-paper:       #fbf2e2;
+    --bg-card:        #f1e2c9;
+    --text-prim:      #2a2218;
+    --text-body:      #4a3d2c;
+    --text-sec:       #8c7d65;
+    --gold-fill:      #a87445;
+    --gold-warm:      #d4a070;
+    --teal:           #3e6e78;
+    --install:        #b8835a;
+
+    /* Aktuell (random entstandene SMALL-Farben) */
+    --aS:  #c4793a;
+    --aM:  #4a9e8e;
+    --aA:  #9e6d94;
+    --aL1: #b8922e;
+    --aL2: #be5a5a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: #ece4d6;
+    color: #2c2418;
+    padding: 28px 18px 60px;
+    min-height: 100vh;
+  }
+  h1 {
+    font-family: Georgia, serif;
+    font-weight: 400;
+    font-size: 28px;
+    text-align: center;
+    margin-bottom: 4px;
+  }
+  .sub {
+    text-align: center;
+    font-size: 14px;
+    color: #6a5d4a;
+    margin-bottom: 32px;
+  }
+
+  .variant {
+    max-width: 920px;
+    margin: 0 auto 28px;
+    background: #faf6ed;
+    border-radius: 16px;
+    padding: 22px 26px 24px;
+    box-shadow: 0 2px 10px rgba(120,100,70,0.08);
+  }
+  .variant-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 6px;
+  }
+  .variant-name {
+    font-family: Georgia, serif;
+    font-size: 20px;
+    color: #2a2218;
+  }
+  .variant-tag {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: #8c7d65;
+    font-weight: 600;
+  }
+  .variant-desc {
+    font-size: 13px;
+    color: #4a3d2c;
+    line-height: 1.5;
+    margin-bottom: 18px;
+  }
+
+  /* Side-by-side: Buttons groß links, Mini-Phone-Context rechts */
+  .compare-row {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 22px;
+    align-items: stretch;
+  }
+  @media (max-width: 720px) {
+    .compare-row { grid-template-columns: 1fr; }
+  }
+
+  /* Button row groß */
+  .btn-row {
+    background: linear-gradient(180deg, var(--bg-page-top) 0%, var(--bg-page-bot) 100%);
+    border-radius: 12px;
+    padding: 18px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .btn {
+    flex: 1;
+    aspect-ratio: 1;
+    max-height: 80px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: Georgia, serif;
+    font-weight: 600;
+    font-size: 22px;
+  }
+
+  /* Mini-Phone-Context */
+  .mini-phone {
+    background: linear-gradient(180deg, var(--bg-page-top) 0%, var(--bg-page-bot) 100%);
+    border-radius: 22px;
+    padding: 14px 14px 16px;
+    display: flex;
+    flex-direction: column;
+  }
+  .mp-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .mp-word {
+    font-family: Georgia, serif;
+    font-size: 13px;
+    color: var(--teal);
+    font-weight: 600;
+  }
+  .mp-icons {
+    color: var(--text-sec);
+    font-size: 11px;
+  }
+  .mp-card {
+    background: var(--bg-paper);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 9px;
+    color: var(--text-prim);
+    margin-bottom: 10px;
+    border: 1px solid rgba(120,90,50,0.10);
+    font-family: Georgia, serif;
+  }
+  .mp-btn-row {
+    display: flex;
+    gap: 4px;
+  }
+  .mp-btn {
+    flex: 1;
+    aspect-ratio: 1;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: Georgia, serif;
+    font-weight: 600;
+    font-size: 11px;
+  }
+
+  /* ============ VARIANTE 0 — REFERENZ (Status Quo) ============ */
+  .v0 .btn.S  { background: rgba(196,121,58,0.09); color: var(--aS);  border: 1px solid rgba(196,121,58,0.12); }
+  .v0 .btn.M  { background: rgba(74,158,142,0.09); color: var(--aM);  border: 1px solid rgba(74,158,142,0.12); }
+  .v0 .btn.A  { background: rgba(158,109,148,0.09); color: var(--aA); border: 1px solid rgba(158,109,148,0.12); }
+  .v0 .btn.L1 { background: rgba(184,146,46,0.09); color: var(--aL1); border: 1px solid rgba(184,146,46,0.12); }
+  .v0 .btn.L2 { background: rgba(190,90,90,0.09); color: var(--aL2);  border: 1px solid rgba(190,90,90,0.12); }
+  .v0 .mp-btn.S  { background: rgba(196,121,58,0.09); color: var(--aS); }
+  .v0 .mp-btn.M  { background: rgba(74,158,142,0.09); color: var(--aM); }
+  .v0 .mp-btn.A  { background: rgba(158,109,148,0.09); color: var(--aA); }
+  .v0 .mp-btn.L1 { background: rgba(184,146,46,0.09); color: var(--aL1); }
+  .v0 .mp-btn.L2 { background: rgba(190,90,90,0.09); color: var(--aL2); }
+
+  /* ============ VARIANTE A — Aktuell + dezenter Rand verstärkt ============ */
+  /* Border-Opacity von 0.12 → 0.40, sonst alles gleich */
+  .vA .btn.S  { background: rgba(196,121,58,0.09); color: var(--aS);  border: 1.5px solid rgba(196,121,58,0.42); }
+  .vA .btn.M  { background: rgba(74,158,142,0.09); color: var(--aM);  border: 1.5px solid rgba(74,158,142,0.42); }
+  .vA .btn.A  { background: rgba(158,109,148,0.09); color: var(--aA); border: 1.5px solid rgba(158,109,148,0.42); }
+  .vA .btn.L1 { background: rgba(184,146,46,0.09); color: var(--aL1); border: 1.5px solid rgba(184,146,46,0.42); }
+  .vA .btn.L2 { background: rgba(190,90,90,0.09); color: var(--aL2);  border: 1.5px solid rgba(190,90,90,0.42); }
+  .vA .mp-btn.S  { background: rgba(196,121,58,0.09); color: var(--aS);  border: 1px solid rgba(196,121,58,0.42); }
+  .vA .mp-btn.M  { background: rgba(74,158,142,0.09); color: var(--aM);  border: 1px solid rgba(74,158,142,0.42); }
+  .vA .mp-btn.A  { background: rgba(158,109,148,0.09); color: var(--aA); border: 1px solid rgba(158,109,148,0.42); }
+  .vA .mp-btn.L1 { background: rgba(184,146,46,0.09); color: var(--aL1); border: 1px solid rgba(184,146,46,0.42); }
+  .vA .mp-btn.L2 { background: rgba(190,90,90,0.09); color: var(--aL2); border: 1px solid rgba(190,90,90,0.42); }
+
+  /* ============ VARIANTE B — Cover-Palette (harmonisch) ============ */
+  /* Alle 5 in der Cover-Welt: Peach, Bronze, Teal, Gold, Terracotta */
+  /* S=#c87c5a Peach-Coral · M=#3e6e78 Teal · A=#7a8a6e Sage(Cover-Schatten) · L1=#a87445 Bronze · L2=#8b4a3c Terracotta-Rot */
+  .vB .btn.S  { background: rgba(200,124,90,0.10); color: #c87c5a; border: 1px solid rgba(200,124,90,0.25); }
+  .vB .btn.M  { background: rgba(62,110,120,0.10); color: #3e6e78; border: 1px solid rgba(62,110,120,0.25); }
+  .vB .btn.A  { background: rgba(122,138,110,0.10); color: #7a8a6e; border: 1px solid rgba(122,138,110,0.25); }
+  .vB .btn.L1 { background: rgba(168,116,69,0.10); color: #a87445; border: 1px solid rgba(168,116,69,0.25); }
+  .vB .btn.L2 { background: rgba(139,74,60,0.10); color: #8b4a3c; border: 1px solid rgba(139,74,60,0.25); }
+  .vB .mp-btn.S  { background: rgba(200,124,90,0.10); color: #c87c5a; }
+  .vB .mp-btn.M  { background: rgba(62,110,120,0.10); color: #3e6e78; }
+  .vB .mp-btn.A  { background: rgba(122,138,110,0.10); color: #7a8a6e; }
+  .vB .mp-btn.L1 { background: rgba(168,116,69,0.10); color: #a87445; }
+  .vB .mp-btn.L2 { background: rgba(139,74,60,0.10); color: #8b4a3c; }
+
+  /* ============ VARIANTE C — Monochrom, nur Buchstabe trägt Farbe ============ */
+  /* Alle Hintergründe gleich (bg-paper), nur der Buchstabe ist farbig — heutige Farben */
+  .vC .btn  { background: var(--bg-paper); border: 1px solid rgba(120,90,50,0.18); }
+  .vC .btn.S  { color: var(--aS);  }
+  .vC .btn.M  { color: var(--aM);  }
+  .vC .btn.A  { color: var(--aA);  }
+  .vC .btn.L1 { color: var(--aL1); }
+  .vC .btn.L2 { color: var(--aL2); }
+  .vC .mp-btn { background: var(--bg-paper); border: 1px solid rgba(120,90,50,0.15); }
+  .vC .mp-btn.S  { color: var(--aS);  }
+  .vC .mp-btn.M  { color: var(--aM);  }
+  .vC .mp-btn.A  { color: var(--aA);  }
+  .vC .mp-btn.L1 { color: var(--aL1); }
+  .vC .mp-btn.L2 { color: var(--aL2); }
+
+  /* ============ VARIANTE D — Outline only ============ */
+  /* Transparenter Hintergrund, farbiger Rand, farbiger Buchstabe — Cover-Palette */
+  .vD .btn  { background: transparent; }
+  .vD .btn.S  { color: #c87c5a; border: 1.5px solid #c87c5a; }
+  .vD .btn.M  { color: #3e6e78; border: 1.5px solid #3e6e78; }
+  .vD .btn.A  { color: #7a8a6e; border: 1.5px solid #7a8a6e; }
+  .vD .btn.L1 { color: #a87445; border: 1.5px solid #a87445; }
+  .vD .btn.L2 { color: #8b4a3c; border: 1.5px solid #8b4a3c; }
+  .vD .mp-btn  { background: transparent; }
+  .vD .mp-btn.S  { color: #c87c5a; border: 1px solid #c87c5a; }
+  .vD .mp-btn.M  { color: #3e6e78; border: 1px solid #3e6e78; }
+  .vD .mp-btn.A  { color: #7a8a6e; border: 1px solid #7a8a6e; }
+  .vD .mp-btn.L1 { color: #a87445; border: 1px solid #a87445; }
+  .vD .mp-btn.L2 { color: #8b4a3c; border: 1px solid #8b4a3c; }
+
+  /* Pro-Contra Liste */
+  .pros-cons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-top: 14px;
+    font-size: 12px;
+  }
+  .pros, .cons {
+    padding: 10px 12px;
+    border-radius: 8px;
+  }
+  .pros { background: rgba(62,110,120,0.06); border-left: 3px solid #3e6e78; }
+  .cons { background: rgba(190,90,90,0.06); border-left: 3px solid #be5a5a; }
+  .pros strong, .cons strong { display: block; margin-bottom: 4px; font-size: 11px; letter-spacing: 0.8px; text-transform: uppercase; }
+  .pros strong { color: #3e6e78; }
+  .cons strong { color: #be5a5a; }
+  .pros ul, .cons ul { margin-left: 16px; }
+  .pros li, .cons li { margin-bottom: 3px; line-height: 1.4; }
+</style>
+</head>
+<body>
+
+<h1>SMALL-Buttons — 4 Varianten</h1>
+<p class="sub">Welt: Verlauf-Hintergrund aus C + weicher Teal aus C+ · Buttons frei explorierbar</p>
+
+<!-- ===================== REFERENZ ===================== -->
+<div class="variant v0">
+  <div class="variant-head">
+    <div class="variant-name">Referenz — Status Quo</div>
+    <div class="variant-tag">aktuell</div>
+  </div>
+  <div class="variant-desc">Heutige Buttons. 5 unabhängige Farben, leichte Fläche, sehr dezenter Rand (12% opacity).</div>
+  <div class="compare-row">
+    <div class="btn-row">
+      <div class="btn S">S</div>
+      <div class="btn M">M</div>
+      <div class="btn A">A</div>
+      <div class="btn L1">L</div>
+      <div class="btn L2">L</div>
+    </div>
+    <div class="mini-phone">
+      <div class="mp-header"><div class="mp-word">Löwenherz</div><div class="mp-icons">♡ ⚙</div></div>
+      <div class="mp-card">Heute, ein Schritt.</div>
+      <div class="mp-btn-row">
+        <div class="mp-btn S">S</div><div class="mp-btn M">M</div><div class="mp-btn A">A</div><div class="mp-btn L1">L</div><div class="mp-btn L2">L</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== VARIANTE A ===================== -->
+<div class="variant vA">
+  <div class="variant-head">
+    <div class="variant-name">A — Rand verstärkt</div>
+    <div class="variant-tag">minimal-invasiv</div>
+  </div>
+  <div class="variant-desc">Heutige Farben behalten. Rand von 12% → 42% Opacity. Mehr Definition ohne Farb-Umbau.</div>
+  <div class="compare-row">
+    <div class="btn-row">
+      <div class="btn S">S</div>
+      <div class="btn M">M</div>
+      <div class="btn A">A</div>
+      <div class="btn L1">L</div>
+      <div class="btn L2">L</div>
+    </div>
+    <div class="mini-phone">
+      <div class="mp-header"><div class="mp-word">Löwenherz</div><div class="mp-icons">♡ ⚙</div></div>
+      <div class="mp-card">Heute, ein Schritt.</div>
+      <div class="mp-btn-row">
+        <div class="mp-btn S">S</div><div class="mp-btn M">M</div><div class="mp-btn A">A</div><div class="mp-btn L1">L</div><div class="mp-btn L2">L</div>
+      </div>
+    </div>
+  </div>
+  <div class="pros-cons">
+    <div class="pros"><strong>Pro</strong><ul><li>Kleinster Eingriff, kein Risiko für Muscle Memory</li><li>Tap-Target visuell deutlicher</li><li>Rand harmoniert mit dem Verlauf-Hintergrund</li></ul></div>
+    <div class="cons"><strong>Contra</strong><ul><li>5 unabhängige Farben bleiben — wirkt weiter „bunt"</li><li>Kein Cover-Bezug</li></ul></div>
+  </div>
+</div>
+
+<!-- ===================== VARIANTE B ===================== -->
+<div class="variant vB">
+  <div class="variant-head">
+    <div class="variant-name">B — Cover-Palette</div>
+    <div class="variant-tag">harmonisch</div>
+  </div>
+  <div class="variant-desc">Alle 5 Farben aus der Cover-Welt: Peach-Coral, Teal, Sage, Bronze, Terracotta. Harmonisches Bild, klare Wiederkennung zum Buch.</div>
+  <div class="compare-row">
+    <div class="btn-row">
+      <div class="btn S">S</div>
+      <div class="btn M">M</div>
+      <div class="btn A">A</div>
+      <div class="btn L1">L</div>
+      <div class="btn L2">L</div>
+    </div>
+    <div class="mini-phone">
+      <div class="mp-header"><div class="mp-word">Löwenherz</div><div class="mp-icons">♡ ⚙</div></div>
+      <div class="mp-card">Heute, ein Schritt.</div>
+      <div class="mp-btn-row">
+        <div class="mp-btn S">S</div><div class="mp-btn M">M</div><div class="mp-btn A">A</div><div class="mp-btn L1">L</div><div class="mp-btn L2">L</div>
+      </div>
+    </div>
+  </div>
+  <div class="pros-cons">
+    <div class="pros"><strong>Pro</strong><ul><li>Maximale Harmonie zum Cover</li><li>Wirkt durchkomponiert, nicht random</li><li>5 distincte Töne, jeder bleibt erkennbar</li></ul></div>
+    <div class="cons"><strong>Contra</strong><ul><li>M-Teal überlappt mit Wortmarke-Teal → semantisch verwirrend</li><li>L1-Bronze sehr nah am App-Akzent-Gold</li><li>Muscle Memory bricht (alte Farb-→-Funktion-Verknüpfung weg)</li></ul></div>
+  </div>
+</div>
+
+<!-- ===================== VARIANTE C ===================== -->
+<div class="variant vC">
+  <div class="variant-head">
+    <div class="variant-name">C — Monochrom mit Akzent-Buchstabe</div>
+    <div class="variant-tag">ruhig</div>
+  </div>
+  <div class="variant-desc">Buttons alle in Paper-Cream mit einem zarten Rand. Nur der Buchstabe trägt Farbe (heutige Farben). Maximale Ruhe, Buchstabe wird zum eigentlichen Signal.</div>
+  <div class="compare-row">
+    <div class="btn-row">
+      <div class="btn S">S</div>
+      <div class="btn M">M</div>
+      <div class="btn A">A</div>
+      <div class="btn L1">L</div>
+      <div class="btn L2">L</div>
+    </div>
+    <div class="mini-phone">
+      <div class="mp-header"><div class="mp-word">Löwenherz</div><div class="mp-icons">♡ ⚙</div></div>
+      <div class="mp-card">Heute, ein Schritt.</div>
+      <div class="mp-btn-row">
+        <div class="mp-btn S">S</div><div class="mp-btn M">M</div><div class="mp-btn A">A</div><div class="mp-btn L1">L</div><div class="mp-btn L2">L</div>
+      </div>
+    </div>
+  </div>
+  <div class="pros-cons">
+    <div class="pros"><strong>Pro</strong><ul><li>Allerleisesterer Look — extrem journal-mäßig</li><li>Cover-Hintergrund bekommt die Bühne</li><li>Klar: Buchstabe = Signal, Fläche = neutral</li></ul></div>
+    <div class="cons"><strong>Contra</strong><ul><li>Signal-Stärke pro Button reduziert (Farb-Fläche weg)</li><li>Bei Angst-Spitze: weniger eindeutiges visuelles „Anker-Element"</li><li>Buchstaben-Farben bleiben „random"</li></ul></div>
+  </div>
+</div>
+
+<!-- ===================== VARIANTE D ===================== -->
+<div class="variant vD">
+  <div class="variant-head">
+    <div class="variant-name">D — Outline only (Cover-Farben)</div>
+    <div class="variant-tag">tagebuch</div>
+  </div>
+  <div class="variant-desc">Transparenter Hintergrund, farbiger Rand und Buchstabe in Cover-Palette. Lässt den Verlauf maximal durchscheinen — wirkt wie handgezeichnete Tagebuch-Marker.</div>
+  <div class="compare-row">
+    <div class="btn-row">
+      <div class="btn S">S</div>
+      <div class="btn M">M</div>
+      <div class="btn A">A</div>
+      <div class="btn L1">L</div>
+      <div class="btn L2">L</div>
+    </div>
+    <div class="mini-phone">
+      <div class="mp-header"><div class="mp-word">Löwenherz</div><div class="mp-icons">♡ ⚙</div></div>
+      <div class="mp-card">Heute, ein Schritt.</div>
+      <div class="mp-btn-row">
+        <div class="mp-btn S">S</div><div class="mp-btn M">M</div><div class="mp-btn A">A</div><div class="mp-btn L1">L</div><div class="mp-btn L2">L</div>
+      </div>
+    </div>
+  </div>
+  <div class="pros-cons">
+    <div class="pros"><strong>Pro</strong><ul><li>Höchster Wiedererkennungswert mit dem Cover</li><li>„Skizziert/handgemacht" — journal-affin</li><li>Hintergrund-Verlauf maximal sichtbar</li></ul></div>
+    <div class="cons"><strong>Contra</strong><ul><li>Tap-Target weniger eindeutig (keine Fläche)</li><li>Active-State (Tap-Feedback) muss neu gedacht werden</li><li>M-Teal-Konflikt wie Variante B</li></ul></div>
+  </div>
+</div>
+
+</body>
+</html>
