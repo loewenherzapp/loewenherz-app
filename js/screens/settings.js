@@ -541,7 +541,7 @@ const LEGAL_CONTENT = {
     <p>Handelsregister: Rumänisches Handelsregister<br>
     VAT: RO48978340</p>
     <div class="legal-notice">
-      <p><strong>Hinweis:</strong> Diese App dient ausschließlich der allgemeinen Information und Selbstreflexion. Sie ersetzt keine ärztliche oder psychotherapeutische Behandlung. Bei akuten psychischen Krisen wende dich bitte an den ärztlichen Bereitschaftsdienst (116 117), die Telefonseelsorge (0800 111 0 111 / 0800 111 0 222) oder den Notruf (112).</p>
+      <p><strong>Hinweis:</strong> Diese App dient ausschließlich der allgemeinen Information und Selbstreflexion. Sie ersetzt keine ärztliche oder psychotherapeutische Behandlung. In Krisensituationen erreichst du rund um die Uhr: Telefonseelsorge Deutschland 0800 111 0 111 (kostenlos) · Telefonseelsorge Österreich 142 · Die Dargebotene Hand Schweiz 143. In akuten Notfällen wähle den Notruf 112.</p>
     </div>
   `,
   datenschutz: `

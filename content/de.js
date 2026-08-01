@@ -457,7 +457,7 @@ export const TEXTS = {
       bookLink: "Zum Buch",
       bookUrl: "https://buch.angstdoc.de/",
       disclaimerTitle: "Wichtiger Hinweis",
-      disclaimer: "Löwenherz ist ein Selbsthilfe-Begleiter und ersetzt keine ärztliche Diagnose, Beratung oder Behandlung. Bei akuten Beschwerden wende dich an deine Ärztin, deinen Arzt oder eine Therapeutin/einen Therapeuten. In Krisensituationen erreichst du die Telefonseelsorge unter 0800 111 0 111 (kostenlos, rund um die Uhr). In akuten Notfällen wähle den Notruf 112.",
+      disclaimer: "Löwenherz ist ein Selbsthilfe-Begleiter und ersetzt keine ärztliche Diagnose, Beratung oder Behandlung. Bei akuten Beschwerden wende dich an deine Ärztin, deinen Arzt oder eine Therapeutin/einen Therapeuten. In Krisensituationen erreichst du rund um die Uhr: Telefonseelsorge Deutschland 0800 111 0 111 (kostenlos) · Telefonseelsorge Österreich 142 · Die Dargebotene Hand Schweiz 143. In akuten Notfällen wähle den Notruf 112.",
       impressum: "Impressum",
       impressumText: "impressum",
       datenschutz: "Datenschutz",

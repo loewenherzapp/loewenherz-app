@@ -2,7 +2,7 @@
 // Löwenherz PWA — Service Worker (Cache-First)
 // ============================================================
 
-const CACHE_NAME = 'loewenherz-v86';
+const CACHE_NAME = 'loewenherz-v87';
 
 const URLS_TO_CACHE = [
   './',
