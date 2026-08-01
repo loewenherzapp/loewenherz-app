@@ -1,4 +1,5 @@
 {
+  "installCommand": "",
   "headers": [
     {
       "source": "/.well-known/assetlinks.json",

@@ -1,0 +1,10 @@
+# Nur die Web-App wird deployt — Capacitor/Node-Fundament bleibt draußen.
+# Details: docs/ios-capacitor-notes.md
+ios/
+www/
+node_modules/
+scripts/
+package.json
+package-lock.json
+capacitor.config.json
+.gitattributes
