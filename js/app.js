@@ -16,14 +16,16 @@ import { renderDashboard } from './screens/dashboard.js';
 import { renderReflection } from './screens/reflection.js';
 import { renderHistory } from './screens/history.js';
 import { renderSettings } from './screens/settings.js';
+import { isNative } from './platform.js';
 import './push.js'; // OneSignal init (side-effect import)
 
 let currentTab = 'today';
 let profile = null;
 
-// Check if running as installed PWA
+// Check if running as installed PWA (or as native Capacitor app)
 function isStandalone() {
-  return window.matchMedia('(display-mode: standalone)').matches
+  return isNative()
+    || window.matchMedia('(display-mode: standalone)').matches
     || window.navigator.standalone === true;
 }
 

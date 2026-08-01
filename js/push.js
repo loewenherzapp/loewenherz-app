@@ -7,7 +7,14 @@
 // Bestandsuser die App öffnet, der Push schon mal aktiviert hatte
 // (loewenherz_push_asked === 'true' && loewenherz_push_enabled !== 'false').
 // Damit fließt keine IP-Adresse an OneSignal/USA vor Einwilligung.
+//
+// Nativ (Capacitor-iOS): Das Web-SDK wird NIE geladen — alle
+// Einstiegspunkte sind mit isNative() geguarded. C2 ersetzt das
+// durch das native OneSignal-SDK.
 // ============================================================
+
+import { isNative } from './platform.js';
+import { API_BASE } from './config.js';
 
 const ONESIGNAL_SDK_URL = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';
 let oneSignalLoadPromise = null;
@@ -17,6 +24,8 @@ let oneSignalLoadPromise = null;
  * Idempotent: weitere Aufrufe geben das gleiche Promise zurück.
  */
 export function ensureOneSignalLoaded() {
+  // Nativ: Web-SDK nie laden (C2 bringt das native SDK).
+  if (isNative()) return Promise.resolve(null);
   if (oneSignalLoadPromise) return oneSignalLoadPromise;
 
   oneSignalLoadPromise = new Promise((resolve) => {
@@ -59,6 +68,7 @@ export function ensureOneSignalLoaded() {
 // Wer Push schon mal aktiviert hat und nicht explizit deaktiviert hat,
 // braucht das SDK direkt (sonst keine Tag-Syncs, keine Subscription-Pflege).
 (function autoLoadForExistingUsers() {
+  if (isNative()) return;
   try {
     const asked = localStorage.getItem('loewenherz_push_asked') === 'true';
     const enabled = localStorage.getItem('loewenherz_push_enabled') !== 'false';
@@ -158,6 +168,8 @@ function buildTags() {
 }
 
 function syncTagsToOneSignal() {
+  // Nativ: Tags laufen ab C2 über das native SDK.
+  if (isNative()) return;
   const tags = buildTags();
   console.log('[Push] Syncing tags:', tags);
 
@@ -195,7 +207,7 @@ function syncTagsViaServer(tags) {
 
   console.log('[Push] Server sync for:', subscriptionId);
 
-  fetch('/api/set-tags', {
+  fetch(API_BASE + '/api/set-tags', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ player_id: subscriptionId, tags: tags })
@@ -298,6 +310,8 @@ export function showPushSoftAsk() {
 // --- Check Soft-Ask after Reflexion ---
 
 export function checkSoftAskAfterReflexion() {
+  // Nativ: Web-Soft-Ask entfällt — C2 hängt hier den nativen Permission-Flow ein.
+  if (isNative()) return;
   setTimeout(() => {
     if (
       typeof Notification !== 'undefined' &&

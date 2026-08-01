@@ -4,6 +4,8 @@
 // Macht KEIN UI — jeder Aufrufer baut sein eigenes.
 // ============================================================
 
+import { API_BASE } from './config.js';
+
 // Lockere Validierung — fängt grobe Tippfehler, lässt valide Adressen durch.
 // Brevo validiert serverseitig nochmal.
 export function isValidEmail(email) {
@@ -17,7 +19,7 @@ export function isValidEmail(email) {
 // Rückgabe: { ok: true } | { ok: false, error: "<Text für den User>" }
 export async function subscribeEmail(email) {
   try {
-    const res = await fetch('/api/subscribe', {
+    const res = await fetch(API_BASE + '/api/subscribe', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email })
