@@ -64,10 +64,32 @@ Erwartung: **404** (ebenso `ios/App/App/Info.plist`, `capacitor.config.json`).
 - **Datenexport bricht nativ:** `js/data-export.js` nutzt Blob-Download via `<a download>` — funktioniert in WKWebView nicht. Fix in C3 (`@capacitor/filesystem` + `@capacitor/share`).
 - **Native App startet bei null:** iOS-PWA-Bestandsdaten (IndexedDB/localStorage aus Safari) werden nicht migriert — bewusste Entscheidung.
 
+## Simulator-Smoke-Test — Ergebnis 02.08.2026 (iPhone 17, iOS 26.5)
+
+Erledigt und bestanden:
+
+- [x] Xcode 26.6 + Lizenz; Simulator-Runtime via `xcodebuild -downloadPlatform iOS` (8,5 GB, separat seit Xcode 26)
+- [x] Build erfolgreich (`App.xcodeproj`, Scheme `App`; Erstbuild ~24 Min wegen Capacitor-SPM-Kompilierung)
+- [x] Start ins **Onboarding**, nicht in die Install-Landing → `isNative()`-Guard in `isStandalone()` greift
+- [x] **Null** Service-Worker-Registrierungen (`Library/Caches/…/WebKit/ServiceWorkers` leer), **kein** CacheStorage
+- [x] **Null** Netzwerk-Requests an app.angstdoc.de / cdn.onesignal.com / `_vercel/insights`; WebKit-NetworkCache enthält nur die 8-Byte-`salt`-Systemdatei → Assets kommen vollständig aus dem Bundle
+- [x] IndexedDB `loewenherz-db` mit korrektem Schema (`userProfile`, `smallPoints`, `reflections`, `milestones`)
+- [x] E-Mail-Gate erscheint, „Erstmal ohne" setzt `emailGateSeen`/`emailGateComplete`/`emailSkipped`
+- [x] Persistenz über App-Neustart: Profil, SMALL-Punkte, Milestones, Morgen-Intention alle erhalten
+
+Nützlich fürs nächste Mal: Die **Morgen-Intention liegt in localStorage** (`morningReflection_<datum>`, `reflection.js:59`), die **Abend-Reflexion in IndexedDB** (`saveReflection()`, `reflection.js:508`) — ein leerer `reflections`-Store nach einer Morgen-Reflexion ist also korrekt, kein Bug.
+
+Verifikation ohne Xcode-GUI (praktisch für Regressionstests):
+
+```bash
+xcrun simctl launch booted de.angstdoc.loewenherz
+xcrun simctl io booted screenshot /tmp/shot.png
+```
+
+Datenstand direkt lesbar unter `~/Library/Developer/CoreSimulator/Devices/<UDID>/data/Containers/Data/Application/<APP-UUID>/Library/WebKit/de.angstdoc.loewenherz/WebsiteData/` (IndexedDB + localStorage als SQLite).
+
 ## Offene Punkte vor C2/C3
 
-- [ ] Xcode-Lizenz akzeptieren (`sudo xcodebuild -license accept`) + iOS-Simulator-Runtime laden
-- [ ] Simulator-Smoke-Test: Offline-Start, Onboarding statt Install-Landing, Reflexion → App-Neustart → Daten da, Konsole ohne SW-/OneSignal-Fehler
 - [ ] `tel:`-Links im Krisen-Modal aus WKWebView testen (müssen den Dialer öffnen — kritisch!)
 - [ ] Externe Links (`buch.angstdoc.de`, Datenschutz) öffnen in Safari, nicht in der WebView
 - [ ] C2: OneSignal-Migration (natives SDK, Tags, Soft-Ask-Ersatz)
