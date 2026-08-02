@@ -8,31 +8,75 @@
 // (loewenherz_push_asked === 'true' && loewenherz_push_enabled !== 'false').
 // Damit fließt keine IP-Adresse an OneSignal/USA vor Einwilligung.
 //
-// Nativ (Capacitor-iOS): Das Web-SDK wird NIE geladen — alle
-// Einstiegspunkte sind mit isNative() geguarded. C2 ersetzt das
-// durch das native OneSignal-SDK.
+// Diese Datei ist die Push-Facade: Sie kapselt beide Plattformen und
+// verzweigt intern nach isNative(). Außerhalb von push.js und
+// push-native.js greift NICHTS mehr direkt auf OneSignal oder die
+// Notification-API zu.
+//
+//   Web   → OneSignal Web SDK v16 (CDN, lazy) — hier in dieser Datei
+//   Nativ → @onesignal/capacitor-plugin       — js/push-native.js
+//
+// Geteilt und bewusst NICHT dupliziert: roundTo15Min(), localTimeToUTC()
+// und buildTags(). Der Server filtert nach exakten Tag-Werten; jede
+// Abweichung im Format bräche das Scheduling lautlos.
 // ============================================================
 
 import { isNative } from './platform.js';
-import { API_BASE } from './config.js';
+import { API_BASE, ONESIGNAL_APP_ID } from './config.js';
 
 const ONESIGNAL_SDK_URL = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';
 let oneSignalLoadPromise = null;
+let nativeLoadPromise = null;
+
+// Handle auf js/push-native.js, sobald der native Pfad geladen ist.
+// Bleibt im Web für immer null.
+let nativePush = null;
+
+/**
+ * Aktueller Permission-Status: 'default' | 'granted' | 'denied' | 'unsupported'.
+ * Bewusst synchron, damit die Aufrufer (settings.js) unverändert bleiben —
+ * nativ liefert ein Cache im SDK-Adapter den Wert.
+ */
+export function getPermissionState() {
+  if (isNative()) {
+    return nativePush ? nativePush.getNativePermissionState() : 'default';
+  }
+  if (typeof Notification === 'undefined') return 'unsupported';
+  return Notification.permission;
+}
 
 /**
  * Lädt das OneSignal-SDK dynamisch nach und initialisiert es.
  * Idempotent: weitere Aufrufe geben das gleiche Promise zurück.
  */
 export function ensureOneSignalLoaded() {
-  // Nativ: Web-SDK nie laden (C2 bringt das native SDK).
-  if (isNative()) return Promise.resolve(null);
+  // Nativ: statt des Web-SDKs den Capacitor-Adapter laden.
+  if (isNative()) {
+    if (nativeLoadPromise) return nativeLoadPromise;
+    nativeLoadPromise = import('./push-native.js').then((mod) => {
+      nativePush = mod;
+      return mod.initNative().then((sdk) => {
+        // Pendant zu attemptTagSync() im Web-Zweig: nach dem Init einmal
+        // die Tags schreiben. Kein Polling nötig — das native SDK hält
+        // die Tags im User-Model und synct selbst.
+        if (sdk && mod.getNativePermissionState() === 'granted') {
+          syncTagsToOneSignal();
+        }
+        return sdk;
+      });
+    }).catch((e) => {
+      console.warn('[Push] Nativer Push-Adapter nicht ladbar:', e);
+      return null;
+    });
+    return nativeLoadPromise;
+  }
   if (oneSignalLoadPromise) return oneSignalLoadPromise;
 
   oneSignalLoadPromise = new Promise((resolve) => {
     window.OneSignalDeferred = window.OneSignalDeferred || [];
     window.OneSignalDeferred.push(async function(OneSignal) {
       await OneSignal.init({
-        appId: "1aeeca68-13c9-400a-a243-dd749527c49f",
+        appId: ONESIGNAL_APP_ID,
         serviceWorkerParam: { scope: "/" },
         serviceWorkerPath: "OneSignalSDKWorker.js",
         notifyButton: { enable: false },
@@ -68,10 +112,16 @@ export function ensureOneSignalLoaded() {
 // Wer Push schon mal aktiviert hat und nicht explizit deaktiviert hat,
 // braucht das SDK direkt (sonst keine Tag-Syncs, keine Subscription-Pflege).
 (function autoLoadForExistingUsers() {
-  if (isNative()) return;
   try {
     const asked = localStorage.getItem('loewenherz_push_asked') === 'true';
     const enabled = localStorage.getItem('loewenherz_push_enabled') !== 'false';
+    if (isNative()) {
+      // WKWebView kennt Notification.permission nicht — den echten Status
+      // klärt das native SDK selbst beim Init. Gate wie im Web: nur für
+      // Bestandsuser, die Push schon aktiviert und nicht abgeschaltet haben.
+      if (asked && enabled) ensureOneSignalLoaded();
+      return;
+    }
     const permitted = typeof Notification !== 'undefined' && Notification.permission === 'granted';
     if (asked && enabled && permitted) {
       ensureOneSignalLoaded();
@@ -168,10 +218,16 @@ function buildTags() {
 }
 
 function syncTagsToOneSignal() {
-  // Nativ: Tags laufen ab C2 über das native SDK.
-  if (isNative()) return;
   const tags = buildTags();
   console.log('[Push] Syncing tags:', tags);
+
+  // Nativ: ausschließlich über das SDK. api/set-tags.js hat kein
+  // CORS-Handling und ist aus capacitor://localhost nicht erreichbar —
+  // der Server-Doppelschreiber unten entfällt deshalb bewusst.
+  if (isNative()) {
+    if (nativePush) nativePush.syncNativeTags(tags).catch(() => {});
+    return;
+  }
 
   // Client-seitig via SDK
   try {
@@ -227,11 +283,42 @@ export function syncOneSignalTags() {
   syncTagsToOneSignal();
 }
 
+// --- Permission-Prompt (Facade für Soft-Ask und Settings) ---
+
+/**
+ * Lädt bei Bedarf das SDK und zeigt den Permission-Prompt.
+ * Resolved mit 'granted' | 'denied' | 'default' | 'unknown'.
+ *
+ * 'unknown' ist der Web-Slidedown-Pfad und Absicht: OneSignals Slidedown
+ * meldet kein Ergebnis zurück. Aufrufer dürfen daraufhin NICHTS am
+ * UI-Zustand ändern — exakt das Verhalten, das der Web-Pfad heute hat.
+ */
+export function requestPushPermission() {
+  return ensureOneSignalLoaded().then(() => {
+    // Nativ: Der Apple-System-Dialog ist ein One-Shot. Lehnt der User dort
+    // ab, wird nie wieder gefragt — kein Nag-Screen, und mit `false` in
+    // requestPermission() auch kein Sprung in die iOS-Einstellungen (V1).
+    if (isNative()) {
+      if (!nativePush) return 'unknown';
+      return nativePush.requestNativePermission()
+        .then(() => nativePush.getNativePermissionState())
+        .catch(() => 'unknown');
+    }
+    if (window.OneSignal && OneSignal.Slidedown) {
+      OneSignal.Slidedown.promptPush();
+      return 'unknown';
+    }
+    if (typeof Notification !== 'undefined') {
+      return Notification.requestPermission();
+    }
+    return 'unknown';
+  });
+}
+
 // --- Soft-Ask Overlay ---
 
 export function showPushSoftAsk() {
-  if (typeof Notification === 'undefined') return;
-  if (Notification.permission !== 'default') return;
+  if (getPermissionState() !== 'default') return;
   if (localStorage.getItem('loewenherz_push_asked')) return;
 
   const overlay = document.createElement('div');
@@ -285,18 +372,13 @@ export function showPushSoftAsk() {
       }
     }
 
-    // SDK lazy nachladen, dann Permission-Prompt zeigen
-    ensureOneSignalLoaded().then(() => {
-      if (window.OneSignal && OneSignal.Slidedown) {
-        OneSignal.Slidedown.promptPush();
-      } else if (typeof Notification !== 'undefined') {
-        Notification.requestPermission().then(permission => {
-          if (permission === 'granted') {
-            localStorage.setItem('loewenherz_push_enabled', 'true');
-            attemptTagSync(0);
-          }
-        });
-      }
+    // Erst jetzt der echte Permission-Prompt — im Web der Slidedown,
+    // nativ der Apple-System-Dialog.
+    requestPushPermission().then((state) => {
+      if (state !== 'granted') return;
+      localStorage.setItem('loewenherz_push_enabled', 'true');
+      if (isNative()) syncTagsToOneSignal();
+      else attemptTagSync(0);
     });
   });
 
@@ -309,13 +391,13 @@ export function showPushSoftAsk() {
 
 // --- Check Soft-Ask after Reflexion ---
 
+// Gleiche UI, gleiche Logik, gleiche localStorage-Keys auf beiden Plattformen.
+// Nativ ist die Reihenfolge: Soft-Ask (unsere UI) → erst bei Zustimmung der
+// Apple-System-Dialog. Ablehnung im Soft-Ask → gar kein System-Dialog.
 export function checkSoftAskAfterReflexion() {
-  // Nativ: Web-Soft-Ask entfällt — C2 hängt hier den nativen Permission-Flow ein.
-  if (isNative()) return;
   setTimeout(() => {
     if (
-      typeof Notification !== 'undefined' &&
-      Notification.permission === 'default' &&
+      getPermissionState() === 'default' &&
       !localStorage.getItem('loewenherz_push_asked')
     ) {
       showPushSoftAsk();

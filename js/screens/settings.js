@@ -6,7 +6,7 @@ import { TEXTS } from '../../content/de.js';
 import { PRIVACY_URL } from '../config.js';
 import { saveProfile, clearAllData, migrateToV2 } from '../db.js';
 import { openCrisis } from '../components/crisis-modal.js';
-import { syncOneSignalTags, roundTo15Min, ensureOneSignalLoaded } from '../push.js';
+import { syncOneSignalTags, roundTo15Min, ensureOneSignalLoaded, getPermissionState, requestPushPermission } from '../push.js';
 import { downloadBackup, importBackup } from '../data-export.js';
 import { isValidEmail, subscribeEmail, lockButton } from '../emailSignup.js';
 
@@ -235,30 +235,26 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
 
   pushMainToggle.addEventListener('change', () => {
     if (pushMainToggle.checked) {
-      if (typeof Notification !== 'undefined' && Notification.permission === 'denied') {
+      if (getPermissionState() === 'denied') {
         pushBlockedHint.classList.remove('hidden');
         pushMainToggle.checked = false;
         return;
       }
       pushBlockedHint.classList.add('hidden');
 
-      if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
-        // SDK lazy nachladen (erster Push-Opt-in)
-        ensureOneSignalLoaded().then(() => {
-          if (window.OneSignal && OneSignal.Slidedown) {
-            OneSignal.Slidedown.promptPush();
-          } else {
-            Notification.requestPermission().then(permission => {
-              if (permission === 'granted') {
-                localStorage.setItem('loewenherz_push_enabled', 'true');
-                updatePushSubState();
-                syncOneSignalTags();
-              } else {
-                pushMainToggle.checked = false;
-                localStorage.setItem('loewenherz_push_enabled', 'false');
-                updatePushSubState();
-              }
-            });
+      if (getPermissionState() === 'default') {
+        // SDK lazy nachladen und Permission anfragen (erster Push-Opt-in).
+        // 'unknown' = OneSignals Slidedown meldet kein Ergebnis zurück →
+        // bewusst nichts am Toggle ändern.
+        requestPushPermission().then(state => {
+          if (state === 'granted') {
+            localStorage.setItem('loewenherz_push_enabled', 'true');
+            updatePushSubState();
+            syncOneSignalTags();
+          } else if (state !== 'unknown') {
+            pushMainToggle.checked = false;
+            localStorage.setItem('loewenherz_push_enabled', 'false');
+            updatePushSubState();
           }
         });
       }

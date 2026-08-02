@@ -1,5 +1,8 @@
 {
   "appId": "de.angstdoc.loewenherz",
   "appName": "Löwenherz",
-  "webDir": "www"
+  "webDir": "www",
+  "ios": {
+    "handleApplicationNotifications": false
+  }
 }

@@ -34,7 +34,7 @@ Erst diagnostizieren, nicht blind neuen Code schreiben:
 2. **Vercel deployed?** — `curl -s https://loewenherz-app.vercel.app/[datei]` prüfen.
 3. **Browser-Cache?** — SW serviert index.html als Fallback. Neue HTML-Dateien vom SW-Fetch ausschließen.
 4. **IndexedDB Version-Konflikt?** — Anderer Tab hat alte DB-Version offen.
-5. **OneSignal Free Plan** — Max 3 Tags pro Player.
+5. **OneSignal-Tags: es sind 7** — `morning_utc`, `evening_utc`, `small_1_utc` … `small_5_utc`. Werte immer String `"HH:MM"` in UTC, 15-Minuten-Raster; „aus" = leerer String. Ein `push_enabled`-Tag gibt es nicht. Berechnet in `buildTags()` (`js/push.js`) — dieselbe Funktion für Web und nativ. Der Server filtert auf exakte Stringgleichheit; jede Formatabweichung bricht das Scheduling lautlos.
 
 ## Deployment-Checkliste
 

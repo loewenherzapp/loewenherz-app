@@ -146,7 +146,11 @@ async function sendNotification({ appId, apiKey, filters, title, body, url }) {
       filters: filters,
       headings: { en: title },
       contents: { en: body },
-      url: url,
+      // web_url statt url: `url` gilt für ALLE Plattformen und wäre auf iOS
+      // die Launch-URL — der Tap würde die Website öffnen statt der App.
+      // web_url zielt nur auf Web-Push; iOS-Taps öffnen damit die App (V1:
+      // kein Deep-Link, kein Routing). Web-Verhalten unverändert.
+      web_url: url,
       chrome_web_icon: 'https://loewenherz-app.vercel.app/assets/icons/icon-192.png',
       ttl: 900 // 15 Minuten — danach nicht mehr zustellen
     })

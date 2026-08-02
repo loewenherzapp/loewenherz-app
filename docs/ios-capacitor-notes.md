@@ -1,6 +1,6 @@
 # iOS-Build (Capacitor) — Fundament, Arbeitsschritte, Architektur
 
-Die iOS-App ist eine Capacitor-8-Hülle mit **gebündelten Web-Assets** — die native App lädt alles lokal aus dem App-Bundle, kein Remote-URL-Wrapper. Eine Quelle der Wahrheit: dasselbe Repo, derselbe Code wie app.angstdoc.de. Bundle-ID **`de.angstdoc.loewenherz`** (identisch zum Android-Paketnamen), Homescreen-Name **`Löwenherz`**. Stand: C1 (Fundament). OneSignal-Push nativ = C2, native Politur (Haptics/Splash/StatusBar) = C3.
+Die iOS-App ist eine Capacitor-8-Hülle mit **gebündelten Web-Assets** — die native App lädt alles lokal aus dem App-Bundle, kein Remote-URL-Wrapper. Eine Quelle der Wahrheit: dasselbe Repo, derselbe Code wie app.angstdoc.de. Bundle-ID **`de.angstdoc.loewenherz`** (identisch zum Android-Paketnamen), Homescreen-Name **`Löwenherz`**. Stand: **C2** (Fundament + nativer Push). Native Politur (Haptics/Splash/StatusBar) = C3.
 
 Verwandte Dokumente: [play-store-launch-notes.md](play-store-launch-notes.md) (Android/TWA), [store-readiness.md](store-readiness.md), [../scripts/build-ios.mjs](../scripts/build-ios.mjs).
 
@@ -27,11 +27,11 @@ Erwartung: `[build-ios] OK — ~48 Dateien in www/`, danach `Sync finished`.
 |---|---|
 | `index.html` (Inline-Modul) | Keine SW-Registrierung, kein Vercel-Insights-Script |
 | `js/app.js` → `isStandalone()` | `true` → Neu-User landen im Onboarding, nie auf der PWA-Install-Landing |
-| `js/push.js` → `ensureOneSignalLoaded()` | Lädt das OneSignal-**Web**-SDK nie (lasttragender Guard; Rückgabe `Promise.resolve(null)`) |
-| `js/push.js` → Auto-Load-IIFE, `checkSoftAskAfterReflexion()`, `syncTagsToOneSignal()` | Early-Return — Soft-Ask und Tag-Sync sind C2-Andockpunkte |
+| `js/push.js` → `ensureOneSignalLoaded()` | Lädt statt des **Web**-SDKs den nativen Adapter `js/push-native.js` (seit C2) |
+| `js/push.js` → Auto-Load-IIFE, `checkSoftAskAfterReflexion()`, `syncTagsToOneSignal()`, `requestPushPermission()`, `getPermissionState()` | Plattform-Zweig statt Early-Return — Details in [Abschnitt f](#f-push-nativ-c2) |
 | `js/config.js` → `API_BASE` | Nativ `https://app.angstdoc.de`, im Web `''` — beide `fetch`-Aufrufe (`/api/subscribe`, `/api/set-tags`) nutzen sie |
 
-Im Web (`isNative() === false`) ist jeder Pfad funktional identisch zu vorher; `settings.js`/`reflection.js` brauchten keine Änderung, weil alle Aufrufe durch die geguardeten push.js-Funktionen laufen.
+Im Web (`isNative() === false`) ist jeder Pfad funktional identisch zu vorher; `reflection.js` brauchte keine Änderung, weil alle Aufrufe durch die verzweigenden push.js-Funktionen laufen. `settings.js` liest den Permission-Status seit C2 über `getPermissionState()` statt direkt über `Notification.permission` — im Web derselbe Wert.
 
 ## c) Warum kein Service Worker in der nativen App
 
@@ -58,9 +58,48 @@ curl -s -o /dev/null -w '%{http_code}' https://app.angstdoc.de/package.json
 
 Erwartung: **404** (ebenso `ios/App/App/Info.plist`, `capacitor.config.json`).
 
-## Bekannte Einschränkungen (Stand C1 — gewollt)
+## f) Push nativ (C2)
 
-- **Push nativ: aus.** OneSignal-Web-SDK lädt nie; der Settings-Push-Toggle speichert nur localStorage-Zeiten, bewirkt nativ nichts. C2 bringt `@onesignal/capacitor-plugin`. Merker für C2: Es sind **7 Tags** (`morning_utc`, `evening_utc`, `small_1..5_utc` — nicht 3), und `api/set-tags.js` hat **kein CORS-Handling** (nativ nötig, sobald der Server-Fallback aus der App aufgerufen wird).
+Push läuft über **eine** OneSignal-App-ID für alle Plattformen (`ONESIGNAL_APP_ID` in [`js/config.js`](../js/config.js), von Web- und Nativ-Pfad geteilt). iOS ist im OneSignal-Dashboard nur eine zusätzliche Plattform derselben App. **Der Server filtert weiter nach denselben Tags und erreicht damit Web- UND iOS-Subscriptions** — `api/send-notifications.js`, das Cron-Setup und Brevo blieben unangetastet (einzige Ausnahme: `web_url`, siehe unten).
+
+**Die Facade.** `js/push.js` kapselt beide Plattformen und verzweigt intern nach `isNative()`; `js/push-native.js` ist der Adapter fürs `@onesignal/capacitor-plugin`. Außerhalb dieser beiden Dateien gibt es **keinen** direkten OneSignal- oder `Notification.`-Zugriff mehr (Grep-Probe).
+
+| Funktion | Web | Nativ |
+|---|---|---|
+| Init | Web SDK v16 vom CDN, lazy | `OneSignal.initialize(ONESIGNAL_APP_ID)` |
+| Permission anfragen | `OneSignal.Slidedown.promptPush()` | `Notifications.requestPermission(false)` |
+| Permission lesen | `Notification.permission` | `permissionNative()`, gecacht für synchronen Zugriff |
+| Tags setzen | `User.addTags()` + Server-Fallback | `User.addTags()` / `removeTags()` |
+
+**Tags sind formatidentisch — per Konstruktion.** `roundTo15Min()`, `localTimeToUTC()` und `buildTags()` leben in `js/push.js`; der native Pfad bekommt das **fertige** Objekt übergeben und rechnet nichts nach. Kein Duplikat, das auseinanderlaufen könnte. Einziger Unterschied: leere Werte gehen nativ als `removeTags()` raus statt als `addTags('')` — das Web-SDK behandelt `''` als Löschen, das native würde den leeren String schreiben. Für den Server-Filter gleichwertig, im Dashboard nur so identisch.
+
+**Kein `api/set-tags.js` nativ.** Der Endpunkt hat kein CORS-Handling und ist aus `capacitor://localhost` nicht erreichbar. Der native Pfad schreibt ausschließlich übers SDK — der Server-Doppelschreiber des Web-Pfads entfällt dort bewusst.
+
+**DSGVO: gleiches Lazy-Gate wie im Web.** `initialize()` läuft **nicht** beim App-Start, sondern erst bei Zustimmung im Soft-Ask bzw. für Bestandsuser mit aktivem Push. Vor der Einwilligung fließt nichts an OneSignal — dieselbe Zusage wie im Web, die Datenschutzerklärung bleibt gültig. Bewusste Abweichung von der OneSignal-Standardempfehlung („init beim App-Start").
+
+**Soft-Ask: gleiche UI, gleiche localStorage-Keys.** Ablauf nativ: unser Overlay → erst bei „Ja, gern" `requestPermission(false)` → Apple-System-Dialog. „Später" ⇒ gar kein System-Dialog. ⚠️ **Der Apple-Dialog ist ein One-Shot.** Lehnt der User dort ab, wird nie wieder gefragt: kein Nag-Screen, und das `false` unterdrückt bewusst auch den automatischen Sprung in die iOS-Einstellungen (V1).
+
+**Foreground: unterdrückt.** `addEventListener('foregroundWillDisplay', e => e.preventDefault())`. Grund: Es sind Reminder („öffne die App"). Wer die App gerade offen hat, braucht den Reminder nicht — ein Banner über der offenen App wirkt kaputt. `preventDefault()` muss **synchron** im Listener fallen; das Plugin ruft direkt danach `proceedWithWillDisplay()`.
+
+**Notification-Click: nur App öffnen.** Kein Deep-Link, kein Routing nach Typ (V1), deshalb auch kein `click`-Listener. Dafür war **eine** Server-Zeile nötig: `url:` → `web_url:` in `api/send-notifications.js`. `url` gilt laut OneSignal-Doku für *alle* Plattformen und wäre auf iOS die Launch-URL — der Tap hätte die Website geöffnet statt der App. `web_url` zielt nur auf Web-Push; das Web-Verhalten ist unverändert.
+
+**Vendor-Bundling — die einzige Nicht-Repo-Datei im Bundle.** Die App hat keinen Bundler, ein Capacitor-Plugin braucht aber `registerPlugin` aus `@capacitor/core`. Der native Bridge-Inject (`native-bridge.js`) liefert nur `isNativePlatform`/`Plugins`, **nicht** `registerPlugin` — ohne `@capacitor/core` im Web-Layer ist kein Plugin ansprechbar. Deshalb erzeugt `scripts/build-ios.mjs` beim Build `www/js/vendor/`:
+
+| Datei | Quelle | Transform |
+|---|---|---|
+| `capacitor-core.js` | `@capacitor/core/dist/index.js` | keine (self-contained ESM) |
+| `onesignal.js` | `@onesignal/capacitor-plugin/dist/index.js` | der eine Bare-Import `from "@capacitor/core"` → `from "./capacitor-core.js"` |
+
+Trifft der Replace nicht **exakt einmal**, bricht der Build laut ab statt still ein kaputtes Bundle auszuliefern. Konsequenz: `js/` und `www/js/` sind **nicht mehr byte-identisch** — `js/vendor/` existiert nur in `www/`, nicht im Repo, nicht auf Vercel, nicht im SW-Precache. Der Web-Pfad lädt es nie (der dynamische Import steckt hinter dem `isNative()`-Zweig).
+
+**Doppel-Subscriptions.** iOS-User, die vorher die PWA mit Web-Push hatten, existieren nach dem Wechsel **doppelt**: alte Safari-Web-Subscription plus neue iOS-Subscription. Beide tragen dieselben Tags, beide bekommen den Reminder — je nachdem, ob die PWA noch installiert ist, sieht der User ihn also unter Umständen zweimal. Kosmetisch, kein Fix geplant. Wichtig fürs Lesen der OneSignal-Statistiken: Subscription-Zahlen sind ab jetzt **keine** User-Zahlen.
+
+**Keine Notification Service Extension (V1).** Simple Text-Reminder brauchen keine NSE. Was sie später brächte: Rich Media (Bilder/Audio im Push), **Confirmed Delivery** (echte Zustellraten statt nur „gesendet") und serverseitig gesteuerte Badge-Zahlen. Nachrüstbar als separates Xcode-Target ohne jede Änderung am Client-Code — die Entscheidung ist also folgenlos umkehrbar.
+
+**Manuell in Xcode (macht Patrick, nicht das Skript):** App-Target → Signing & Capabilities → **Push Notifications** + **Background Modes → Remote notifications**. Ein Signing-Team ist noch nicht gesetzt. Dazu im OneSignal-Dashboard: iOS-Plattform zur bestehenden App hinzufügen und den APNs-Key (.p8) hinterlegen.
+
+## Bekannte Einschränkungen (Stand C2 — gewollt)
+
 - **Datenexport bricht nativ:** `js/data-export.js` nutzt Blob-Download via `<a download>` — funktioniert in WKWebView nicht. Fix in C3 (`@capacitor/filesystem` + `@capacitor/share`).
 - **Native App startet bei null:** iOS-PWA-Bestandsdaten (IndexedDB/localStorage aus Safari) werden nicht migriert — bewusste Entscheidung.
 
@@ -88,9 +127,11 @@ xcrun simctl io booted screenshot /tmp/shot.png
 
 Datenstand direkt lesbar unter `~/Library/Developer/CoreSimulator/Devices/<UDID>/data/Containers/Data/Application/<APP-UUID>/Library/WebKit/de.angstdoc.loewenherz/WebsiteData/` (IndexedDB + localStorage als SQLite).
 
-## Offene Punkte vor C2/C3
+## Offene Punkte vor C3
 
+- [x] C2: OneSignal-Migration (natives SDK, Tags, Soft-Ask) — Code steht, siehe Abschnitt f
+- [ ] C2-Gerätetest (echtes iPhone, APNs-Key + Xcode-Capabilities Voraussetzung): Soft-Ask vor Apple-Dialog, iOS-Subscription im Dashboard, 7 Tags mit **denselben Wertformaten wie eine Web-Subscription** (direkt vergleichen), Test-Push im Hintergrund, kein Banner im Vordergrund, Zeitänderung aktualisiert den Tag
+- [ ] C2-Cron-Realtest: Erinnerungszeit auf +20 min, App schließen, warten — kommt der Reminder über die bestehende Server-Route an, ist die Kette Server → OneSignal → APNs → Gerät komplett
 - [ ] `tel:`-Links im Krisen-Modal aus WKWebView testen (müssen den Dialer öffnen — kritisch!)
 - [ ] Externe Links (`buch.angstdoc.de`, Datenschutz) öffnen in Safari, nicht in der WebView
-- [ ] C2: OneSignal-Migration (natives SDK, Tags, Soft-Ask-Ersatz)
 - [ ] C3: Splash/StatusBar/Haptics, App-Icon, Datenexport-Fix, App-Store-Connect-Name
