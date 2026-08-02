@@ -108,28 +108,83 @@ export function ensureOneSignalLoaded() {
   return oneSignalLoadPromise;
 }
 
+/**
+ * Hat dieser User Push aktiv? Das ist die DSGVO-Zusage in Codeform —
+ * ist das hier false, darf KEIN OneSignal-SDK geladen werden.
+ * Bewusst nur an dieser einen Stelle definiert: Eine zweite Kopie wäre
+ * die Stelle, an der die Zusage irgendwann auseinanderläuft.
+ */
+function pushIsActive() {
+  const asked = localStorage.getItem('loewenherz_push_asked') === 'true';
+  const enabled = localStorage.getItem('loewenherz_push_enabled') !== 'false';
+  if (!asked || !enabled) return false;
+  // WKWebView kennt Notification.permission nicht — den echten Status klärt
+  // das native SDK selbst beim Init.
+  if (isNative()) return true;
+  return typeof Notification !== 'undefined' && Notification.permission === 'granted';
+}
+
 // --- Auto-load für Bestandsuser ---
 // Wer Push schon mal aktiviert hat und nicht explizit deaktiviert hat,
 // braucht das SDK direkt (sonst keine Tag-Syncs, keine Subscription-Pflege).
 (function autoLoadForExistingUsers() {
   try {
-    const asked = localStorage.getItem('loewenherz_push_asked') === 'true';
-    const enabled = localStorage.getItem('loewenherz_push_enabled') !== 'false';
-    if (isNative()) {
-      // WKWebView kennt Notification.permission nicht — den echten Status
-      // klärt das native SDK selbst beim Init. Gate wie im Web: nur für
-      // Bestandsuser, die Push schon aktiviert und nicht abgeschaltet haben.
-      if (asked && enabled) ensureOneSignalLoaded();
-      return;
-    }
-    const permitted = typeof Notification !== 'undefined' && Notification.permission === 'granted';
-    if (asked && enabled && permitted) {
-      ensureOneSignalLoaded();
-    }
+    if (pushIsActive()) ensureOneSignalLoaded();
   } catch (e) {
     // Silent — kein Push-Fail darf App-Start blockieren
   }
 })();
+
+// --- Zeitzonen-Drift: Tags neu schreiben, wenn sich der UTC-Offset ändert ---
+//
+// Die Tags speichern absolute UTC-Zeiten, berechnet mit dem Offset vom Tag
+// des Schreibens. Nach einer Zeitumstellung (oder einer Reise) stimmen sie
+// nicht mehr: "07:00 Ortszeit" ist im Sommer 05:00 UTC, im Winter 06:00 UTC.
+//
+// Beim App-START werden die Tags ohnehin neu geschrieben. Die Lücke ist iOS:
+// Dort werden Apps suspendiert statt beendet — der WKWebView bleibt im
+// Speicher, dieses Modul wird beim Zurückholen aus dem Hintergrund NICHT neu
+// ausgewertet. Ohne diesen Listener bekäme ein User, der nie kalt startet,
+// nie einen Re-Sync.
+
+const TZ_OFFSET_KEY = 'loewenherz_tz_offset';
+
+// Minuten gegenüber UTC, Osten positiv (Berlin Sommer: "120", Winter: "60").
+function currentUtcOffset() {
+  return String(-new Date().getTimezoneOffset());
+}
+
+// Wird erst aufgerufen, wenn die Tags das Gerät tatsächlich verlassen haben.
+// Bewusst NICHT einfach am Anfang von syncTagsToOneSignal(): Ein Sync, der
+// mangels geladenem SDK ins Leere läuft, würde sonst den Offset festschreiben
+// und damit den nächsten Wiederholungsversuch unterdrücken.
+function rememberOffset() {
+  try {
+    localStorage.setItem(TZ_OFFSET_KEY, currentUtcOffset());
+  } catch (e) {
+    // Silent — ohne den Merker gibt es nur einen überflüssigen Re-Sync.
+  }
+}
+
+function resyncIfOffsetChanged() {
+  try {
+    if (!pushIsActive()) return;
+    const gespeichert = localStorage.getItem(TZ_OFFSET_KEY);
+    const jetzt = currentUtcOffset();
+    if (gespeichert === jetzt) return;
+    console.log(`[Push] Zeitzonen-Offset geändert: ${gespeichert} → ${jetzt} — Tags neu schreiben`);
+    ensureOneSignalLoaded().then(() => syncOneSignalTags()).catch(() => {});
+  } catch (e) {
+    // Silent — Push darf nie den App-Flow stören
+  }
+}
+
+// Bewusst hier und nicht in app.js: Der Handler braucht weder DOM noch
+// Tab-Zustand. Läge er dort, müsste app.js von Zeitzonen-Offsets wissen —
+// genau das soll die Push-Facade verhindern.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') resyncIfOffsetChanged();
+});
 
 // --- Polling: Warte bis PushSubscription.id bereit ist ---
 
@@ -225,7 +280,7 @@ function syncTagsToOneSignal() {
   // CORS-Handling und ist aus capacitor://localhost nicht erreichbar —
   // der Server-Doppelschreiber unten entfällt deshalb bewusst.
   if (isNative()) {
-    if (nativePush) nativePush.syncNativeTags(tags).catch(() => {});
+    if (nativePush) nativePush.syncNativeTags(tags).then(rememberOffset).catch(() => {});
     return;
   }
 
@@ -233,6 +288,7 @@ function syncTagsToOneSignal() {
   try {
     if (window.OneSignal && window.OneSignal.User) {
       OneSignal.User.addTags(tags);
+      rememberOffset();
       console.log('[Push] Client addTags() called');
     }
   } catch (e) {
