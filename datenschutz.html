@@ -40,7 +40,7 @@
 <body>
   <main class="wrap">
     <h1>Datenschutzerklärung</h1>
-    <p class="meta">Stand: Juni 2026</p>
+    <p class="meta">Stand: August 2026</p>
 
     <h2>1. Verantwortlicher</h2>
     <p>Der AngstDoc und Kollegen S.R.L.<br>
@@ -86,22 +86,26 @@
 
     <h2>7. Push-Benachrichtigungen (OneSignal)</h2>
     <p>Für tägliche Erinnerungen (Morgenintention, Abendreflexion, SMALL-Reminder) nutzen wir den Push-Dienst von OneSignal Inc., 2194 Esperanca Avenue, Santa Clara, CA 95054, USA.</p>
-    <p><strong>OneSignal wird erst geladen, wenn du Push-Benachrichtigungen aktiv einschaltest.</strong> Vor deiner Einwilligung fließen keine Daten an OneSignal.</p>
-    <p>Nach deiner Aktivierung werden folgende Daten an OneSignal übertragen:</p>
+    <p><strong>OneSignal wird erst aktiv, wenn du Push-Benachrichtigungen einschaltest.</strong> Vor deiner Einwilligung fließen keine Daten an OneSignal — im Browser wie in der iOS-App. Schaltest du Push nie ein, wird das OneSignal-SDK nie gestartet.</p>
+    <p>Nach deiner Aktivierung werden in beiden Fällen übertragen:</p>
     <ul>
-      <li>Eine technische Push-Subscription-ID (kein Klarname, keine E-Mail)</li>
+      <li>Eine technische Push-Subscription-ID sowie der Push-Token deines Geräts bzw. Browsers (kein Klarname, keine E-Mail)</li>
       <li>Deine gewünschten Erinnerungszeiten in UTC-Format (z.B. "06:00") für bis zu 7 Tags: morning_utc, evening_utc, small_1_utc bis small_5_utc</li>
-      <li>Technische Verbindungsdaten (IP-Adresse, Browser-Typ) beim Laden des OneSignal-SDK von cdn.onesignal.com</li>
+      <li>Deine IP-Adresse beim Verbindungsaufbau (OneSignal speichert die IP-Adressen von Nutzerinnen und Nutzern aus der EU nach eigenen Angaben nicht)</li>
     </ul>
+    <p><strong>Nur im Browser:</strong> Das OneSignal-SDK wird von cdn.onesignal.com nachgeladen. Dabei werden zusätzlich technische Verbindungsdaten wie der Browsertyp übermittelt.</p>
+    <p><strong>Nur in der iOS-App:</strong> Dort ist das SDK Teil der App, es wird also nichts nachgeladen. Dafür erhebt das mobile SDK nach der Aktivierung automatisch zusätzliche Gerätedaten: Gerätemodell, Betriebssystem-Version, App-Version und App-Kennung, Sprache, Zeitzone, Land, Mobilfunkanbieter, den Status deiner Benachrichtigungs-Berechtigung sowie Nutzungsstatistiken (Zeitpunkt der ersten und letzten Sitzung, Anzahl der Sitzungen, Gesamtnutzungsdauer). <strong>Standortdaten (GPS) werden nicht erhoben</strong>, und deine Inhalte aus der App werden nicht übertragen.</p>
+    <p><strong>Apple als Zwischenstation (nur iOS-App):</strong> Die Zustellung läuft technisch über den Apple Push Notification service (APNs) der Apple Inc. Dein Gerät erhält dafür von Apple einen Push-Token, den wir an OneSignal weitergeben. Apple erhält damit auch den Zeitpunkt und den Text der Benachrichtigung — das sind allgemeine Erinnerungstexte ohne jeden Bezug zu deinen Reflexionen.</p>
     <p>OneSignal verarbeitet Daten in den USA. Die Übermittlung erfolgt auf Basis von EU-Standardvertragsklauseln.</p>
-    <p>Rechtsgrundlage: Einwilligung (Art. 6 Abs. 1 lit. a DSGVO). Du kannst die Einwilligung jederzeit widerrufen — entweder über den Push-Schalter in den Einstellungen oder über die Benachrichtigungs-Einstellungen deines Geräts. Beim Widerruf werden alle Tags bei OneSignal gelöscht.</p>
+    <p><strong>Deine E-Mail-Adresse wird nicht an OneSignal übertragen.</strong> Sie liegt ausschließlich bei Brevo (siehe Abschnitt 4). Push und E-Mail-Impulse sind zwei getrennte Dienste, die nicht miteinander verknüpft werden.</p>
+    <p>Rechtsgrundlage: Einwilligung (Art. 6 Abs. 1 lit. a DSGVO). Du kannst die Einwilligung jederzeit widerrufen — entweder über den Push-Schalter in den Einstellungen oder über die Benachrichtigungs-Einstellungen deines Geräts bzw. Browsers. Beim Widerruf werden alle Tags bei OneSignal gelöscht.</p>
     <p>Mehr Informationen: <a href="https://onesignal.com/privacy_policy" target="_blank" rel="noopener noreferrer">onesignal.com/privacy_policy</a></p>
 
     <h2>8. Cookies und lokale Speicher</h2>
     <p>Diese App verwendet keine Cookies. Zur Speicherung deiner Daten nutzen wir IndexedDB und LocalStorage — beides lokale Browser-Speicher, die ausschließlich auf deinem Gerät verbleiben. Es findet keine Übertragung dieser Daten an unsere Server oder Dritte statt.</p>
 
     <h2>9. Keine Weitergabe an Dritte</h2>
-    <p>Deine Inhalte (Reflexionen, SMALL-Punkte, Profildaten) werden nicht an Dritte weitergegeben, verkauft oder für Werbezwecke genutzt. Die einzigen Drittanbieter, die Daten verarbeiten, sind Vercel (Hosting/Analytics) sowie — jeweils nach deiner Einwilligung — OneSignal (Push) und Brevo (E-Mail-Impulse).</p>
+    <p>Deine Inhalte (Reflexionen, SMALL-Punkte, Profildaten) werden nicht an Dritte weitergegeben, verkauft oder für Werbezwecke genutzt. Die einzigen Drittanbieter, die Daten verarbeiten, sind Vercel (Hosting/Analytics) sowie — jeweils nach deiner Einwilligung — OneSignal (Push), Apple (technische Push-Zustellung in der iOS-App) und Brevo (E-Mail-Impulse).</p>
 
     <h2>10. Deine Rechte</h2>
     <p>Du hast das Recht auf Auskunft, Berichtigung, Löschung und Einschränkung der Verarbeitung deiner Daten sowie das Recht auf Datenübertragbarkeit und Widerspruch. Erteilte Einwilligungen kannst du jederzeit mit Wirkung für die Zukunft widerrufen (Art. 7 Abs. 3 DSGVO) — für E-Mail-Impulse über den Abmeldelink in jeder Mail oder per Nachricht an uns.</p>
