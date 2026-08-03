@@ -23,6 +23,7 @@
 
 import { isNative } from './platform.js';
 import { API_BASE, ONESIGNAL_APP_ID } from './config.js';
+import { rollIfNeeded, getRoll, toMin, MAX_SLOTS } from './small-schedule.js';
 
 const ONESIGNAL_SDK_URL = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';
 let oneSignalLoadPromise = null;
@@ -179,11 +180,32 @@ function resyncIfOffsetChanged() {
   }
 }
 
+// --- Tageswechsel: neu würfeln ---
+//
+// Der Wurf gilt für einen Kalendertag. Ohne diesen Handler bekäme jemand,
+// der die App tagelang nur aus dem Hintergrund zurückholt statt sie kalt
+// zu starten, immer wieder dieselben Uhrzeiten — also genau die Gewöhnung,
+// gegen die das Würfeln gebaut ist.
+function resyncIfRollStale() {
+  try {
+    if (!pushIsActive()) return;
+    // rollIfNeeded() meldet mit true, dass es tatsächlich gewürfelt hat.
+    // Am selben Tag mit unveränderten Einstellungen passiert nichts.
+    if (!rollIfNeeded(fixedTimesInMinutes())) return;
+    console.log('[Push] Neuer Tag — SMALL-Zeiten neu gewürfelt:', getRoll().join(' '));
+    ensureOneSignalLoaded().then(() => syncOneSignalTags()).catch(() => {});
+  } catch (e) {
+    // Silent — Push darf nie den App-Flow stören
+  }
+}
+
 // Bewusst hier und nicht in app.js: Der Handler braucht weder DOM noch
 // Tab-Zustand. Läge er dort, müsste app.js von Zeitzonen-Offsets wissen —
 // genau das soll die Push-Facade verhindern.
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') resyncIfOffsetChanged();
+  if (document.visibilityState !== 'visible') return;
+  resyncIfOffsetChanged();
+  resyncIfRollStale();
 });
 
 // --- Polling: Warte bis PushSubscription.id bereit ist ---
@@ -247,9 +269,29 @@ export function localTimeToUTC(timeStr) {
   return `${String(utcH).padStart(2, '0')}:${String(utcM).padStart(2, '0')}`;
 }
 
-// --- Tag Sync: 7 Tags ---
-// morning_utc, evening_utc, small_1_utc .. small_5_utc
+// --- Tag Sync: 12 Tags ---
+// morning_utc, evening_utc, small_1_utc .. small_10_utc
 // push_enabled entfällt — wenn Push aus: alle Tags löschen
+
+/**
+ * Stellt sicher, dass für heute ein Wurf existiert, ohne einen Tag-Sync
+ * auszulösen. Für die Einstellungen: Dort sollen die heutigen Uhrzeiten
+ * auch dann stehen, wenn Push (noch) aus ist — sonst zeigt der Screen
+ * eine leere Vorschau und wirkt kaputt.
+ *
+ * Kein zweiter Würfelpfad: rollIfNeeded() bleibt die einzige Stelle, die
+ * würfelt, und tut es nur bei Tageswechsel oder geänderten Einstellungen.
+ */
+export function ensureRoll() {
+  return rollIfNeeded(fixedTimesInMinutes());
+}
+
+/** Die festen Zeiten in Minuten — der Würfel muss sie freilassen. */
+function fixedTimesInMinutes() {
+  const morning = roundTo15Min(localStorage.getItem('loewenherz_morning_time') || '07:00') || '07:00';
+  const evening = roundTo15Min(localStorage.getItem('loewenherz_evening_time') || '20:30') || '20:30';
+  return [toMin(morning), toMin(evening)];
+}
 
 function buildTags() {
   const pushEnabled = localStorage.getItem('loewenherz_push_enabled') !== 'false';
@@ -257,7 +299,7 @@ function buildTags() {
   // Push deaktiviert → alle Tags löschen (leerer String = Tag wird gelöscht)
   if (!pushEnabled) {
     const tags = { morning_utc: '', evening_utc: '' };
-    for (let i = 1; i <= 5; i++) tags[`small_${i}_utc`] = '';
+    for (let i = 1; i <= MAX_SLOTS; i++) tags[`small_${i}_utc`] = '';
     return tags;
   }
 
@@ -275,15 +317,20 @@ function buildTags() {
     evening_utc: eveningUTC
   };
 
-  // 5 SMALL slots: enabled → UTC time, disabled → '' (delete tag)
-  for (let i = 1; i <= 5; i++) {
-    const enabled = localStorage.getItem(`loewenherz_small_${i}_enabled`) !== 'false';
-    if (enabled) {
-      const raw = localStorage.getItem(`loewenherz_small_${i}_time`) || '12:00';
-      tags[`small_${i}_utc`] = localTimeToUTC(roundTo15Min(raw) || '12:00');
-    } else {
-      tags[`small_${i}_utc`] = '';
-    }
+  // Der Aufruf ist idempotent: rollIfNeeded() würfelt nur bei Tageswechsel
+  // oder geänderten Einstellungen. Deshalb darf er hier stehen, obwohl
+  // buildTags() an sieben Stellen erreicht wird — ein unbedingter Würfel
+  // an dieser Stelle würde dem Nutzer über den Tag ein Vielfaches der
+  // eingestellten Anzahl schicken.
+  rollIfNeeded(fixedTimesInMinutes());
+  const roll = getRoll();
+
+  // IMMER alle Slots schreiben, auch die ungenutzten. Stellt jemand von 10
+  // auf 3 zurück und wir schrieben nur drei, blieben small_4..10 bei
+  // OneSignal stehen und feuerten weiter — für immer, weil sie nie wieder
+  // angefasst würden.
+  for (let i = 1; i <= MAX_SLOTS; i++) {
+    tags[`small_${i}_utc`] = roll[i - 1] ? localTimeToUTC(roll[i - 1]) : '';
   }
 
   return tags;

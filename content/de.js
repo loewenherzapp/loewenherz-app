@@ -327,11 +327,10 @@ export const TEXTS = {
       askName: "Wie heißt du?",
       namePlaceholder: "Dein Vorname",
       next: "Weiter →",
-      reminderTitle: "Hey {name}, wann soll ich dich an SMALL erinnern?",
-      reminderHint: "(Kannst du jederzeit in den Einstellungen ändern.)",
-      morning: "Morgens",
-      midday: "Mittags",
-      evening: "Abends",
+      reminderTitle: "Hey {name}, wann darf ich dich ansprechen?",
+      reminderHint: "Ich melde mich mehrmals am Tag zu wechselnden Zeiten — damit du dich nicht an sie gewöhnst. (Jederzeit in den Einstellungen änderbar.)",
+      windowFrom: "Ab",
+      windowTo: "Bis",
       go: "Los geht's 🦁"
     },
     dashboard: {

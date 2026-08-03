@@ -6,19 +6,11 @@ import { TEXTS } from '../../content/de.js';
 import { PRIVACY_URL } from '../config.js';
 import { saveProfile, clearAllData, migrateToV2 } from '../db.js';
 import { openCrisis } from '../components/crisis-modal.js';
-import { syncOneSignalTags, roundTo15Min, ensureOneSignalLoaded, getPermissionState, requestPushPermission } from '../push.js';
+import { syncOneSignalTags, roundTo15Min, ensureOneSignalLoaded, getPermissionState, requestPushPermission, ensureRoll } from '../push.js';
 import { openTimePicker, renderTimeButton, setTimeButtonValue } from '../components/time-picker.js';
+import { getWindow, getCount, setSchedule, getRoll, migrateLegacySlots, maxCountFor, toMin, MAX_COUNT } from '../small-schedule.js';
 import { downloadBackup, importBackup } from '../data-export.js';
 import { isValidEmail, subscribeEmail, lockButton } from '../emailSignup.js';
-
-// Default SMALL reminder slots (3 enabled, 2 disabled)
-const DEFAULT_SMALL_SLOTS = [
-  { id: 1, time: '09:30', enabled: true },
-  { id: 2, time: '12:30', enabled: true },
-  { id: 3, time: '15:30', enabled: true },
-  { id: 4, time: '11:00', enabled: false },
-  { id: 5, time: '17:00', enabled: false }
-];
 
 /**
  * Entfernt Zeit-Keys, die kein gültiges HH:MM enthalten. Räumt den Schaden
@@ -27,39 +19,54 @@ const DEFAULT_SMALL_SLOTS = [
  * Feld sichtbar. Nach dem Löschen greifen die Default-Pfade darunter.
  */
 function dropCorruptTimes() {
-  const keys = ['loewenherz_morning_time', 'loewenherz_evening_time'];
-  for (let i = 1; i <= 5; i++) keys.push(`loewenherz_small_${i}_time`);
-  for (const key of keys) {
+  for (const key of ['loewenherz_morning_time', 'loewenherz_evening_time']) {
     const raw = localStorage.getItem(key);
     if (raw !== null && !roundTo15Min(raw)) localStorage.removeItem(key);
   }
 }
 
-function initSmallSlotsIfNeeded() {
-  for (const slot of DEFAULT_SMALL_SLOTS) {
-    if (localStorage.getItem(`loewenherz_small_${slot.id}_time`) === null) {
-      localStorage.setItem(`loewenherz_small_${slot.id}_time`, slot.time);
-      localStorage.setItem(`loewenherz_small_${slot.id}_enabled`, String(slot.enabled));
-    }
-  }
+/** Die heute gewürfelten Zeiten — vergangene gedimmt, damit sie nicht wie
+ *  ein Fehler aussehen, wenn sie schon durch sind. */
+function renderRollPreview() {
+  const roll = getRoll();
+  if (!roll.length) return '';
+  const jetzt = new Date();
+  const nowMin = jetzt.getHours() * 60 + jetzt.getMinutes();
+  const teile = roll.map(t =>
+    toMin(t) < nowMin ? `<span class="is-past">${t}</span>` : `<span>${t}</span>`
+  );
+  // Bereits zugestellte Zeiten bleiben nach einer Änderung stehen, damit
+  // der Tag nicht doppelt gezählt wird. Sie können dadurch außerhalb des
+  // gerade eingestellten Zeitraums liegen — ohne diesen Zusatz sieht das
+  // wie ein Fehler aus.
+  const kommt = roll.some(t => toMin(t) >= nowMin);
+  const schluss = kommt ? '' : ' <span class="is-past">— morgen geht es weiter</span>';
+  return `Heute: ${teile.join(' · ')}${schluss}`;
 }
 
-function getSmallSlots() {
-  return DEFAULT_SMALL_SLOTS.map(slot => ({
-    id: slot.id,
-    time: localStorage.getItem(`loewenherz_small_${slot.id}_time`) || slot.time,
-    enabled: localStorage.getItem(`loewenherz_small_${slot.id}_enabled`) !== 'false'
-  }));
-}
-
-function renderSmallSlot(slot) {
-  return `<div class="push-small-slot" data-slot-id="${slot.id}">
-    ${renderTimeButton('data-field="time"', slot.time)}
-    <label class="toggle">
-      <input type="checkbox" data-field="toggle" ${slot.enabled ? 'checked' : ''}>
-      <span class="toggle-slider"></span>
-    </label>
-  </div>`;
+function renderSmallConfig() {
+  const { start, end } = getWindow();
+  const count = getCount();
+  const cap = Math.min(MAX_COUNT, maxCountFor(toMin(start), toMin(end)));
+  return `
+    <div class="push-setting-time">
+      <div class="push-setting-label">Zeitraum</div>
+      <div class="push-small-window">
+        ${renderTimeButton('data-field="window-start"', start)}
+        <span class="push-small-dash">–</span>
+        ${renderTimeButton('data-field="window-end"', end)}
+      </div>
+    </div>
+    <div class="push-setting-time">
+      <div class="push-setting-label">Wie oft am Tag</div>
+      <div class="push-small-stepper">
+        <button type="button" class="push-small-step" data-step="-1" aria-label="Weniger"${count <= 1 ? ' disabled' : ''}>−</button>
+        <span class="push-small-count">${count}</span>
+        <button type="button" class="push-small-step" data-step="1" aria-label="Mehr"${count >= cap ? ' disabled' : ''}>+</button>
+      </div>
+    </div>
+    <div class="push-small-preview">${renderRollPreview()}</div>
+  `;
 }
 
 export async function renderSettings(container, profile, onBack, onDataDeleted) {
@@ -68,12 +75,10 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
   // Run v2 migration if needed (keeps DB clean)
   profile = await migrateToV2(profile);
 
-  // Erst Müll raus, dann Defaults setzen — die Reihenfolge ist wichtig:
-  // initSmallSlotsIfNeeded() prüft auf null und würde "00:NaN" stehen lassen.
+  // Reihenfolge zählt: erst die alten Einzelslots ins Fenster-Modell
+  // überführen, dann kaputte Zeiten wegräumen, dann Defaults setzen.
+  migrateLegacySlots();
   dropCorruptTimes();
-
-  // Initialize SMALL slots in localStorage if first time
-  initSmallSlotsIfNeeded();
 
   // Migrate old push defaults if needed
   if (!localStorage.getItem('loewenherz_morning_time')) {
@@ -83,9 +88,12 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
     localStorage.setItem('loewenherz_evening_time', '20:30');
   }
 
+  // Vor dem Rendern würfeln, sonst zeigt die Vorschau beim ersten Öffnen
+  // nichts an. Auch bei ausgeschaltetem Push — die Zeiten zu sehen ist
+  // genau das, was den Schalter erklärt.
+  ensureRoll();
+
   const pushEnabled = localStorage.getItem('loewenherz_push_enabled') !== 'false';
-  const smallSlots = getSmallSlots();
-  const sortedSlots = [...smallSlots].sort((a, b) => a.time.localeCompare(b.time));
 
   container.innerHTML = `
     <header class="app-header">
@@ -136,11 +144,14 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
 
             <div class="push-settings-divider"></div>
 
-            <!-- SMALL Reminder Slots -->
+            <!-- SMALL-Reminder: Zeitfenster + Anzahl, Uhrzeiten gewürfelt -->
             <div class="push-setting-label push-small-header">SMALL-Reminder</div>
-            <div class="push-setting-sublabel push-small-sublabel">Kurze Impulse zwischen Morgen und Abend</div>
-            <div id="push-small-slots">
-              ${sortedSlots.map(s => renderSmallSlot(s)).join('')}
+            <div class="push-setting-sublabel push-small-sublabel">
+              Du legst den Zeitraum und die Anzahl fest — die Uhrzeiten wechseln
+              täglich. So gewöhnst du dich nicht an sie und nimmst sie wirklich wahr.
+            </div>
+            <div id="push-small-config">
+              ${renderSmallConfig()}
             </div>
           </div>
         </div>
@@ -309,37 +320,42 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
   bindTimeButton(document.getElementById('push-morning-time'), 'Morgenkompass', 'loewenherz_morning_time');
   bindTimeButton(document.getElementById('push-evening-time'), 'Abendreflexion', 'loewenherz_evening_time');
 
-  // ---- SMALL Slots: event delegation ----
-  const smallSlotsEl = document.getElementById('push-small-slots');
+  // ---- SMALL-Reminder: Zeitfenster + Anzahl ----
+  //
+  // Event-Delegation, weil der ganze Block nach jeder Änderung neu
+  // gerendert wird — die Anzahl kann sich beim Verkleinern des Fensters
+  // mitverschieben, und die Vorschau der gewürfelten Zeiten ohnehin.
+  const smallConfigEl = document.getElementById('push-small-config');
 
-  smallSlotsEl.addEventListener('change', (e) => {
-    const slotEl = e.target.closest('.push-small-slot');
-    if (!slotEl || e.target.dataset.field !== 'toggle') return;
-    localStorage.setItem(`loewenherz_small_${slotEl.dataset.slotId}_enabled`, e.target.checked ? 'true' : 'false');
+  // syncOneSignalTags() löst über buildTags() den Neuwurf aus, sobald sich
+  // Fenster oder Anzahl geändert haben. Ein eigener Würfelaufruf hier wäre
+  // die zweite Stelle, an der gewürfelt wird — genau die, die auseinander
+  // laufen würde.
+  function applySchedule(next) {
+    const { start, end } = getWindow();
+    setSchedule({ start, end, count: getCount(), ...next });
+    // ensureRoll() explizit, weil buildTags() bei ausgeschaltetem Push in
+    // den Lösch-Zweig geht und dort gar nicht würfelt — die Vorschau bliebe
+    // sonst auf dem alten Stand stehen.
+    ensureRoll();
     syncOneSignalTags();
-  });
+    smallConfigEl.innerHTML = renderSmallConfig();
+  }
 
-  smallSlotsEl.addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-field="time"]');
+  smallConfigEl.addEventListener('click', (e) => {
+    const step = e.target.closest('.push-small-step');
+    if (step) {
+      applySchedule({ count: getCount() + Number(step.dataset.step) });
+      return;
+    }
+
+    const btn = e.target.closest('[data-field^="window-"]');
     if (!btn) return;
-    const id = btn.closest('.push-small-slot').dataset.slotId;
-    openTimePicker('SMALL-Reminder', btn.dataset.time, (picked) => {
-      localStorage.setItem(`loewenherz_small_${id}_time`, picked);
-      // Eine Zeit zu setzen IST die Absicht, erinnert zu werden — sonst
-      // bliebe ein ausgeschalteter Slot aus und buildTags() löschte den
-      // Tag wieder. Anders als beim alten Feld gibt es hier kein
-      // versehentliches Auslösen: Der Wert kommt nur über „Übernehmen".
-      localStorage.setItem(`loewenherz_small_${id}_enabled`, 'true');
-      syncOneSignalTags();
-      reRenderSmallSlots();
+    const istStart = btn.dataset.field === 'window-start';
+    openTimePicker(istStart ? 'Ab wann' : 'Bis wann', btn.dataset.time, (picked) => {
+      applySchedule(istStart ? { start: picked } : { end: picked });
     });
   });
-
-  function reRenderSmallSlots() {
-    const slots = getSmallSlots();
-    const sorted = [...slots].sort((a, b) => a.time.localeCompare(b.time));
-    smallSlotsEl.innerHTML = sorted.map(s => renderSmallSlot(s)).join('');
-  }
 
   // E-Mail (Anzeige oder Eintragen-Formular)
   renderEmailCard(t);
@@ -587,7 +603,7 @@ const LEGAL_CONTENT = {
     <p>Nach deiner Aktivierung werden in beiden Fällen übertragen:</p>
     <ul>
       <li>Eine technische Push-Subscription-ID sowie der Push-Token deines Geräts bzw. Browsers (kein Klarname, keine E-Mail)</li>
-      <li>Deine gewünschten Erinnerungszeiten in UTC-Format (z.B. "06:00") für bis zu 7 Tags: morning_utc, evening_utc, small_1_utc bis small_5_utc</li>
+      <li>Deine gewünschten Erinnerungszeiten in UTC-Format (z.B. "06:00") für bis zu 12 Tags: morning_utc, evening_utc, small_1_utc bis small_10_utc</li>
       <li>Deine IP-Adresse beim Verbindungsaufbau (OneSignal speichert die IP-Adressen von Nutzerinnen und Nutzern aus der EU nach eigenen Angaben nicht)</li>
     </ul>
     <p><strong>Nur im Browser:</strong> Das OneSignal-SDK wird von cdn.onesignal.com nachgeladen. Dabei werden zusätzlich technische Verbindungsdaten wie der Browsertyp übermittelt.</p>

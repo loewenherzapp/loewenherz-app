@@ -126,7 +126,7 @@ export async function requestNativePermission() {
 }
 
 /**
- * Schreibt die 7 Tags über das native SDK.
+ * Schreibt die 12 Tags über das native SDK.
  * @param tags Fertiges Objekt aus buildTags() in js/push.js.
  *
  * Init wird hier bewusst NICHT erzwungen: Wie im Web (dort das

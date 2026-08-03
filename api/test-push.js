@@ -43,21 +43,23 @@ export default async function handler(req, res) {
   const players = playersData?.players || [];
 
   // ============================================================
-  // Schritt 3: Force-Tags setzen (7 Tags: morning, evening, 5 SMALL slots)
+  // Schritt 3: Force-Tags setzen (12 Tags: morning, evening, 10 SMALL slots)
   // Nur wenn ?force_tags=true
   // ============================================================
   const forceTagResults = [];
 
   if (req.query?.force_tags === 'true') {
+    // Die ungenutzten Slots MÜSSEN als Leerwert mit — sonst bleiben bei
+    // einem Gerät, das vorher mehr Slots hatte, die alten Zeiten stehen
+    // und feuern zusätzlich zu den Testzeiten.
     const testTags = {
       morning_utc: '05:00',
       evening_utc: '18:30',
       small_1_utc: '07:30',
       small_2_utc: '10:30',
-      small_3_utc: '13:30',
-      small_4_utc: '',
-      small_5_utc: ''
+      small_3_utc: '13:30'
     };
+    for (let i = 4; i <= 10; i++) testTags[`small_${i}_utc`] = '';
 
     for (const player of players) {
       try {
@@ -172,7 +174,7 @@ export default async function handler(req, res) {
 
     force_tag_results: forceTagResults.length > 0
       ? forceTagResults
-      : 'Add ?force_tags=true to set test tags (7 tags: morning_utc, evening_utc, small_1_utc..small_5_utc)',
+      : 'Add ?force_tags=true to set test tags (12 tags: morning_utc, evening_utc, small_1_utc..small_10_utc)',
 
     hints: {
       notification_types: '1=subscribed, -2=unsubscribed',

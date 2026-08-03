@@ -2572,21 +2572,66 @@ button.settings-link, .settings-link-btn {
   margin-bottom: 8px;
 }
 
-.push-small-slot {
+/* Zeitfenster: zwei Zeit-Buttons mit Gedankenstrich dazwischen */
+.push-small-window {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 6px 0;
-  min-height: 44px;
-  gap: 12px;
+  gap: 8px;
 }
 
-.push-small-slot .reminder-time {
-  width: auto;
-  flex: 1;
+.push-small-dash {
+  color: var(--text-muted);
+  flex-shrink: 0;
 }
 
-.push-settings-disabled .push-small-slot {
+/* Anzahl pro Tag — bewusst ein Stepper und kein <select>: Ein Select
+   öffnet auf Android wieder einen Systemdialog, und genau davon kommen
+   wir mit dem eigenen Zeit-Picker gerade weg. */
+.push-small-stepper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.push-small-step {
+  width: 40px; height: 40px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg-card);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 20px; line-height: 1;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+.push-small-step:active { background: var(--bg-hover); }
+.push-small-step:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.push-small-count {
+  min-width: 32px;
+  text-align: center;
+  font-size: 16px;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Die heutigen Uhrzeiten — bewusst unauffällig. Sie sollen belegen, dass
+   etwas passiert, nicht die Einstellungen dominieren. */
+.push-small-preview {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  padding: 4px 0 2px;
+  font-variant-numeric: tabular-nums;
+}
+.push-small-preview .is-past {
+  color: var(--text-faint);
+}
+
+.push-settings-disabled .push-small-preview {
   opacity: 0.4;
   pointer-events: none;
 }
@@ -2853,7 +2898,7 @@ button.settings-link, .settings-link-btn {
 /* ---- Time Picker (ersetzt <input type="time">) ---- */
 
 /* Der Auslöser erbt bewusst .reminder-time: Alle Layout-Regeln für
-   .push-setting-time und .push-small-slot greifen damit unverändert. */
+   .push-setting-time und .push-small-window greifen damit unverändert. */
 button.reminder-time {
   display: inline-flex;
   align-items: center;
@@ -2880,8 +2925,11 @@ button.reminder-time:active { background: var(--bg-hover); }
   opacity: 0;
   transition: opacity var(--transition-sheet);
   overscroll-behavior: contain;
+  /* Während des Ausblendens keine Taps mehr abfangen — sonst schluckt das
+     verschwindende Sheet den nächsten Tipp auf die Seite darunter. */
+  pointer-events: none;
 }
-.time-picker-overlay.open { opacity: 1; }
+.time-picker-overlay.open { opacity: 1; pointer-events: auto; }
 
 .time-picker-sheet {
   position: fixed; bottom: 0; left: 50%;

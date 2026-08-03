@@ -18,6 +18,7 @@ import {
   clearAllData,
   initDB
 } from './db.js';
+import { migrateLegacySlots } from './small-schedule.js';
 
 const SCHEMA_VERSION = 1;
 const APP_VERSION = '1.0';
@@ -32,9 +33,20 @@ const LS_EXACT_KEYS = [
   'smallPointsTotal',
   'hasSeenInfo'
 ];
-// Slot keys (1..5):
+// SMALL-Reminder: Zeitfenster und Anzahl.
+//
+// Der gewürfelte Tagesplan (loewenherz_small_roll*) gehört BEWUSST nicht
+// dazu: Ein Backup vom März würde sonst die Märzzeiten wiederherstellen und
+// die App hielte sie für den heutigen Wurf.
+//
+// Die Legacy-Keys bleiben in der Liste, damit alte Backups noch einlesbar
+// sind — migrateLegacySlots() rechnet sie danach ins Fenster-Modell um.
 const LS_SMALL_KEYS = (() => {
-  const out = [];
+  const out = [
+    'loewenherz_small_window_start',
+    'loewenherz_small_window_end',
+    'loewenherz_small_count'
+  ];
   for (let i = 1; i <= 5; i++) {
     out.push(`loewenherz_small_${i}_time`);
     out.push(`loewenherz_small_${i}_enabled`);
@@ -201,6 +213,11 @@ export async function importBackup(jsonText) {
 
   // LocalStorage wiederherstellen (inkl. Push-Settings)
   restoreLocalStorage(data.localStorage);
+
+  // Ein Backup von vor der Umstellung bringt die alten Einzelslots zurück.
+  // Ohne diesen Aufruf stünde der Nutzer bis zum nächsten Öffnen der
+  // Einstellungen in einem Zustand, den der Push-Pfad nicht mehr liest.
+  migrateLegacySlots();
 
   return {
     pointsRestored: data.points.length,

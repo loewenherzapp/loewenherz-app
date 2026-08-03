@@ -88,9 +88,17 @@ export function openTimePicker(title, value, onSelect) {
     if (sel) col.scrollTop = sel.offsetTop - col.clientHeight / 2 + sel.clientHeight / 2;
   }
 
+  // Das Overlay lebt nach dem Schließen noch für die Ausblend-Animation
+  // weiter. Ohne dieses Flag läuft ein Tap in dieser Zeitspanne erneut in
+  // den Handler und ruft onSelect ein zweites Mal — mit den Werten des
+  // bereits geschlossenen Sheets. Sichtbar wurde das beim Setzen zweier
+  // Zeiten kurz hintereinander: Die zweite Auswahl landete im ersten Feld.
+  let closed = false;
+
   function close() {
-    if (activeOverlay !== overlay) return;
-    activeOverlay = null;
+    if (closed) return;
+    closed = true;
+    if (activeOverlay === overlay) activeOverlay = null;
     overlay.classList.remove('open');
     document.removeEventListener('keydown', onKey);
     setTimeout(() => overlay.remove(), 200);
@@ -101,6 +109,8 @@ export function openTimePicker(title, value, onSelect) {
   }
 
   overlay.addEventListener('click', (e) => {
+    if (closed) return;
+
     // Tap neben das Sheet = abbrechen, onSelect bleibt ungerufen.
     if (e.target === overlay) { close(); return; }
 

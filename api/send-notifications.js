@@ -86,9 +86,13 @@ export default async function handler(req, res) {
   }
 
   // ============================================================
-  // SMALL-REMINDER (5 individual slots)
-  // Each user has up to 5 tags: small_1_utc .. small_5_utc
+  // SMALL-REMINDER (10 individual slots)
+  // Each user has up to 10 tags: small_1_utc .. small_10_utc
   // Send to anyone whose ANY slot matches currentSlot
+  //
+  // Die Zeiten sind clientseitig gewürfelt (js/small-schedule.js) und
+  // wechseln täglich. Für den Server ändert das nichts — er filtert
+  // weiterhin nur auf exakte Tag-Werte und kennt keine Nutzer.
   // ============================================================
   const smallTexts = [
     "Kurzer Check: Schultern unten? Atem fließt?",
@@ -102,9 +106,9 @@ export default async function handler(req, res) {
   ];
 
   try {
-    // OR-combined: match if ANY of the 5 slots equals currentSlot
+    // OR-combined: match if ANY of the 10 slots equals currentSlot
     const smallFilters = [];
-    for (let i = 1; i <= 5; i++) {
+    for (let i = 1; i <= 10; i++) {
       if (i > 1) smallFilters.push({ operator: 'OR' });
       smallFilters.push({ field: 'tag', key: `small_${i}_utc`, relation: '=', value: currentSlot });
     }
