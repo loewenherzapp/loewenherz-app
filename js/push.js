@@ -376,6 +376,11 @@ export function requestPushPermission() {
 export function showPushSoftAsk() {
   if (getPermissionState() !== 'default') return;
   if (localStorage.getItem('loewenherz_push_asked')) return;
+  // Der push_asked-Riegel greift erst NACH einer Nutzerentscheidung. Zwei
+  // Auslöser können aber gleichzeitig feuern — die Morgenreflexion vergibt
+  // selbst SMALL-Punkte, triggert also beide Pfade. Ohne diese Zeile lägen
+  // dann zwei Overlays übereinander.
+  if (document.querySelector('.push-soft-ask-overlay')) return;
 
   const overlay = document.createElement('div');
   overlay.className = 'push-soft-ask-overlay';
@@ -450,7 +455,13 @@ export function showPushSoftAsk() {
 // Gleiche UI, gleiche Logik, gleiche localStorage-Keys auf beiden Plattformen.
 // Nativ ist die Reihenfolge: Soft-Ask (unsere UI) → erst bei Zustimmung der
 // Apple-System-Dialog. Ablehnung im Soft-Ask → gar kein System-Dialog.
-export function checkSoftAskAfterReflexion() {
+//
+// Aufrufer: nach einer abgeschlossenen Reflexion (reflection.js) UND nach
+// einem SMALL-Punkt vom Dashboard. Der Dashboard-Pfad ist der wichtigere:
+// Reflexionen gehen nur 05:00–11:59 und 18:00–04:59, ein SMALL-Punkt geht
+// jederzeit. Ohne ihn wird ein User, der nachmittags installiert, an dem
+// Tag gar nicht gefragt.
+export function checkPushSoftAsk() {
   setTimeout(() => {
     if (
       getPermissionState() === 'default' &&

@@ -4,6 +4,7 @@
 
 import { TEXTS } from '../../content/de.js';
 import { saveProfile } from '../db.js';
+import { roundTo15Min } from '../push.js';
 
 export function renderOnboarding(container, onComplete) {
   let step = 1;
@@ -58,7 +59,7 @@ export function renderOnboarding(container, onComplete) {
         <div class="reminder-slot">
           <div class="reminder-left">
             <span class="reminder-label">${t.morning}</span>
-            <input type="time" class="reminder-time" id="rem-morning-time" value="${reminders.morning.time}">
+            <input type="time" class="reminder-time" id="rem-morning-time" step="900" value="${reminders.morning.time}">
           </div>
           <label class="toggle">
             <input type="checkbox" id="rem-morning-toggle" ${reminders.morning.enabled ? 'checked' : ''}>
@@ -69,7 +70,7 @@ export function renderOnboarding(container, onComplete) {
         <div class="reminder-slot">
           <div class="reminder-left">
             <span class="reminder-label">${t.midday}</span>
-            <input type="time" class="reminder-time" id="rem-midday-time" value="${reminders.midday.time}">
+            <input type="time" class="reminder-time" id="rem-midday-time" step="900" value="${reminders.midday.time}">
           </div>
           <label class="toggle">
             <input type="checkbox" id="rem-midday-toggle" ${reminders.midday.enabled ? 'checked' : ''}>
@@ -80,7 +81,7 @@ export function renderOnboarding(container, onComplete) {
         <div class="reminder-slot">
           <div class="reminder-left">
             <span class="reminder-label">${t.evening}</span>
-            <input type="time" class="reminder-time" id="rem-evening-time" value="${reminders.evening.time}">
+            <input type="time" class="reminder-time" id="rem-evening-time" step="900" value="${reminders.evening.time}">
           </div>
           <label class="toggle">
             <input type="checkbox" id="rem-evening-toggle" ${reminders.evening.enabled ? 'checked' : ''}>
@@ -121,8 +122,41 @@ export function renderOnboarding(container, onComplete) {
         onboardingComplete: true
       };
       await saveProfile(profile);
+      persistReminderTimes();
       onComplete(profile);
     });
+  }
+
+  /**
+   * Die im Onboarding gewählten Zeiten in die Keys schreiben, die das
+   * Push-System wirklich liest. Vorher landeten sie nur als `remindersV2`
+   * im Profil — und das liest niemand: Der User stellte Erinnerungen ein,
+   * die es im Push-Pfad nie gab.
+   *
+   * Gefragt wird „wann soll ich dich an SMALL erinnern?" — also mappen die
+   * drei Slots auf small_1..3. Morgen-/Abend-Erinnerung stehen im Onboarding
+   * fest verdrahtet und werden vom User gar nicht gewählt; sie bleiben bei
+   * den Push-Vorgaben, die Soft-Ask und Settings absenzgeschützt setzen.
+   *
+   * Bewusst NICHT gesetzt: loewenherz_push_asked / _push_enabled. Das
+   * Onboarding speichert eine Präferenz, es erteilt keine Einwilligung —
+   * würden wir den Riegel hier setzen, käme der Soft-Ask nie.
+   */
+  function persistReminderTimes() {
+    try {
+      const slots = [reminders.morning, reminders.midday, reminders.evening];
+      slots.forEach((slot, i) => {
+        const id = i + 1;
+        localStorage.setItem(`loewenherz_small_${id}_time`, roundTo15Min(slot.time));
+        // _enabled IMMER mitschreiben: Ein fehlender Wert gilt in
+        // buildTags() und getSmallSlots() als „an" (!== 'false') — ein
+        // ausgeschalteter Slot würde sonst stillschweigend anspringen.
+        localStorage.setItem(`loewenherz_small_${id}_enabled`, String(slot.enabled));
+      });
+    } catch (e) {
+      // Silent — ein fehlgeschlagener Schreibvorgang darf das Onboarding
+      // nicht blockieren; Settings und Soft-Ask setzen dann die Vorgaben.
+    }
   }
 
   renderStep1();

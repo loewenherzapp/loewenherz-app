@@ -9,6 +9,7 @@ import { renderWeekCircles, formatDate, getMonday } from '../components/week-dot
 
 import { showDayDetail } from './history.js';
 import { checkMilestones } from '../milestones.js';
+import { checkPushSoftAsk } from '../push.js';
 import { getDashboardQuatschiText, getTapFeedback, showTapToast } from '../quatschi.js';
 
 const MORNING_NUDGE_TEXTS = [
@@ -199,6 +200,12 @@ export async function renderDashboard(container, profile, { animate = true } = {
 
           // Milestone check (async, non-blocking)
           checkMilestones().catch(() => {});
+
+          // Push-Soft-Ask: der einzige Auslöser, der nicht an ein
+          // Reflexions-Zeitfenster gebunden ist. Zeigt sich erst nach
+          // 1500 ms (siehe push.js) — also nach Sheet-Ausblenden (300 ms)
+          // und Re-Render (600 ms). Guards drin: läuft höchstens einmal.
+          checkPushSoftAsk();
 
           // --- Erfolgs-Animation auf dem Button ---
           btn.classList.add('tapped');

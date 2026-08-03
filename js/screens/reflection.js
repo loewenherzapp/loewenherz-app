@@ -6,7 +6,7 @@ import { TEXTS } from '../../content/de.js';
 import { getReflectionByDate, getReflectionsByDateRange, saveReflection, addSmallPoint } from '../db.js';
 import { formatDate } from '../components/week-dots.js';
 import { getReflectionEndComment } from '../quatschi.js';
-import { checkSoftAskAfterReflexion } from '../push.js';
+import { checkPushSoftAsk } from '../push.js';
 import { checkMilestones } from '../milestones.js';
 
 const MOOD_MAP = {};
@@ -322,7 +322,7 @@ function startMorningFlow(container, profile) {
       renderReflection(container, profile);
 
       // Soft-Ask nach erster Reflexion
-      checkSoftAskAfterReflexion();
+      checkPushSoftAsk();
     });
   }
 }
@@ -562,7 +562,7 @@ function startReflectionFlow(container, profile) {
       }, 2500);
 
       // Soft-Ask nach erster Reflexion
-      checkSoftAskAfterReflexion();
+      checkPushSoftAsk();
     });
   }
 }
