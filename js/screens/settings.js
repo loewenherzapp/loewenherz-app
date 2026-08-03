@@ -19,6 +19,21 @@ const DEFAULT_SMALL_SLOTS = [
   { id: 5, time: '17:00', enabled: false }
 ];
 
+/**
+ * Entfernt Zeit-Keys, die kein gültiges HH:MM enthalten. Räumt den Schaden
+ * des „Löschen"-Bugs auf: Ein geleertes Feld schrieb "00:NaN" — buildTags()
+ * fängt das inzwischen ab, aber im Eingabefeld bliebe der Wert als leeres
+ * Feld sichtbar. Nach dem Löschen greifen die Default-Pfade darunter.
+ */
+function dropCorruptTimes() {
+  const keys = ['loewenherz_morning_time', 'loewenherz_evening_time'];
+  for (let i = 1; i <= 5; i++) keys.push(`loewenherz_small_${i}_time`);
+  for (const key of keys) {
+    const raw = localStorage.getItem(key);
+    if (raw !== null && !roundTo15Min(raw)) localStorage.removeItem(key);
+  }
+}
+
 function initSmallSlotsIfNeeded() {
   for (const slot of DEFAULT_SMALL_SLOTS) {
     if (localStorage.getItem(`loewenherz_small_${slot.id}_time`) === null) {
@@ -51,6 +66,10 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
 
   // Run v2 migration if needed (keeps DB clean)
   profile = await migrateToV2(profile);
+
+  // Erst Müll raus, dann Defaults setzen — die Reihenfolge ist wichtig:
+  // initSmallSlotsIfNeeded() prüft auf null und würde "00:NaN" stehen lassen.
+  dropCorruptTimes();
 
   // Initialize SMALL slots in localStorage if first time
   initSmallSlotsIfNeeded();
@@ -277,6 +296,12 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
 
   function saveTime(inputEl, storageKey) {
     const rounded = roundTo15Min(inputEl.value);
+    // Leeres/ungültiges Feld (Android-„Löschen") — gespeicherten Wert
+    // zurückholen statt Müll zu schreiben.
+    if (!rounded) {
+      inputEl.value = localStorage.getItem(storageKey) || '';
+      return;
+    }
     inputEl.value = rounded;
     localStorage.setItem(storageKey, rounded);
     syncOneSignalTags();
@@ -316,14 +341,15 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
       localStorage.setItem(`loewenherz_small_${id}_enabled`, e.target.checked ? 'true' : 'false');
       syncOneSignalTags();
     } else if (field === 'time') {
+      // Eine Zeit einzustellen IST die Absicht, erinnert zu werden. Vorher
+      // blieb ein ausgeschalteter Slot aus — die Zeit wurde gespeichert,
+      // der Tag aber gelöscht, die Erinnerung existierte nie.
+      // Bewusst hier im change-Zweig und nicht in saveSmallTime(): change
+      // feuert nur bei echter Wertänderung, focusout auch beim bloßen
+      // Antippen-und-Abbrechen.
+      localStorage.setItem(`loewenherz_small_${id}_enabled`, 'true');
       clearTimeout(smallTimers[id]);
-      smallTimers[id] = setTimeout(() => {
-        const rounded = roundTo15Min(e.target.value);
-        e.target.value = rounded;
-        localStorage.setItem(`loewenherz_small_${id}_time`, rounded);
-        syncOneSignalTags();
-        reRenderSmallSlots();
-      }, 1500);
+      smallTimers[id] = setTimeout(() => saveSmallTime(id, e.target), 1500);
     }
   });
 
@@ -333,12 +359,20 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
     if (!slotEl) return;
     const id = slotEl.dataset.slotId;
     clearTimeout(smallTimers[id]);
-    const rounded = roundTo15Min(e.target.value);
-    e.target.value = rounded;
+    saveSmallTime(id, e.target);
+  });
+
+  function saveSmallTime(id, inputEl) {
+    const rounded = roundTo15Min(inputEl.value);
+    if (!rounded) {
+      inputEl.value = localStorage.getItem(`loewenherz_small_${id}_time`) || '';
+      return;
+    }
+    inputEl.value = rounded;
     localStorage.setItem(`loewenherz_small_${id}_time`, rounded);
     syncOneSignalTags();
     reRenderSmallSlots();
-  });
+  }
 
   function reRenderSmallSlots() {
     const slots = getSmallSlots();

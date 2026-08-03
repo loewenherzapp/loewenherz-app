@@ -147,7 +147,12 @@ export function renderOnboarding(container, onComplete) {
       const slots = [reminders.morning, reminders.midday, reminders.evening];
       slots.forEach((slot, i) => {
         const id = i + 1;
-        localStorage.setItem(`loewenherz_small_${id}_time`, roundTo15Min(slot.time));
+        const time = roundTo15Min(slot.time);
+        // Ungültig = Feld wurde geleert. Slot komplett auslassen, dann
+        // setzt initSmallSlotsIfNeeded() in den Settings den Default —
+        // besser als eine halb geschriebene Zeit ohne _enabled.
+        if (!time) return;
+        localStorage.setItem(`loewenherz_small_${id}_time`, time);
         // _enabled IMMER mitschreiben: Ein fehlender Wert gilt in
         // buildTags() und getSmallSlots() als „an" (!== 'false') — ein
         // ausgeschalteter Slot würde sonst stillschweigend anspringen.

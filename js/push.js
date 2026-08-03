@@ -215,8 +215,23 @@ function attemptTagSync(attempt) {
 
 // --- Time Helpers ---
 
+/**
+ * Rundet "HH:MM" auf das 15-Minuten-Raster.
+ *
+ * Gibt null zurück, wenn der Wert kein gültiges HH:MM ist. Der Fall ist
+ * real: Chromes Android-Zeitdialog hat einen „Löschen"-Button, der das
+ * Feld leert — das anschließende focusout schrieb "00:NaN" nach
+ * localStorage und als Tag zu OneSignal. Der Slot war danach still tot.
+ *
+ * Aufrufer MÜSSEN auf null prüfen.
+ */
 export function roundTo15Min(timeStr) {
-  const [h, m] = timeStr.split(':').map(Number);
+  if (typeof timeStr !== 'string') return null;
+  const match = timeStr.match(/^(\d{1,2}):(\d{2})/);
+  if (!match) return null;
+  const h = Number(match[1]);
+  const m = Number(match[2]);
+  if (h > 23 || m > 59) return null;
   const rounded = Math.round(m / 15) * 15;
   const finalM = rounded === 60 ? 0 : rounded;
   const finalH = rounded === 60 ? (h + 1) % 24 : h;
@@ -248,8 +263,10 @@ function buildTags() {
 
   const morningRaw = localStorage.getItem('loewenherz_morning_time') || '07:00';
   const eveningRaw = localStorage.getItem('loewenherz_evening_time') || '20:30';
-  const morning = roundTo15Min(morningRaw);
-  const evening = roundTo15Min(eveningRaw);
+  // Fallback fängt auch Altbestand ab: Wer vor dem null-Riegel in
+  // roundTo15Min() ein "00:NaN" gespeichert hat, heilt hier still aus.
+  const morning = roundTo15Min(morningRaw) || '07:00';
+  const evening = roundTo15Min(eveningRaw) || '20:30';
   const morningUTC = localTimeToUTC(morning);
   const eveningUTC = localTimeToUTC(evening);
 
@@ -263,7 +280,7 @@ function buildTags() {
     const enabled = localStorage.getItem(`loewenherz_small_${i}_enabled`) !== 'false';
     if (enabled) {
       const raw = localStorage.getItem(`loewenherz_small_${i}_time`) || '12:00';
-      tags[`small_${i}_utc`] = localTimeToUTC(roundTo15Min(raw));
+      tags[`small_${i}_utc`] = localTimeToUTC(roundTo15Min(raw) || '12:00');
     } else {
       tags[`small_${i}_utc`] = '';
     }
