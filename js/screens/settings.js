@@ -41,7 +41,7 @@ function renderRollPreview() {
   // wie ein Fehler aus.
   const kommt = roll.some(t => toMin(t) >= nowMin);
   const schluss = kommt ? '' : ' <span class="is-past">— morgen geht es weiter</span>';
-  return `Heute: ${teile.join(' · ')}${schluss}`;
+  return `Erinnerungen heute: ${teile.join(' · ')}${schluss}`;
 }
 
 function renderSmallConfig() {
@@ -147,8 +147,8 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
             <!-- SMALL-Reminder: Zeitfenster + Anzahl, Uhrzeiten gewürfelt -->
             <div class="push-setting-label push-small-header">SMALL-Reminder</div>
             <div class="push-setting-sublabel push-small-sublabel">
-              Du legst den Zeitraum und die Anzahl fest — die Uhrzeiten wechseln
-              täglich. So gewöhnst du dich nicht an sie und nimmst sie wirklich wahr.
+              Kurze Impulse, die dich an deine Vorsätze erinnern — das Herzstück
+              der App. Zeitraum und Anzahl legst du fest, die Uhrzeiten wechseln täglich.
             </div>
             <div id="push-small-config">
               ${renderSmallConfig()}

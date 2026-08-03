@@ -208,12 +208,22 @@ export function migrateLegacySlots() {
 
   if (!gefunden) return false;
 
+  // Hat der Nutzer bereits ein Fenster? Dann NICHT überschreiben — nur die
+  // Altlast wegräumen. Sonst passiert genau das hier: Das Onboarding fragt
+  // nach dem Zeitraum und speichert ihn, beim ersten Öffnen der
+  // Einstellungen läuft diese Migration und ersetzt die Antwort durch das
+  // aus den alten Slots abgeleitete Fenster. Der Nutzer sieht zwei
+  // verschiedene Zeiträume und keiner davon ist der, den er gewählt hat.
+  const schonGesetzt = localStorage.getItem(KEY_START) !== null;
+
   // Erst nach dem Auslesen löschen, sonst verlieren wir bei einem Fehler
   // in der Mitte beides.
   for (let i = 1; i <= LEGACY_SLOTS; i++) {
     localStorage.removeItem(`loewenherz_small_${i}_time`);
     localStorage.removeItem(`loewenherz_small_${i}_enabled`);
   }
+
+  if (schonGesetzt) return false;
 
   // Alle Slots aus? Dann hat der Nutzer SMALL bewusst abgewählt — das
   // respektieren wir mit der kleinsten Anzahl statt mit dem Default.

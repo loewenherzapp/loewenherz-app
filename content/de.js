@@ -328,7 +328,7 @@ export const TEXTS = {
       namePlaceholder: "Dein Vorname",
       next: "Weiter →",
       reminderTitle: "Hey {name}, wann darf ich dich ansprechen?",
-      reminderHint: "Ich melde mich mehrmals am Tag zu wechselnden Zeiten — damit du dich nicht an sie gewöhnst. (Jederzeit in den Einstellungen änderbar.)",
+      reminderHint: "Kurze Impulse im Alltag sind das Herzstück von Löwenherz. Sie holen dich aus dem Autopilot und erinnern dich an das, was du dir vorgenommen hast. Die Uhrzeiten wechseln täglich — damit sie nicht zur Gewohnheit werden.",
       windowFrom: "Ab",
       windowTo: "Bis",
       go: "Los geht's 🦁"
