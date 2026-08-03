@@ -2845,4 +2845,105 @@ button.settings-link, .settings-link-btn {
   .soft-prompt-overlay, .soft-prompt-modal {
     transition: none !important;
   }
+  .time-picker-overlay, .time-picker-sheet {
+    transition: none !important;
+  }
 }
+
+/* ---- Time Picker (ersetzt <input type="time">) ---- */
+
+/* Der Auslöser erbt bewusst .reminder-time: Alle Layout-Regeln für
+   .push-setting-time und .push-small-slot greifen damit unverändert. */
+button.reminder-time {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-family: var(--font-sans);
+  text-align: left;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+button.reminder-time:active { background: var(--bg-hover); }
+
+.reminder-time-caret {
+  color: var(--text-muted);
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+.time-picker-overlay {
+  position: fixed; inset: 0;
+  background: var(--bg-overlay);
+  z-index: 300;                  /* über dem SMALL-Sheet (201) */
+  opacity: 0;
+  transition: opacity var(--transition-sheet);
+  overscroll-behavior: contain;
+}
+.time-picker-overlay.open { opacity: 1; }
+
+.time-picker-sheet {
+  position: fixed; bottom: 0; left: 50%;
+  transform: translateX(-50%) translateY(100%);
+  width: 100%; max-width: 480px;
+  background: var(--bg-paper);
+  border-radius: 20px 20px 0 0;
+  padding: 12px 20px calc(24px + var(--safe-bottom));
+  transition: transform var(--transition-sheet);
+}
+.time-picker-overlay.open .time-picker-sheet {
+  transform: translateX(-50%) translateY(0);
+}
+
+.time-picker-cols {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.time-picker-col {
+  /* Positionierungskontext — sonst bezieht sich das offsetTop beim
+     Einscrollen der Vorauswahl auf einen Vorfahren weiter außen und die
+     Spalte landet an einer beliebigen Stelle. */
+  position: relative;
+  flex: 0 1 96px;
+  max-height: 40vh;
+  overflow-y: auto;
+  /* Verhindert, dass das Scrollen am Listenende die Seite dahinter
+     mitzieht — im WKWebView sonst deutlich sichtbar. */
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.time-picker-sep {
+  display: flex; align-items: center;
+  font-family: var(--font-serif);
+  font-size: 20px;
+  color: var(--text-muted);
+  padding-bottom: 4px;
+}
+
+.time-picker-opt {
+  width: 100%;
+  min-height: 48px;              /* Touch-Ziel, nicht kleiner setzen */
+  display: flex; align-items: center; justify-content: center;
+  background: transparent;
+  border: none; border-radius: var(--radius-sm);
+  color: var(--text-body);
+  font-family: var(--font-sans);
+  font-size: 17px;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+.time-picker-opt:active { background: var(--bg-hover); }
+
+.time-picker-opt.is-selected {
+  background: var(--gold);
+  color: var(--bg-paper);
+  font-weight: 600;
+}
+
+.time-picker-apply { width: 100%; }

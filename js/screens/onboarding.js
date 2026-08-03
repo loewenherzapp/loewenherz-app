@@ -5,6 +5,7 @@
 import { TEXTS } from '../../content/de.js';
 import { saveProfile } from '../db.js';
 import { roundTo15Min } from '../push.js';
+import { openTimePicker, renderTimeButton, setTimeButtonValue } from '../components/time-picker.js';
 
 export function renderOnboarding(container, onComplete) {
   let step = 1;
@@ -59,7 +60,7 @@ export function renderOnboarding(container, onComplete) {
         <div class="reminder-slot">
           <div class="reminder-left">
             <span class="reminder-label">${t.morning}</span>
-            <input type="time" class="reminder-time" id="rem-morning-time" step="900" value="${reminders.morning.time}">
+            ${renderTimeButton('id="rem-morning-time"', reminders.morning.time)}
           </div>
           <label class="toggle">
             <input type="checkbox" id="rem-morning-toggle" ${reminders.morning.enabled ? 'checked' : ''}>
@@ -70,7 +71,7 @@ export function renderOnboarding(container, onComplete) {
         <div class="reminder-slot">
           <div class="reminder-left">
             <span class="reminder-label">${t.midday}</span>
-            <input type="time" class="reminder-time" id="rem-midday-time" step="900" value="${reminders.midday.time}">
+            ${renderTimeButton('id="rem-midday-time"', reminders.midday.time)}
           </div>
           <label class="toggle">
             <input type="checkbox" id="rem-midday-toggle" ${reminders.midday.enabled ? 'checked' : ''}>
@@ -81,7 +82,7 @@ export function renderOnboarding(container, onComplete) {
         <div class="reminder-slot">
           <div class="reminder-left">
             <span class="reminder-label">${t.evening}</span>
-            <input type="time" class="reminder-time" id="rem-evening-time" step="900" value="${reminders.evening.time}">
+            ${renderTimeButton('id="rem-evening-time"', reminders.evening.time)}
           </div>
           <label class="toggle">
             <input type="checkbox" id="rem-evening-toggle" ${reminders.evening.enabled ? 'checked' : ''}>
@@ -96,9 +97,19 @@ export function renderOnboarding(container, onComplete) {
     `;
 
     // Bind time/toggle changes
-    document.getElementById('rem-morning-time').addEventListener('change', (e) => reminders.morning.time = e.target.value);
-    document.getElementById('rem-midday-time').addEventListener('change', (e) => reminders.midday.time = e.target.value);
-    document.getElementById('rem-evening-time').addEventListener('change', (e) => reminders.evening.time = e.target.value);
+    function bindTime(btnId, label, slot) {
+      const btn = document.getElementById(btnId);
+      btn.addEventListener('click', () => {
+        openTimePicker(label, btn.dataset.time, (picked) => {
+          setTimeButtonValue(btn, picked);
+          slot.time = picked;
+        });
+      });
+    }
+    bindTime('rem-morning-time', t.morning, reminders.morning);
+    bindTime('rem-midday-time', t.midday, reminders.midday);
+    bindTime('rem-evening-time', t.evening, reminders.evening);
+
     document.getElementById('rem-morning-toggle').addEventListener('change', (e) => reminders.morning.enabled = e.target.checked);
     document.getElementById('rem-midday-toggle').addEventListener('change', (e) => reminders.midday.enabled = e.target.checked);
     document.getElementById('rem-evening-toggle').addEventListener('change', (e) => reminders.evening.enabled = e.target.checked);

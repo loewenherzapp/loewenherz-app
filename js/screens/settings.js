@@ -7,6 +7,7 @@ import { PRIVACY_URL } from '../config.js';
 import { saveProfile, clearAllData, migrateToV2 } from '../db.js';
 import { openCrisis } from '../components/crisis-modal.js';
 import { syncOneSignalTags, roundTo15Min, ensureOneSignalLoaded, getPermissionState, requestPushPermission } from '../push.js';
+import { openTimePicker, renderTimeButton, setTimeButtonValue } from '../components/time-picker.js';
 import { downloadBackup, importBackup } from '../data-export.js';
 import { isValidEmail, subscribeEmail, lockButton } from '../emailSignup.js';
 
@@ -53,7 +54,7 @@ function getSmallSlots() {
 
 function renderSmallSlot(slot) {
   return `<div class="push-small-slot" data-slot-id="${slot.id}">
-    <input type="time" class="reminder-time" data-field="time" step="900" value="${slot.time}">
+    ${renderTimeButton('data-field="time"', slot.time)}
     <label class="toggle">
       <input type="checkbox" data-field="toggle" ${slot.enabled ? 'checked' : ''}>
       <span class="toggle-slider"></span>
@@ -126,11 +127,11 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
             <!-- Morning / Evening times (always active when push is on) -->
             <div class="push-setting-time">
               <div class="push-setting-label">Morgenkompass</div>
-              <input type="time" class="reminder-time" id="push-morning-time" step="900" value="${localStorage.getItem('loewenherz_morning_time') || '07:00'}">
+              ${renderTimeButton('id="push-morning-time"', localStorage.getItem('loewenherz_morning_time') || '07:00')}
             </div>
             <div class="push-setting-time">
               <div class="push-setting-label">Abendreflexion</div>
-              <input type="time" class="reminder-time" id="push-evening-time" step="900" value="${localStorage.getItem('loewenherz_evening_time') || '20:30'}">
+              ${renderTimeButton('id="push-evening-time"', localStorage.getItem('loewenherz_evening_time') || '20:30')}
             </div>
 
             <div class="push-settings-divider"></div>
@@ -290,89 +291,49 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
     }
   });
 
-  // ---- Morning / Evening time pickers ----
-  const pushMorningTime = document.getElementById('push-morning-time');
-  const pushEveningTime = document.getElementById('push-evening-time');
-
-  function saveTime(inputEl, storageKey) {
-    const rounded = roundTo15Min(inputEl.value);
-    // Leeres/ungültiges Feld (Android-„Löschen") — gespeicherten Wert
-    // zurückholen statt Müll zu schreiben.
-    if (!rounded) {
-      inputEl.value = localStorage.getItem(storageKey) || '';
-      return;
-    }
-    inputEl.value = rounded;
-    localStorage.setItem(storageKey, rounded);
-    syncOneSignalTags();
+  // ---- Morgen- / Abendzeit ----
+  //
+  // Kein Debounce mehr: Der Picker liefert einen fertigen, gültigen Wert
+  // erst beim „Übernehmen". Die 1500-ms-Timer von früher waren nur nötig,
+  // weil <input type="time"> bei jeder Ziffernänderung `change` feuerte.
+  function bindTimeButton(btn, title, storageKey) {
+    btn.addEventListener('click', () => {
+      openTimePicker(title, btn.dataset.time, (picked) => {
+        setTimeButtonValue(btn, picked);
+        localStorage.setItem(storageKey, picked);
+        syncOneSignalTags();
+      });
+    });
   }
 
-  let pushMorningTimer;
-  pushMorningTime.addEventListener('change', () => {
-    clearTimeout(pushMorningTimer);
-    pushMorningTimer = setTimeout(() => saveTime(pushMorningTime, 'loewenherz_morning_time'), 1500);
-  });
-  pushMorningTime.addEventListener('focusout', () => {
-    clearTimeout(pushMorningTimer);
-    saveTime(pushMorningTime, 'loewenherz_morning_time');
-  });
-
-  let pushEveningTimer;
-  pushEveningTime.addEventListener('change', () => {
-    clearTimeout(pushEveningTimer);
-    pushEveningTimer = setTimeout(() => saveTime(pushEveningTime, 'loewenherz_evening_time'), 1500);
-  });
-  pushEveningTime.addEventListener('focusout', () => {
-    clearTimeout(pushEveningTimer);
-    saveTime(pushEveningTime, 'loewenherz_evening_time');
-  });
+  bindTimeButton(document.getElementById('push-morning-time'), 'Morgenkompass', 'loewenherz_morning_time');
+  bindTimeButton(document.getElementById('push-evening-time'), 'Abendreflexion', 'loewenherz_evening_time');
 
   // ---- SMALL Slots: event delegation ----
   const smallSlotsEl = document.getElementById('push-small-slots');
-  let smallTimers = {};
 
   smallSlotsEl.addEventListener('change', (e) => {
     const slotEl = e.target.closest('.push-small-slot');
-    if (!slotEl) return;
-    const id = slotEl.dataset.slotId;
-    const field = e.target.dataset.field;
-
-    if (field === 'toggle') {
-      localStorage.setItem(`loewenherz_small_${id}_enabled`, e.target.checked ? 'true' : 'false');
-      syncOneSignalTags();
-    } else if (field === 'time') {
-      // Eine Zeit einzustellen IST die Absicht, erinnert zu werden. Vorher
-      // blieb ein ausgeschalteter Slot aus — die Zeit wurde gespeichert,
-      // der Tag aber gelöscht, die Erinnerung existierte nie.
-      // Bewusst hier im change-Zweig und nicht in saveSmallTime(): change
-      // feuert nur bei echter Wertänderung, focusout auch beim bloßen
-      // Antippen-und-Abbrechen.
-      localStorage.setItem(`loewenherz_small_${id}_enabled`, 'true');
-      clearTimeout(smallTimers[id]);
-      smallTimers[id] = setTimeout(() => saveSmallTime(id, e.target), 1500);
-    }
-  });
-
-  smallSlotsEl.addEventListener('focusout', (e) => {
-    if (e.target.dataset.field !== 'time') return;
-    const slotEl = e.target.closest('.push-small-slot');
-    if (!slotEl) return;
-    const id = slotEl.dataset.slotId;
-    clearTimeout(smallTimers[id]);
-    saveSmallTime(id, e.target);
-  });
-
-  function saveSmallTime(id, inputEl) {
-    const rounded = roundTo15Min(inputEl.value);
-    if (!rounded) {
-      inputEl.value = localStorage.getItem(`loewenherz_small_${id}_time`) || '';
-      return;
-    }
-    inputEl.value = rounded;
-    localStorage.setItem(`loewenherz_small_${id}_time`, rounded);
+    if (!slotEl || e.target.dataset.field !== 'toggle') return;
+    localStorage.setItem(`loewenherz_small_${slotEl.dataset.slotId}_enabled`, e.target.checked ? 'true' : 'false');
     syncOneSignalTags();
-    reRenderSmallSlots();
-  }
+  });
+
+  smallSlotsEl.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-field="time"]');
+    if (!btn) return;
+    const id = btn.closest('.push-small-slot').dataset.slotId;
+    openTimePicker('SMALL-Reminder', btn.dataset.time, (picked) => {
+      localStorage.setItem(`loewenherz_small_${id}_time`, picked);
+      // Eine Zeit zu setzen IST die Absicht, erinnert zu werden — sonst
+      // bliebe ein ausgeschalteter Slot aus und buildTags() löschte den
+      // Tag wieder. Anders als beim alten Feld gibt es hier kein
+      // versehentliches Auslösen: Der Wert kommt nur über „Übernehmen".
+      localStorage.setItem(`loewenherz_small_${id}_enabled`, 'true');
+      syncOneSignalTags();
+      reRenderSmallSlots();
+    });
+  });
 
   function reRenderSmallSlots() {
     const slots = getSmallSlots();
