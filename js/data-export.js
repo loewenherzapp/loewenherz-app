@@ -28,6 +28,7 @@ const APP_VERSION = '1.0';
 const LS_EXACT_KEYS = [
   'loewenherz_push_enabled',
   'loewenherz_push_asked',
+  'loewenherz_push_snooze_until',
   'loewenherz_morning_time',
   'loewenherz_evening_time',
   'smallPointsTotal',

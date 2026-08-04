@@ -459,29 +459,100 @@ export function requestPushPermission() {
 }
 
 // --- Soft-Ask Overlay ---
+//
+// Ein Nein hier killt die zentrale Funktion der App — deshalb gibt es
+// eine zweite Chance: „Später" setzt keinen endgültigen Riegel mehr,
+// sondern eine Schlummerfrist. Nach deren Ablauf erscheint der Soft-Ask
+// GENAU EINMAL erneut (Runde 2). Erst „Nein, danke" dort ist endgültig.
+//
+// Bewusst nur eine Wiederholung: Wiederholtes Fragen erzeugt bei
+// Angstpatienten genau das Kontrollverlust-Gefühl, das die App bekämpft.
+//
+// Die Frist ist eine simple Kalenderfrist — nutzungsbasiertes Zählen wäre
+// doppelt gemoppelt, weil der Auslöser (SMALL-Punkt / Reflexion) ohnehin
+// nur in aktiven Momenten feuert. 7 Tage + aktiver Moment ergibt sich von
+// selbst.
+
+const SNOOZE_KEY = 'loewenherz_push_snooze_until';
+const SNOOZE_MS = 7 * 24 * 60 * 60 * 1000;
+
+function snoozeActive() {
+  const until = Number(localStorage.getItem(SNOOZE_KEY));
+  return Number.isFinite(until) && until > 0 && Date.now() < until;
+}
+
+// --- Alt-„Später" zurückholen ---
+//
+// Vor dieser Änderung setzte „Später" denselben endgültigen Riegel wie
+// eine echte Entscheidung — der Button log. Diese Nutzer sind eindeutig
+// erkennbar: push_asked gesetzt, aber push_enabled nie berührt (das setzt
+// nur der Ja-Pfad bzw. der Settings-Toggle) und der System-Dialog nie
+// beantwortet. Sie bekommen die Schlummerfrist rückwirkend — und damit
+// genau eine zweite Chance, wie alle anderen auch.
+(function reopenLegacyLater() {
+  try {
+    if (
+      localStorage.getItem('loewenherz_push_asked') === 'true' &&
+      localStorage.getItem('loewenherz_push_enabled') === null &&
+      localStorage.getItem(SNOOZE_KEY) === null &&
+      getPermissionState() === 'default'
+    ) {
+      localStorage.removeItem('loewenherz_push_asked');
+      localStorage.setItem(SNOOZE_KEY, String(Date.now() + SNOOZE_MS));
+      console.log('[Push] Altes „Später" in Schlummerfrist umgewandelt');
+    }
+  } catch (e) {
+    // Silent — schlimmstenfalls bleibt der alte Riegel bestehen
+  }
+})();
 
 export function showPushSoftAsk() {
   if (getPermissionState() !== 'default') return;
   if (localStorage.getItem('loewenherz_push_asked')) return;
+  if (snoozeActive()) return;
   // Der push_asked-Riegel greift erst NACH einer Nutzerentscheidung. Zwei
   // Auslöser können aber gleichzeitig feuern — die Morgenreflexion vergibt
   // selbst SMALL-Punkte, triggert also beide Pfade. Ohne diese Zeile lägen
   // dann zwei Overlays übereinander.
   if (document.querySelector('.push-soft-ask-overlay')) return;
 
+  // Ein abgelaufener Schlummer-Eintrag heißt: „Später" wurde schon einmal
+  // getippt — das hier ist Runde 2, die letzte.
+  const zweiteRunde = localStorage.getItem(SNOOZE_KEY) !== null;
+
+  const ersteRundeHtml = `
+      <h2 class="push-soft-ask-title">Darf ich dich erinnern?</h2>
+      <p class="push-soft-ask-text">
+        Dranbleiben ist kein Willensproblem — es ist ein Erinnerungsproblem.
+        Genau dafür bin ich da: Ich stupse dich zur richtigen Zeit an, damit
+        deine Werkzeuge im Alltag nicht untergehen. Dein Handy fragt dich
+        dafür gleich offiziell um Erlaubnis für Mitteilungen.
+      </p>
+      <p class="push-soft-ask-text">
+        Wann ich mich melde, bestimmst du. Ausschalten geht jederzeit.
+      </p>
+      <button class="btn-primary push-soft-ask-accept" id="push-accept">Ja, erinner mich</button>
+      <button class="push-soft-ask-later" id="push-later">Später</button>`;
+
+  // Runde 2: kürzer, anerkennt die Nutzung (der Auslöser ist ja ein frisch
+  // geholter Punkt) und nörgelt nicht. Der Ablehnen-Button heißt hier
+  // ehrlich „Nein, danke" — dieses Mal IST es endgültig.
+  const zweiteRundeHtml = `
+      <h2 class="push-soft-ask-title">Du bist noch dabei.</h2>
+      <p class="push-soft-ask-text">
+        Und das ganz ohne Erinnerungen — stark. Falls du doch welche
+        willst: Wann ich mich melde, bestimmst du. Ausschalten geht
+        jederzeit.
+      </p>
+      <button class="btn-primary push-soft-ask-accept" id="push-accept">Ja, erinner mich</button>
+      <button class="push-soft-ask-later" id="push-later">Nein, danke</button>`;
+
   const overlay = document.createElement('div');
   overlay.className = 'push-soft-ask-overlay';
   overlay.innerHTML = `
     <div class="push-soft-ask-content">
       <div class="push-soft-ask-icon">🔔</div>
-      <h2 class="push-soft-ask-title">Soll ich dich erinnern?</h2>
-      <p class="push-soft-ask-text">
-        Morgens an deine Intention.<br>
-        Abends an deine Reflexion.<br>
-        Und zwischendurch an einen SMALL-Moment.
-      </p>
-      <button class="btn-primary push-soft-ask-accept" id="push-accept">Ja, gern →</button>
-      <button class="push-soft-ask-later" id="push-later">Später</button>
+      ${zweiteRunde ? zweiteRundeHtml : ersteRundeHtml}
     </div>
   `;
 
@@ -497,6 +568,7 @@ export function showPushSoftAsk() {
 
   document.getElementById('push-accept').addEventListener('click', () => {
     localStorage.setItem('loewenherz_push_asked', 'true');
+    localStorage.removeItem(SNOOZE_KEY);
     overlay.classList.remove('active');
     setTimeout(() => overlay.remove(), 300);
 
@@ -527,7 +599,14 @@ export function showPushSoftAsk() {
   });
 
   document.getElementById('push-later').addEventListener('click', () => {
-    localStorage.setItem('loewenherz_push_asked', 'true');
+    if (zweiteRunde) {
+      // „Nein, danke" — jetzt gilt die Entscheidung. Kein weiteres Fragen;
+      // der Weg zurück führt über die Einstellungen.
+      localStorage.setItem('loewenherz_push_asked', 'true');
+    } else {
+      // „Später" hält sein Wort: kein Riegel, nur eine Schlummerfrist.
+      localStorage.setItem(SNOOZE_KEY, String(Date.now() + SNOOZE_MS));
+    }
     overlay.classList.remove('active');
     setTimeout(() => overlay.remove(), 300);
   });

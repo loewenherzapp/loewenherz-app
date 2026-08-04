@@ -6,11 +6,28 @@ import { TEXTS } from '../../content/de.js';
 import { PRIVACY_URL } from '../config.js';
 import { saveProfile, clearAllData, migrateToV2 } from '../db.js';
 import { openCrisis } from '../components/crisis-modal.js';
+import { isNative } from '../platform.js';
 import { syncOneSignalTags, roundTo15Min, ensureOneSignalLoaded, getPermissionState, requestPushPermission, ensureRoll } from '../push.js';
 import { openTimePicker, renderTimeButton, setTimeButtonValue } from '../components/time-picker.js';
 import { getWindow, getCount, setSchedule, getRoll, migrateLegacySlots, maxCountFor, toMin, MAX_COUNT } from '../small-schedule.js';
 import { downloadBackup, importBackup } from '../data-export.js';
 import { isValidEmail, subscribeEmail, lockButton } from '../emailSignup.js';
+
+/**
+ * Anleitung zum Entsperren blockierter Mitteilungen — je Plattform anders,
+ * denn der Weg führt jeweils woanders hin. Der alte Pauschaltext („im
+ * Browser blockiert") war in der iOS-App und im Android-TWA schlicht
+ * falsch und half genau den Nutzern nicht, die ihn brauchten.
+ */
+function pushBlockedHintText() {
+  if (isNative()) {
+    return 'Mitteilungen sind für Löwenherz ausgeschaltet. So erlaubst du sie wieder: iOS-Einstellungen → Löwenherz → Mitteilungen.';
+  }
+  if (/Android/i.test(navigator.userAgent)) {
+    return 'Benachrichtigungen sind für Löwenherz blockiert. So erlaubst du sie wieder: App-Symbol gedrückt halten → App-Info → Benachrichtigungen.';
+  }
+  return 'Push-Benachrichtigungen sind im Browser blockiert. Bitte aktiviere sie in deinen Browser-Einstellungen.';
+}
 
 /**
  * Entfernt Zeit-Keys, die kein gültiges HH:MM enthalten. Räumt den Schaden
@@ -41,7 +58,12 @@ function renderRollPreview() {
   // wie ein Fehler aus.
   const kommt = roll.some(t => toMin(t) >= nowMin);
   const schluss = kommt ? '' : ' <span class="is-past">— morgen geht es weiter</span>';
-  return `Erinnerungen heute: ${teile.join(' · ')}${schluss}`;
+  // Blockierte Mitteilungen: Die Zeiten stehen zwar fest, aber es kommt
+  // nichts an. Das zu verschweigen hieße, eine funktionierende Funktion
+  // vorzutäuschen — der Hinweis oben erklärt den Weg zurück.
+  const blockiert = getPermissionState() === 'denied'
+    ? ' <span class="is-past">— derzeit blockiert, siehe Hinweis oben</span>' : '';
+  return `Erinnerungen heute: ${teile.join(' · ')}${schluss}${blockiert}`;
 }
 
 function renderSmallConfig() {
@@ -127,7 +149,10 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
               <span class="toggle-slider"></span>
             </label>
           </div>
-          <div class="push-blocked-hint hidden" id="push-blocked-hint">Push-Benachrichtigungen sind im Browser blockiert. Bitte aktiviere sie in deinen Browser-Einstellungen.</div>
+          <!-- Bei Blockierung sofort sichtbar, nicht erst nach Toggle-Klick:
+               Wer im System-Dialog abgelehnt hat, würde sonst nie erfahren,
+               dass (und wie) es einen Weg zurück gibt. -->
+          <div class="push-blocked-hint${getPermissionState() === 'denied' ? '' : ' hidden'}" id="push-blocked-hint">${pushBlockedHintText()}</div>
 
           <div id="push-sub-settings" class="${!pushEnabled ? 'push-settings-disabled' : ''}">
             <div class="push-settings-divider"></div>
