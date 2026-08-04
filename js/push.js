@@ -23,7 +23,7 @@
 
 import { isNative } from './platform.js';
 import { API_BASE, ONESIGNAL_APP_ID } from './config.js';
-import { rollIfNeeded, getRoll, toMin, MAX_SLOTS } from './small-schedule.js';
+import { rollIfNeeded, getRoll, toMin, MAX_SLOTS, migrateLegacySlots } from './small-schedule.js';
 
 const ONESIGNAL_SDK_URL = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';
 let oneSignalLoadPromise = null;
@@ -124,6 +124,29 @@ function pushIsActive() {
   if (isNative()) return true;
   return typeof Notification !== 'undefined' && Notification.permission === 'granted';
 }
+
+// --- Migration der alten Einzelslots ---
+//
+// Muss beim App-START laufen, nicht erst beim Öffnen der Einstellungen.
+// Sonst wird ein Bestandsnutzer, der nie in die Einstellungen geht, nie
+// migriert: Seine small_1..5 liegen ungelesen herum, und weil buildTags()
+// nur noch den Wurf liest, bekommt er stillschweigend die Vorgabe
+// 06:00–23:00 mit fünf Impulsen statt seiner gewohnten Zeiten. Kein
+// Absturz, keine Meldung — einfach andere Erinnerungen als gestern.
+//
+// Bewusst hier und nicht in app.js: Der Zeitplan gehört zum Push-Bereich,
+// app.js müsste sonst von Migrationen wissen. Die Aufrufe in settings.js
+// und data-export.js bleiben trotzdem stehen — migrateLegacySlots() ist
+// idempotent, und der Backup-Import braucht seinen eigenen.
+(function migrateOnStartup() {
+  try {
+    if (migrateLegacySlots()) {
+      console.log('[Push] Alte SMALL-Slots ins Zeitfenster-Modell überführt');
+    }
+  } catch (e) {
+    // Silent — eine fehlgeschlagene Migration darf den Start nicht blockieren
+  }
+})();
 
 // --- Auto-load für Bestandsuser ---
 // Wer Push schon mal aktiviert hat und nicht explizit deaktiviert hat,
@@ -464,9 +487,13 @@ export function showPushSoftAsk() {
 
   document.body.appendChild(overlay);
 
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => overlay.classList.add('active'));
-  });
+  // Layout-Durchlauf synchron erzwingen statt über requestAnimationFrame:
+  // rAF feuert nicht, solange document.visibilityState 'hidden' ist. Wandert
+  // die App genau zwischen Auslöser und Animationsstart in den Hintergrund,
+  // bliebe .active für immer ungesetzt — das Overlay hinge unsichtbar im
+  // DOM. Bei diesem hier wäre das fatal: z-index 600 über der ganzen App.
+  void overlay.offsetHeight;
+  overlay.classList.add('active');
 
   document.getElementById('push-accept').addEventListener('click', () => {
     localStorage.setItem('loewenherz_push_asked', 'true');
@@ -482,20 +509,12 @@ export function showPushSoftAsk() {
     if (!localStorage.getItem('loewenherz_evening_time')) {
       localStorage.setItem('loewenherz_evening_time', '20:30');
     }
-    // Initialize 5 SMALL slots (3 on, 2 off) if not yet set
-    const defaultSlots = [
-      { id: 1, time: '09:30', enabled: true },
-      { id: 2, time: '12:30', enabled: true },
-      { id: 3, time: '15:30', enabled: true },
-      { id: 4, time: '11:00', enabled: false },
-      { id: 5, time: '17:00', enabled: false }
-    ];
-    for (const s of defaultSlots) {
-      if (!localStorage.getItem(`loewenherz_small_${s.id}_time`)) {
-        localStorage.setItem(`loewenherz_small_${s.id}_time`, s.time);
-        localStorage.setItem(`loewenherz_small_${s.id}_enabled`, String(s.enabled));
-      }
-    }
+    // Für die SMALL-Reminder wird hier bewusst NICHTS geschrieben.
+    // getWindow()/getCount() liefern ihre Defaults ohne Speichereintrag —
+    // und ein hier geschriebenes Default-Fenster würde migrateLegacySlots()
+    // blockieren („überschreibe kein bestehendes Fenster"). Ein Bestands-
+    // nutzer, der den Soft-Ask vor dem ersten Öffnen der Einstellungen
+    // sieht, verlöre damit seine gewohnten Zeiten.
 
     // Erst jetzt der echte Permission-Prompt — im Web der Slidedown,
     // nativ der Apple-System-Dialog.

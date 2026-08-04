@@ -368,9 +368,9 @@ function showGundulaInfo() {
   document.body.appendChild(overlay);
 
   // Animate in
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => overlay.classList.add('active'));
-  });
+  // Synchroner Reflow statt rAF — rAF feuert nicht bei verstecktem Dokument.
+  void overlay.offsetHeight;
+  overlay.classList.add('active');
 
   // Close handlers
   const close = () => {
@@ -421,9 +421,9 @@ function showWeekInfo() {
 
   document.body.appendChild(overlay);
 
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => overlay.classList.add('active'));
-  });
+  // Synchroner Reflow statt rAF — rAF feuert nicht bei verstecktem Dokument.
+  void overlay.offsetHeight;
+  overlay.classList.add('active');
 
   const close = () => {
     overlay.classList.remove('active');

@@ -2461,8 +2461,12 @@ button.settings-link, .settings-link-btn {
   padding: 32px 24px;
   opacity: 0;
   transition: opacity 300ms ease;
+  /* Zweite Verteidigungslinie, wie bei .coach-mark und .info-sheet-overlay:
+     Bleibt .active aus irgendeinem Grund ungesetzt, ist das Overlay zwar
+     unsichtbar, schluckt aber keine Taps. Ohne das wäre die App tot. */
+  pointer-events: none;
 }
-.push-soft-ask-overlay.active { opacity: 1; }
+.push-soft-ask-overlay.active { opacity: 1; pointer-events: auto; }
 
 .push-soft-ask-content {
   text-align: center;

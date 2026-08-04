@@ -313,9 +313,10 @@ function showCoachMark() {
 
   document.body.appendChild(mark);
 
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => mark.classList.add('active'));
-  });
+  // Synchroner Reflow statt rAF — rAF feuert nicht bei verstecktem
+  // Dokument und liesse .active sonst dauerhaft ungesetzt.
+  void mark.offsetHeight;
+  mark.classList.add('active');
 
   // Tap on bubble → open Info-Sheet directly
   mark.querySelector('.coach-mark-bubble').addEventListener('click', (e) => {
@@ -366,9 +367,9 @@ function showAppInfo() {
 
   dismissCoachMark();
 
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => overlay.classList.add('active'));
-  });
+  // Synchroner Reflow statt rAF — siehe Kommentar beim Coach-Mark.
+  void overlay.offsetHeight;
+  overlay.classList.add('active');
 
   const close = () => {
     overlay.classList.remove('active');
