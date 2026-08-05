@@ -205,6 +205,10 @@ function setThemeColor(color) {
 
 async function switchTab(tab) {
   currentTab = tab;
+  // Merker für den Datums-Rollover (siehe Block am Dateiende): Nach diesem
+  // Render ist der Bildschirm für den aktuellen Tag + die aktuelle
+  // Tagesphase frisch.
+  lastRenderKey = renderStateKey();
 
   // Update tab bar active state
   document.querySelectorAll('.nav-tab').forEach(btn => {
@@ -534,6 +538,120 @@ window.debugToast = function(milestoneId) {
   toastVisible = false; // Force allow
   showMilestoneToast(milestoneId, variant);
 };
+
+// ============================================================
+// Datums-Rollover — Bildschirm bei Tageswechsel auffrischen
+// ============================================================
+//
+// init() läuft einmal, danach rendert nur switchTab() — ausgelöst allein
+// durch Tab-Taps. Eine über Nacht offene App zeigte deshalb bis zum ersten
+// Tipp das gestrige Datum, die gestrigen Punkte und (gefährlich) die um
+// 23:00 gerenderte, noch antippbare Abendreflexions-Karte: Ein Tap darauf
+// um 09:00 hätte die „gestrige" Reflexion auf HEUTE gebucht und damit die
+// echte heutige Abendreflexion blockiert.
+//
+// Der Fix ist nur der Auslöser: Bei Rückkehr in den Vordergrund wird
+// geprüft, ob der letzte Render noch zum aktuellen Tag passt, und wenn
+// nicht, der aktuelle Tab neu gerendert. Die Datums-, Punkte- und
+// Zeitfenster-Logik rechnet in den Render-Funktionen ohnehin frisch.
+//
+// Der Vergleichsschlüssel ist Kalendertag PLUS Tagesphase (Grenzen 05/12/18
+// Uhr — die realen Fenstergrenzen aus reflection.js und dashboard.js).
+// Nur das Kalenderdatum zu vergleichen hätte ein Loch: Render um 00:30
+// (Abendkarte zu Recht aktiv, bucht auf gestern), Rückkehr um 09:00 am
+// SELBEN Kalendertag → kein Re-Render → die Karte wäre weiter antippbar
+// und würde jetzt auf heute buchen. Das Zeitfenster-Gating selbst
+// (reflection.js: hour >= 18 || hour <= 4) bildet die 05-Uhr-Grenze
+// korrekt ab — geprüft; der Zweitbefund aus dem Auftrag existiert nicht.
+//
+// Bewusst NICHT in push.js: Der dortige visibilitychange-Listener ist
+// absichtlich DOM-frei (Facade-Schnitt). Bewusst kein Mitternachts-Timer:
+// ereignisgetrieben deckt das Symptom (Hintergrund über Nacht) ab.
+// Bekannte, akzeptierte Restlücke: Bleibt die App über eine Grenze hinweg
+// SICHTBAR (Display die ganze Nacht an), feuert kein visibilitychange und
+// der alte Stand bleibt bis zum nächsten Tipp stehen.
+
+let lastRenderKey = null;
+let rolloverPending = false;
+
+function renderStateKey() {
+  const now = new Date();
+  const h = now.getHours();
+  const phase = h < 5 ? 'nacht' : h < 12 ? 'morgen' : h < 18 ? 'mittag' : 'abend';
+  return `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}|${phase}`;
+}
+
+// Offene Eingabe-Flows und Overlays: Während sie sichtbar sind, wird nicht
+// neu gerendert — ein Re-Render mitten in einer halb ausgefüllten Reflexion
+// würde die Eingaben verwerfen, und das wäre schlimmer als der Bug.
+// Im Zweifel gilt: lieber ein veralteter Screen als ein verlorener Text.
+function uiInputFlowOpen() {
+  if (document.querySelector('.sheet-container.open')) return true;        // Quick-Select
+  if (document.querySelector('.time-picker-overlay')) return true;         // Zeit-Picker
+  if (document.querySelector('.push-soft-ask-overlay')) return true;       // Push-Soft-Ask
+  if (document.querySelector('.soft-prompt-overlay.active')) return true;  // E-Mail-Prompt
+  if (document.querySelector('.info-sheet-overlay.active')) return true;   // Info-Sheets
+  const crisis = document.getElementById('crisis-modal');
+  if (crisis && !crisis.classList.contains('hidden')) return true;
+  const settings = document.getElementById('settings-container');
+  if (settings && !settings.classList.contains('hidden')) return true;
+  // Reflexion mitten im Flow: .reflection-screen ohne Hub-Karten ist ein
+  // Schritt-Screen (Intention, Stimmung, Dankbarkeit, Abschluss).
+  const refl = document.querySelector('#main-content .reflection-screen');
+  if (refl && !refl.querySelector('.ref-hub-cards')) return true;
+  return false;
+}
+
+// Nachhol-Mechanismus: Solange ein Flow offen ist, wartet der Rollover.
+// Flows schließen per Tap — ein Dokument-Listener prüft nach jedem Tap
+// erneut. Er existiert nur, während etwas aussteht.
+function armPendingRollover() {
+  if (rolloverPending) return;
+  rolloverPending = true;
+  const onTap = () => {
+    // Kurz warten, bis der schließende Handler durch ist (Sheets nehmen
+    // ihre .open-Klasse synchron weg, Overlays brauchen einen Moment).
+    setTimeout(() => {
+      if (!rolloverPending) return;
+      if (checkDateRollover()) document.removeEventListener('click', onTap);
+    }, 120);
+  };
+  document.addEventListener('click', onTap);
+}
+
+/**
+ * Prüft den Tageswechsel und rendert bei Bedarf den aktuellen Tab neu.
+ * @returns {boolean} true, wenn der Bildschirm frisch ist (gerendert oder
+ *                    nichts zu tun); false, wenn ein offener Flow den
+ *                    Render blockiert und der Rollover aussteht.
+ *
+ * Exportiert als Andockpunkt: Ein späterer nativer Auslöser
+ * (@capacitor/app ist bewusst noch NICHT installiert) ruft dieselbe
+ * Funktion — App.addEventListener('appStateChange', ({ isActive }) =>
+ * isActive && checkDateRollover()) — ohne dass hier umgebaut werden muss.
+ * Doppeltes Feuern beider Pfade ist unschädlich: Nach dem ersten Render
+ * stimmt der Schlüssel wieder, der zweite Aufruf ist ein No-op.
+ */
+export function checkDateRollover() {
+  // Vor dem ersten switchTab (Landing/Onboarding/E-Mail-Gate) gibt es
+  // keinen Tages-Screen, der veralten könnte.
+  if (!lastRenderKey) return true;
+  if (lastRenderKey === renderStateKey()) {
+    rolloverPending = false;
+    return true;
+  }
+  if (uiInputFlowOpen()) {
+    armPendingRollover();
+    return false;
+  }
+  rolloverPending = false;
+  switchTab(currentTab);
+  return true;
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') checkDateRollover();
+});
 
 // Service Worker: OneSignal handles registration of OneSignalSDKWorker.js automatically.
 // Manual registration removed to avoid conflicts.
