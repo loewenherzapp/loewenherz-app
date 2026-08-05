@@ -34,7 +34,7 @@ Erst diagnostizieren, nicht blind neuen Code schreiben:
 2. **Vercel deployed?** — `curl -s https://loewenherz-app.vercel.app/[datei]` prüfen.
 3. **Browser-Cache?** — SW serviert index.html als Fallback. Neue HTML-Dateien vom SW-Fetch ausschließen.
 4. **IndexedDB Version-Konflikt?** — Anderer Tab hat alte DB-Version offen.
-5. **OneSignal-Tags: es sind 7** — `morning_utc`, `evening_utc`, `small_1_utc` … `small_5_utc`. Werte immer String `"HH:MM"` in UTC, 15-Minuten-Raster; „aus" = leerer String. Ein `push_enabled`-Tag gibt es nicht. Berechnet in `buildTags()` (`js/push.js`) — dieselbe Funktion für Web und nativ. Der Server filtert auf exakte Stringgleichheit; jede Formatabweichung bricht das Scheduling lautlos.
+5. **OneSignal-Tags: es sind 12** — `morning_utc`, `evening_utc`, `small_1_utc` … `small_10_utc` (Zeitfenster+Anzahl-Modell seit `c5b14bb`; gewürfelt wird NUR in `rollIfNeeded()`, `js/small-schedule.js`). Werte immer String `"HH:MM"` in UTC, 15-Minuten-Raster; „aus" = leerer String (nativ: Tag gelöscht). Ein `push_enabled`-Tag gibt es nicht. Berechnet in `buildTags()` (`js/push.js`) — dieselbe Funktion für Web und nativ. Der Server filtert auf exakte Stringgleichheit; jede Formatabweichung bricht das Scheduling lautlos.
 
 ## Deployment-Checkliste
 
@@ -124,3 +124,5 @@ Beispiel: `app-angstdoc-placeholder/` → dort `vercel deploy` → eigenes Verce
 ## Häufige Fehler
 
 _Diese Sektion wird von Claude selbst ergänzt wenn Fehler auftreten._
+
+- **SW-Drift (aufgetreten v93–v99, geheilt mit v100):** Sieben Bumps landeten nur in `sw.js`, `OneSignalSDKWorker.js` blieb auf v92 — Push-aktive Web-Nutzer (deren aktiver SW der OneSignal-Worker ist!) bekamen tagelang alten Code, obwohl „die Cache-Version erhöht" war. Prüf-Kommando nach jedem Bump: `grep -h CACHE_NAME sw.js OneSignalSDKWorker.js` → beide Zeilen müssen identisch sein. Gleiches gilt für `URLS_TO_CACHE` (dort fehlten `small-schedule.js` und `time-picker.js`).

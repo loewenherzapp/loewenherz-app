@@ -17,6 +17,9 @@ import { renderReflection } from './screens/reflection.js';
 import { renderHistory } from './screens/history.js';
 import { renderSettings } from './screens/settings.js';
 import { isNative } from './platform.js';
+import { nativePlugin } from './native-plugins.js';
+import { initExternalLinks } from './external-links.js';
+import { hapticMilestone } from './haptics.js';
 import './push.js'; // OneSignal init (side-effect import)
 
 let currentTab = 'today';
@@ -39,6 +42,8 @@ async function init() {
   initBottomSheet();
   initCrisisModal();
   initEmailSoftPrompt();
+  initExternalLinks();
+  if (isNative()) initNativeShell();
 
   // Set tab labels from TEXTS
   const tabTexts = TEXTS.ui.tabs;
@@ -201,6 +206,70 @@ function bindHeaderButtons() {
 function setThemeColor(color) {
   const meta = document.getElementById('theme-color-meta');
   if (meta) meta.setAttribute('content', color);
+  applyNativeStatusBarStyle(color);
+}
+
+// Statusbar-Textfarbe folgt dem App-Hintergrund: Creme → dunkler Text
+// (Style LIGHT), Reflexions-Dunkelblau → heller Text (Style DARK).
+// Bewusst an setThemeColor() angedockt: Das ist die eine Stelle, an der
+// die App ihre Hintergrundfarbe wechselt — Web (theme-color) und iOS
+// (Statusbar) bleiben so automatisch synchron, auch unter System-Dark.
+function applyNativeStatusBarStyle(color) {
+  if (!isNative()) return;
+  const darkBg = color === '#17262b';
+  nativePlugin('StatusBar')
+    .then((sb) => sb && sb.setStyle({ style: darkBg ? 'DARK' : 'LIGHT' }))
+    .catch(() => {});
+}
+
+// ============================================================
+// Nativer App-Rahmen (iOS) — Persistenz, Lifecycle, Statusbar-Start
+// ============================================================
+// Läuft nur hinter isNative() und ist fire-and-forget: Kein nativer
+// Aufruf darf den App-Start blockieren oder den Web-Pfad berühren.
+async function initNativeShell() {
+  // Startzustand der Statusbar (Creme-Screens) sofort setzen.
+  applyNativeStatusBarStyle('#f7ead8');
+
+  // Storage-Persistenz anfordern. Ein Versuch, keine Garantie — das System
+  // entscheidet selbst; Ablehnung hat keinen Fehlerpfad und keinen
+  // UI-Hinweis. Bewusst NUR nativ: Im Web zeigt Firefox für persist()
+  // einen sichtbaren Permission-Prompt — das wäre eine Web-Änderung.
+  // Warum überhaupt: WebView-Storage gilt als transient, das OS darf
+  // IndexedDB/localStorage bei Speicherdruck räumen — und dort liegen
+  // ALLE Nutzerdaten. Details: docs/ios-capacitor-notes.md (C3).
+  try {
+    if (navigator.storage && navigator.storage.persist) {
+      const granted = await navigator.storage.persist();
+      console.log('[Native] Storage-Persistenz:', granted ? 'gewährt' : 'nicht gewährt');
+    } else {
+      console.log('[Native] navigator.storage.persist nicht verfügbar');
+    }
+  } catch (e) {
+    console.warn('[Native] persist() fehlgeschlagen:', e);
+  }
+
+  // Datums-Rollover zusätzlich über den nativen Lifecycle anstoßen.
+  // visibilitychange feuert im WKWebView nachweislich (C2-Verifikation);
+  // appStateChange deckt lange Suspensionen ab. Doppelfeuern ist per
+  // Konstruktion ein No-op (Schlüsselvergleich in checkDateRollover).
+  nativePlugin('App').then((app) => {
+    if (!app) return;
+    app.addListener('appStateChange', ({ isActive }) => {
+      if (isActive) checkDateRollover();
+    });
+  }).catch(() => {});
+}
+
+// Splash erst verstecken, wenn der erste Screen gerendert ist — und per
+// finally auch bei einem Fehler im Init: Ein für immer stehender Splash
+// wäre schlimmer als ein sichtbarer Fehlerzustand. Kein Timer, keine
+// Mindestdauer; WebView-Hintergrund = Splash-Farbe, also kein Blitz.
+function hideNativeSplash() {
+  if (!isNative()) return;
+  nativePlugin('SplashScreen')
+    .then((splash) => splash && splash.hide())
+    .catch(() => {});
 }
 
 async function switchTab(tab) {
@@ -489,6 +558,12 @@ function showMilestoneToast(id, variant) {
     document.body.appendChild(toast);
   }
 
+  // Haptik-Stelle 3/3: Meilenstein sichtbar gefeiert → spürbare Bestätigung.
+  // Sitzt bewusst am Toast statt am milestoneReached-Event: retroaktive
+  // Milestones (Backup-Import) und die toast-losen Frühmeilensteine lösen
+  // so keine Vibration ohne sichtbaren Anlass aus.
+  hapticMilestone();
+
   // Animate in
   const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (!prefersReduced) {
@@ -657,4 +732,6 @@ document.addEventListener('visibilitychange', () => {
 // Manual registration removed to avoid conflicts.
 
 // Boot
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', () => {
+  init().finally(hideNativeSplash);
+});

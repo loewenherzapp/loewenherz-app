@@ -8,6 +8,7 @@ import { formatDate } from '../components/week-dots.js';
 import { getReflectionEndComment } from '../quatschi.js';
 import { checkPushSoftAsk } from '../push.js';
 import { checkMilestones } from '../milestones.js';
+import { hapticSaved } from '../haptics.js';
 
 const MOOD_MAP = {};
 TEXTS.ui.reflection.moods.forEach(m => { MOOD_MAP[m.key] = m; });
@@ -312,6 +313,9 @@ function startMorningFlow(container, profile) {
       // Save to localStorage
       saveMorningReflectionDone(todayStr, selectedChip, customText);
 
+      // Haptik-Stelle 1/3 (Morgen-Variante): Reflexion abgeschlossen.
+      hapticSaved();
+
       // Milestone check (async, non-blocking)
       checkMilestones().catch(() => {});
 
@@ -518,6 +522,9 @@ function startReflectionFlow(container, profile) {
     const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
     await addSmallPoint({ date: reflectionDateStr, time: timeStr, letter: 'S', category: 'reflection', categoryLabel: 'Abendreflexion' });
     await addSmallPoint({ date: reflectionDateStr, time: timeStr, letter: 'M', category: 'reflection', categoryLabel: 'Abendreflexion' });
+
+    // Haptik-Stelle 1/3 (Abend-Variante): Reflexion gespeichert.
+    hapticSaved();
 
     // Milestone check (async, non-blocking)
     checkMilestones().catch(() => {});

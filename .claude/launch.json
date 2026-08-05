@@ -1,1 +1,1 @@
-{"version":"0.0.1","configurations":[{"name":"loewenherz","runtimeExecutable":"npx","runtimeArgs":["http-server",".","--port","8080","-c-1"],"port":8080}]}
+{"version":"0.0.1","configurations":[{"name":"loewenherz-c3","runtimeExecutable":"sh","runtimeArgs":["-c","npx http-server . --port ${PORT:-4173} -c-1"],"autoPort":true,"port":4173}]}

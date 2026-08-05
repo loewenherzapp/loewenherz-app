@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Löwenherz sammelt selbst keine Daten: Reflexionen, SMALL-Punkte und
+	     Profil bleiben lokal (IndexedDB/localStorage im WKWebView) und werden
+	     nie übertragen. Push-Gerätedaten erhebt das OneSignal-SDK — dessen
+	     eigenes Privacy Manifest liegt im OneSignal-XCFramework (>= 5.1) und
+	     wird von Xcode beim Archivieren aggregiert; hier nicht dupliziert.
+	     Capacitor Core liefert ebenfalls ein eigenes (leeres) Manifest mit. -->
+	<key>NSPrivacyTracking</key>
+	<false/>
+	<key>NSPrivacyTrackingDomains</key>
+	<array/>
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array/>
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array>
+		<!-- Einziger belegter Eintrag: @capacitor/filesystem (Backup-Export,
+		     Temp-Datei im Cache-Verzeichnis) liest Datei-Attribute inkl.
+		     creation/modification date (IONFileStructures+Converters.swift →
+		     ctime/mtime). C617.1 = Zugriff nur auf Dateien im eigenen
+		     App-Container, keine Anzeige an Dritte.
+		     Kein UserDefaults-Eintrag: weder App-Code noch Capacitor 8 Core
+		     noch die installierten Plugins rufen UserDefaults auf (Grep-Probe
+		     über node_modules/@capacitor/*/ios, 05.08.2026). -->
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>C617.1</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>

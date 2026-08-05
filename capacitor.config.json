@@ -2,7 +2,16 @@
   "appId": "de.angstdoc.loewenherz",
   "appName": "Löwenherz",
   "webDir": "www",
+  "backgroundColor": "#f7ead8",
   "ios": {
     "handleApplicationNotifications": false
+  },
+  "plugins": {
+    "Keyboard": {
+      "resize": "native"
+    },
+    "SplashScreen": {
+      "launchAutoHide": false
+    }
   }
 }

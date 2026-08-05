@@ -19,6 +19,8 @@ import {
   initDB
 } from './db.js';
 import { migrateLegacySlots } from './small-schedule.js';
+import { isNative } from './platform.js';
+import { nativePlugin } from './native-plugins.js';
 
 const SCHEMA_VERSION = 1;
 const APP_VERSION = '1.0';
@@ -31,6 +33,9 @@ const LS_EXACT_KEYS = [
   'loewenherz_push_snooze_until',
   'loewenherz_morning_time',
   'loewenherz_evening_time',
+  // Nur in der nativen App gesetzt (Settings-Toggle Haptik). Im Web existiert
+  // der Key nie → Web-Exporte bleiben byte-identisch zu vorher.
+  'loewenherz_haptics_enabled',
   'smallPointsTotal',
   'hasSeenInfo'
 ];
@@ -123,24 +128,61 @@ export async function exportAllData() {
 }
 
 /**
- * Triggert den Browser-Download des Backups.
+ * Exportiert das Backup. Web: Browser-Download. Nativ: System-Share-Sheet.
+ * @returns {Promise<boolean>} false NUR, wenn der User das Share-Sheet
+ *          abgebrochen hat (kein Erfolgs-Toast zeigen); sonst true.
+ *          Der Web-Pfad liefert immer true — Verhalten unverändert.
  */
 export async function downloadBackup() {
   const data = await exportAllData();
   const json = JSON.stringify(data, null, 2);
+  const today = new Date().toISOString().slice(0, 10);
+  const filename = `loewenherz-backup-${today}.json`;
+
+  // Nativ: WebKit unterstützt blob:-URLs im download-Attribut nicht
+  // (bekannter WebKit-Bug) — der <a download>-Klick unten täte still
+  // nichts. Stattdessen Temp-Datei im Cache + natives Share-Sheet
+  // („In Dateien sichern", AirDrop, Mail). Gleicher Dateiname, gleiches
+  // JSON — der Import liest beide Quellen identisch.
+  if (isNative()) {
+    return shareBackupNative(filename, json);
+  }
+
   const blob = new Blob([json], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
 
-  const today = new Date().toISOString().slice(0, 10);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `loewenherz-backup-${today}.json`;
+  a.download = filename;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
 
   // Erst nach kurzem Delay revoken — Safari braucht den URL noch
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+  return true;
+}
+
+// Share-Sheet-Export (iOS). Abbruch ist KEIN Fehler: Schließt der User das
+// Sheet, gibt das Plugin „Share canceled" zurück — dann false liefern statt
+// werfen, sonst zeigt settings.js einen Fehler-Alert für eine bewusste
+// Nutzerentscheidung. Echte Fehler fliegen weiter.
+async function shareBackupNative(filename, json) {
+  const [fs, share] = await Promise.all([nativePlugin('Filesystem'), nativePlugin('Share')]);
+  if (!fs || !share) throw new Error('Native Export-Plugins nicht verfügbar.');
+
+  await fs.writeFile({ path: filename, data: json, directory: 'CACHE', encoding: 'utf8' });
+  try {
+    const { uri } = await fs.getUri({ path: filename, directory: 'CACHE' });
+    await share.share({ files: [uri] });
+    return true;
+  } catch (e) {
+    if (/cancel/i.test(String((e && e.message) || e))) return false;
+    throw e;
+  } finally {
+    // Best effort — eine liegengebliebene Cache-Datei räumt iOS selbst.
+    fs.deleteFile({ path: filename, directory: 'CACHE' }).catch(() => {});
+  }
 }
 
 /**

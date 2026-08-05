@@ -12,6 +12,8 @@ import { openTimePicker, renderTimeButton, setTimeButtonValue } from '../compone
 import { getWindow, getCount, setSchedule, getRoll, migrateLegacySlots, maxCountFor, toMin, MAX_COUNT } from '../small-schedule.js';
 import { downloadBackup, importBackup } from '../data-export.js';
 import { isValidEmail, subscribeEmail, lockButton } from '../emailSignup.js';
+import { nativePlugin } from '../native-plugins.js';
+import { hapticsEnabled, setHapticsEnabled } from '../haptics.js';
 
 /**
  * Anleitung zum Entsperren blockierter Mitteilungen — je Plattform anders,
@@ -152,7 +154,9 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
           <!-- Bei Blockierung sofort sichtbar, nicht erst nach Toggle-Klick:
                Wer im System-Dialog abgelehnt hat, würde sonst nie erfahren,
                dass (und wie) es einen Weg zurück gibt. -->
-          <div class="push-blocked-hint${getPermissionState() === 'denied' ? '' : ' hidden'}" id="push-blocked-hint">${pushBlockedHintText()}</div>
+          <!-- Nativ gibt es einen direkten Ausweg statt nur einer Anleitung:
+               Sprung in die iOS-Einstellungen der App (im Web unmöglich). -->
+          <div class="push-blocked-hint${getPermissionState() === 'denied' ? '' : ' hidden'}" id="push-blocked-hint">${pushBlockedHintText()}${isNative() ? '<button type="button" class="btn-secondary" id="push-open-settings" style="margin-top:12px;">Einstellungen öffnen</button>' : ''}</div>
 
           <div id="push-sub-settings" class="${!pushEnabled ? 'push-settings-disabled' : ''}">
             <div class="push-settings-divider"></div>
@@ -181,6 +185,22 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
           </div>
         </div>
       </div>
+
+      ${isNative() ? `
+      <!-- Haptik: nur in der nativen App — im Web wirkungslos, deshalb ausgeblendet -->
+      <div class="settings-section">
+        <div class="settings-card">
+          <div class="push-setting-row">
+            <div class="push-setting-labels">
+              <div class="push-setting-label">Haptisches Feedback</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="haptics-toggle" ${hapticsEnabled() ? 'checked' : ''}>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>` : ''}
 
       <!-- Data Privacy -->
       <div class="settings-section">
@@ -218,7 +238,7 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
         <div class="settings-label">${t.aboutTitle}</div>
         <div class="settings-card">
           <div class="settings-about">
-            <div>${t.version}</div>
+            <div id="settings-version">${t.version}</div>
             <div>${t.madeBy}</div>
             <div><a href="${t.bookUrl}" target="_blank" rel="noopener noreferrer">${t.bookLink}</a></div>
           </div>
@@ -345,6 +365,37 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
   bindTimeButton(document.getElementById('push-morning-time'), 'Morgenkompass', 'loewenherz_morning_time');
   bindTimeButton(document.getElementById('push-evening-time'), 'Abendreflexion', 'loewenherz_evening_time');
 
+  // ---- Nativ: Sprung in die iOS-Einstellungen bei blockiertem Push ----
+  // 'app-settings:' ist der Wert von UIApplication.openSettingsURLString —
+  // öffnet direkt die Einstellungsseite DIESER App.
+  const openSettingsBtn = document.getElementById('push-open-settings');
+  if (openSettingsBtn) {
+    openSettingsBtn.addEventListener('click', () => {
+      nativePlugin('AppLauncher')
+        .then((launcher) => launcher && launcher.openUrl({ url: 'app-settings:' }))
+        .catch(() => {});
+    });
+  }
+
+  // ---- Nativ: Haptik-Toggle (Utility in js/haptics.js prüft den Zustand) ----
+  const hapticsToggle = document.getElementById('haptics-toggle');
+  if (hapticsToggle) {
+    hapticsToggle.addEventListener('change', () => setHapticsEnabled(hapticsToggle.checked));
+  }
+
+  // ---- Nativ: Version + Build aus der App-Binary statt der Web-Konstante ----
+  // Eine Quelle pro Plattform: nativ MARKETING_VERSION/Build aus Xcode via
+  // @capacitor/app, im Web bleibt t.version aus de.js stehen.
+  if (isNative()) {
+    nativePlugin('App')
+      .then((app) => app && app.getInfo())
+      .then((info) => {
+        const versionEl = document.getElementById('settings-version');
+        if (info && versionEl) versionEl.textContent = `Version ${info.version} (${info.build})`;
+      })
+      .catch(() => {});
+  }
+
   // ---- SMALL-Reminder: Zeitfenster + Anzahl ----
   //
   // Event-Delegation, weil der ganze Block nach jeder Änderung neu
@@ -399,10 +450,12 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
   });
 
   // Backup: Export
+  // downloadBackup() liefert false, wenn der User das native Share-Sheet
+  // abgebrochen hat — dann weder Erfolgs-Toast noch Fehler-Alert.
   document.getElementById('settings-export').addEventListener('click', async () => {
     try {
-      await downloadBackup();
-      showToast(t.exportSuccess);
+      const completed = await downloadBackup();
+      if (completed !== false) showToast(t.exportSuccess);
     } catch (e) {
       console.warn('[Settings] Export failed:', e);
       alert(t.importError + ' ' + (e.message || e));

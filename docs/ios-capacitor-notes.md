@@ -1,6 +1,6 @@
 # iOS-Build (Capacitor) — Fundament, Arbeitsschritte, Architektur
 
-Die iOS-App ist eine Capacitor-8-Hülle mit **gebündelten Web-Assets** — die native App lädt alles lokal aus dem App-Bundle, kein Remote-URL-Wrapper. Eine Quelle der Wahrheit: dasselbe Repo, derselbe Code wie app.angstdoc.de. Bundle-ID **`de.angstdoc.loewenherz`** (identisch zum Android-Paketnamen), Homescreen-Name **`Löwenherz`**. Stand: **C2** (Fundament + nativer Push). Native Politur (Haptics/Splash/StatusBar) = C3.
+Die iOS-App ist eine Capacitor-8-Hülle mit **gebündelten Web-Assets** — die native App lädt alles lokal aus dem App-Bundle, kein Remote-URL-Wrapper. Eine Quelle der Wahrheit: dasselbe Repo, derselbe Code wie app.angstdoc.de. Bundle-ID **`de.angstdoc.loewenherz`** (identisch zum Android-Paketnamen), Homescreen-Name **`Löwenherz`**. Stand: **C3** (Fundament + nativer Push + nativer Layer/Store-Vorbereitung, siehe [Abschnitt g](#g-nativer-layer--store-vorbereitung-c3)).
 
 Verwandte Dokumente: [play-store-launch-notes.md](play-store-launch-notes.md) (Android/TWA), [store-readiness.md](store-readiness.md), [../scripts/build-ios.mjs](../scripts/build-ios.mjs).
 
@@ -104,10 +104,46 @@ Deshalb merkt sich `syncTagsToOneSignal()` den verwendeten Offset in `loewenherz
 
 **Manuell in Xcode (macht Patrick, nicht das Skript):** App-Target → Signing & Capabilities → **Push Notifications** + **Background Modes → Remote notifications**. Ein Signing-Team ist noch nicht gesetzt. Dazu im OneSignal-Dashboard: iOS-Plattform zur bestehenden App hinzufügen und den APNs-Key (.p8) hinterlegen.
 
-## Bekannte Einschränkungen (Stand C2 — gewollt)
+## g) Nativer Layer & Store-Vorbereitung (C3)
 
-- **Datenexport bricht nativ:** `js/data-export.js` nutzt Blob-Download via `<a download>` — funktioniert in WKWebView nicht. Fix in C3 (`@capacitor/filesystem` + `@capacitor/share`).
+Umgesetzt 05.08.2026. Neun offizielle Plugins dazu: `app`, `app-launcher`, `browser`, `filesystem`, `haptics`, `keyboard`, `share`, `splash-screen`, `status-bar` (alle 8.x, via SPM in `CapApp-SPM/Package.swift`, von `cap sync` verwaltet).
+
+**Plugin-Zugriff ohne Bundler — `js/native-plugins.js`.** Statt für jedes Plugin das JS-Dist zu vendorn (wie bei OneSignal nötig), holt `nativePlugin(name)` einen `registerPlugin`-Proxy aus dem bereits gevendorten `www/js/vendor/capacitor-core.js`. Die offiziellen Plugin-Pakete sind dünne registerPlugin-Wrapper — nativ funktionsgleich. Enum-Werte sind Strings (`'LIGHT'`, `'CACHE'`, `'utf8'`, `'DARK'`), verifiziert gegen die jeweilige `dist/esm/definitions.js`. Die npm-Pakete liefern die Swift-Seite. `build-ios.mjs` blieb unverändert.
+
+**Store-Pflicht (Block 1):**
+- `PrivacyInfo.xcprivacy` im App-Target (pbxproj-Resources-Phase). Inhalt minimal und belegt: kein Tracking, keine gesammelten Datentypen (Inhalte bleiben lokal; OneSignal-Gerätedaten deckt das Manifest **im OneSignal-XCFramework** ab, Capacitor-Core bringt ein eigenes leeres mit). Einzige Required-Reason-API: File-Timestamps `C617.1` — `@capacitor/filesystem` liest ctime/mtime (`IONFileStructures+Converters.swift`), genutzt nur für die Backup-Temp-Datei im eigenen Container. Kein `CA92.1`: weder App-Code noch Capacitor-8-Core noch die Plugins rufen UserDefaults (Grep-Probe 05.08.2026).
+- Info.plist: `ITSAppUsesNonExemptEncryption=NO`, `CFBundleDevelopmentRegion=de`, nur noch Portrait, `~ipad`-Block entfernt. `TARGETED_DEVICE_FAMILY=1` (iPhone-only, Debug+Release) — iPad läuft im Kompatibilitätsmodus, keine iPad-Screenshots nötig.
+- App-Icon 1024: aus `assets/icons/icon-512.png` auf `--bg-page` #f7ead8 geflattet + hochskaliert (CoreGraphics-Skript), **ohne Alpha**. Provisorium — Designer-Icon ersetzt es 1:1. ⚠️ Vorher lag hier noch das **Capacitor-Template-Icon** (blaues X): formal gültig, im Review ein sicheres Fail.
+- Launch-Screen-Storyboard: einfarbig #f7ead8, kein Bild. `@capacitor/splash-screen` instanziiert auf iOS **dasselbe Storyboard** (`SplashScreen.swift` liest `UILaunchStoryboardName`) — eine Quelle für Launch und Plugin-Splash. `Splash.imageset` ebenfalls auf Creme neutralisiert (unreferenziert, aber kein blaues Logo mehr im Projekt).
+
+**Kern-UX (Block 2):**
+- Tastatur: `plugins.Keyboard.resize = "native"` in `capacitor.config.json` — WebView-Frame wird verkleinert, `position:fixed` (Bottom-Nav, Sheets) wandert mit und springt sauber zurück. Kein JS-Keyboard-Code; Nav-Ausblenden bewusst nicht spekulativ eingebaut.
+- Externe Links: `js/external-links.js`, EIN delegierter document-Listener (nur nativ): `http(s)` → `Browser.open()` (SFSafariViewController mit Done-Button), `tel:`/`mailto:`/`#` unangetastet. Erfasst auch innerHTML-Links (Legal-Modal, Krisen-Modal).
+- Export: Verzweigung in `downloadBackup()` — nativ `Filesystem.writeFile` (CACHE, utf8) → `Share.share({files})`, Temp-Datei danach gelöscht. Dateiname/JSON identisch zum Web. **Abbruch ≠ Fehler:** Plugin rejected mit „Share canceled" → `downloadBackup()` liefert `false`, settings.js zeigt dann weder Toast noch Alert. Web-Pfad unverändert (liefert `true`).
+- `navigator.storage.persist()` beim Start — **nur nativ**: Im Web zeigt Firefox dafür einen Permission-Prompt (wäre eine sichtbare Web-Änderung); Chrome vergibt Persistenz installierter PWAs ohnehin selbst. Der Aufruf ist ein Versuch ohne Garantie; Ablehnung wird nur geloggt. **Warum das wichtig ist: WebView-Storage gilt dem OS als räumbar, und ALLE Nutzerdaten liegen dort. Der Share-Sheet-Export ist deshalb auf iOS nicht Komfort, sondern die einzige Absicherung gegen OS-seitige Datenlöschung — das ist der Grund, warum der Export-Fix Teil von C3 war.** Eine Migration auf nativen Speicher wäre ein eigener Umbau (bewusst nicht C3).
+- Blockierter Push: Hinweistext war schon plattformrichtig (`isNative()`); neu ist der Button **„Einstellungen öffnen"** (nur nativ) via `AppLauncher.openUrl({url: 'app-settings:'})` — der Wert von `UIApplication.openSettingsURLString`. `@capacitor/app` selbst hat keine Settings-API.
+
+**Politur (Block 3):**
+- Haptik: `js/haptics.js` (Utility prüft Toggle `loewenherz_haptics_enabled`, Default an, im Backup enthalten; Settings-Toggle nur nativ sichtbar). Genau drei semantische Stellen: Reflexion abgeschlossen (Morgen + Abend, `impact LIGHT`), SMALL-Punkt (`selection`-Tick), Meilenstein-Toast (`notification SUCCESS`). ⚠️ `selectionChanged()` allein ist im Plugin ein **stiller No-op** — der Generator entsteht erst in `selectionStart()`; die Utility fährt deshalb start→changed→end. Bestehende `navigator.vibrate()`-Aufrufe (Android/Web: Dashboard 15 ms, Picker/Sheet 50 ms) bleiben unberührt — auf iOS existiert die API nicht.
+- Splash: `launchAutoHide:false`, `hide()` im `finally` des App-Init — auch bei Init-Fehler verschwindet der Splash. `backgroundColor` #f7ead8 in capacitor.config = Overscroll-Bounce und etwaige Render-Lücken bleiben creme.
+- Statusbar: an `setThemeColor()` in app.js angedockt — die eine Stelle, an der die App ihre Hintergrundfarbe wechselt. Creme → `LIGHT` (dunkler Text), Reflexion-Dunkel (#17262b) → `DARK` (heller Text). Systemdark ist damit egal, die App-Farben sind fix.
+- Lifecycle: `App.addListener('appStateChange')` → `checkDateRollover()` (D2-Andockpunkt). `visibilitychange` feuert im WKWebView zwar nachweislich — der native Listener deckt lange Suspensionen ab; Doppelfeuern ist per Schlüsselvergleich ein No-op.
+- Version: Settings-About zeigt nativ `App.getInfo()` („Version 1.0 (1)" = MARKETING_VERSION/Build aus Xcode), im Web weiter die de.js-Konstante. Keine neue hartkodierte Zahl.
+- `user-scalable=no` im Viewport-Tag: **war schon vor C3 da** und bleibt — Entfernen wäre eine Web-Verhaltensänderung (Android-Pinch-Zoom), und nativ ist fixierter Zoom App-Standard. Bewusste, dokumentierte Abweichung vom „keine Zoom-Sperre"-Grundsatz.
+
+**Benachrichtigungston — vorbereitet, nicht umgesetzt (3.5).** Was fehlt, wenn er kommen soll:
+1. Sounddatei: `aiff`, `wav` oder `caf`, **maximal 30 Sekunden**, sonst spielt iOS den Default-Ton. Ablage: ins App-Bundle (Xcode: Datei ins App-Target ziehen, Target-Membership App), Dateiname z. B. `loewenherz.caf`.
+2. Serverseitig (in C3 tabu): OneSignal-Payload in `api/send-notifications.js` um `ios_sound: "loewenherz.caf"` ergänzen — Web-Push ignoriert den Parameter, Android/TWA hat eigene Kanäle.
+3. Danach: neuer App-Store-Build (die Datei reist im Bundle).
+
+**Review Notes:** [app-store-review-notes.md](app-store-review-notes.md) — EN + DE, aus dem Code belegt, für das Notes-Feld in App Store Connect. Wichtigster Punkt dort: Der E-Mail-Screen ist keine Login-Wall; der Überspringen-Button heißt wörtlich **„Erstmal ohne →"**.
+
+**Manuell in Xcode/App Store Connect (Patrick):** unverändert aus C2 — Signing-Team, Capabilities Push + Background Modes/Remote notifications, APNs-Key im OneSignal-Dashboard. Neu dazu: beim ersten Upload prüfen, dass keine ITMS-91053-Warnmail kommt (fehlende API-Deklaration); falls doch, den genannten API-Typ im App-Manifest nachtragen.
+
+## Bekannte Einschränkungen (Stand C3 — gewollt)
+
 - **Native App startet bei null:** iOS-PWA-Bestandsdaten (IndexedDB/localStorage aus Safari) werden nicht migriert — bewusste Entscheidung.
+- **Nutzerdaten liegen im WebView-Storage** (räumbar durch das OS, s. o.) — Absicherung: `persist()`-Versuch + Share-Sheet-Export. Migration auf nativen Speicher = eigener, bewusst vertagter Umbau.
 
 ## Simulator-Smoke-Test — Ergebnis 02.08.2026 (iPhone 17, iOS 26.5)
 
@@ -133,11 +169,11 @@ xcrun simctl io booted screenshot /tmp/shot.png
 
 Datenstand direkt lesbar unter `~/Library/Developer/CoreSimulator/Devices/<UDID>/data/Containers/Data/Application/<APP-UUID>/Library/WebKit/de.angstdoc.loewenherz/WebsiteData/` (IndexedDB + localStorage als SQLite).
 
-## Offene Punkte vor C3
+## Offene Punkte nach C3
 
 - [x] C2: OneSignal-Migration (natives SDK, Tags, Soft-Ask) — Code steht, siehe Abschnitt f
-- [ ] C2-Gerätetest (echtes iPhone, APNs-Key + Xcode-Capabilities Voraussetzung): Soft-Ask vor Apple-Dialog, iOS-Subscription im Dashboard, 7 Tags mit **denselben Wertformaten wie eine Web-Subscription** (direkt vergleichen), Test-Push im Hintergrund, kein Banner im Vordergrund, Zeitänderung aktualisiert den Tag
+- [x] C3: Splash/StatusBar/Haptics, App-Icon, Datenexport-Fix, Store-Pflichten — siehe Abschnitt g
+- [ ] C2-Gerätetest (echtes iPhone, APNs-Key + Xcode-Capabilities Voraussetzung): Soft-Ask vor Apple-Dialog, iOS-Subscription im Dashboard, 12 Tags mit **denselben Wertformaten wie eine Web-Subscription** (direkt vergleichen), Test-Push im Hintergrund, kein Banner im Vordergrund, Zeitänderung aktualisiert den Tag
 - [ ] C2-Cron-Realtest: Erinnerungszeit auf +20 min, App schließen, warten — kommt der Reminder über die bestehende Server-Route an, ist die Kette Server → OneSignal → APNs → Gerät komplett
-- [ ] `tel:`-Links im Krisen-Modal aus WKWebView testen (müssen den Dialer öffnen — kritisch!)
-- [ ] Externe Links (`buch.angstdoc.de`, Datenschutz) öffnen in Safari, nicht in der WebView
-- [ ] C3: Splash/StatusBar/Haptics, App-Icon, Datenexport-Fix, App-Store-Connect-Name
+- [ ] C3-Gerätetest (Patricks Checkliste aus dem C3-Prompt): Tastatur, `tel:`-Links (Dialer!), externe Links → SFSafariViewController, Safe Areas, Splash, Statusbar hell/dunkel, Export→Import-Roundtrip, Haptik + Toggle, Rollover über Mitternacht, „Einstellungen öffnen"-Sprung
+- [ ] App-Store-Connect-Anlage (Name, Metadaten, Screenshots iPhone-only, Review Notes aus docs/app-store-review-notes.md)
