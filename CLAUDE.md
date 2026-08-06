@@ -34,7 +34,11 @@ Erst diagnostizieren, nicht blind neuen Code schreiben:
 2. **Vercel deployed?** — `curl -s https://loewenherz-app.vercel.app/[datei]` prüfen.
 3. **Browser-Cache?** — SW serviert index.html als Fallback. Neue HTML-Dateien vom SW-Fetch ausschließen.
 4. **IndexedDB Version-Konflikt?** — Anderer Tab hat alte DB-Version offen.
-5. **OneSignal-Tags: es sind 13** — `morning_utc`, `evening_utc`, `small_1_utc` … `small_10_utc` (Zeitfenster+Anzahl-Modell seit `c5b14bb`; gewürfelt wird NUR in `rollIfNeeded()`, `js/small-schedule.js`) sowie `sound` (Benachrichtigungston, nur iOS-App). Zeit-Werte immer String `"HH:MM"` in UTC, 15-Minuten-Raster; „aus" = leerer String (nativ: Tag gelöscht). `sound` trägt NUR Abweichler-Werte (`ton-2`/`ton-3`/`system` — Standardton = Tag gelöscht, Server nutzt `not_exists`; ids müssen zu `js/notification-sound.js` UND `SOUND_VARIANTS` in `api/send-notifications.js` passen). Ein `push_enabled`-Tag gibt es nicht. Berechnet in `buildTags()` (`js/push.js`) — dieselbe Funktion für Web und nativ. Der Server filtert auf exakte Stringgleichheit; jede Formatabweichung bricht das Scheduling lautlos.
+5. **OneSignal-Tags: es ist GENAU EINER** — `sched` trägt den kompletten Zeitplan: `v1;m=0500;e=1830;s=0530,0930,1000;t=ton-2` (Version; Morgen; Abend; SMALL-Zeiten; Ton nur bei Abweichung vom Standard). Zeiten immer UTC im Format `HHMM` auf dem 15-Minuten-Raster. Push aus = Tag gelöscht (leerer String). Gebaut in `buildTags()` (`js/push.js`) — dieselbe Funktion für Web und nativ; gewürfelt wird NUR in `rollIfNeeded()` (`js/small-schedule.js`).
+
+   **NIE einen zweiten Tag hinzufügen.** Der Plan dieser App erlaubt **3 Data-Tags pro Gerät, kumulativ**, und weist einen Schreibvorgang mit mehr Keys KOMPLETT ab (`App is limited to a maximum of 3 tags on a given player`) — auch das Löschen. Genau daran ist das alte Modell mit 13 Tags gescheitert: Ab dem sechsten SMALL-Impuls kam monatelang kein Wert mehr an, ohne jede Fehlermeldung. Diagnose-Historie: siehe Memory `loewenherz-onesignal-tag-limit`.
+
+   Weil OneSignal auf einen zusammengesetzten Wert nicht filtern kann, bildet **`api/send-notifications.js` die Zielgruppe selbst**: Subscriptions per API holen, `sched` parsen, auf den aktuellen Slot filtern, gezielt via `include_subscription_ids` senden. Ton-Kennungen müssen zu `SOUND_FILES` dort UND `SOUND_OPTIONS` in `js/notification-sound.js` passen. Geräte mit den alten Einzel-Tags werden weiter bedient und beim Versandlauf automatisch migriert. Regression-Netz: `npm run test:send`.
 
 ## Deployment-Checkliste
 

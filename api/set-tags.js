@@ -15,15 +15,15 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'ONESIGNAL_API_KEY not configured' });
   }
 
-  // Erlaubte Tags: morning, evening, sound + 10 SMALL slots.
-  // Muss zu MAX_SLOTS in js/small-schedule.js passen — was hier fehlt,
-  // wird stillschweigend verschluckt, und weil das Players-API-PUT die
-  // Tags merged statt ersetzt, bliebe der alte Wert obendrein stehen.
-  // sound wird nur von der iOS-App mit Wert belegt; der Web-Pfad liefert
-  // immer '' (= löschen) — hier trotzdem erlaubt, damit Client und
-  // Server dieselbe Tag-Liste kennen.
-  const allowedKeys = ['morning_utc', 'evening_utc', 'sound'];
-  for (let i = 1; i <= 10; i++) allowedKeys.push(`small_${i}_utc`);
+  // Erlaubt ist genau EIN Tag: `sched` trägt den kompletten Zeitplan
+  // (Aufbau siehe buildTags() in js/push.js).
+  //
+  // Die Liste ist bewusst so kurz: Der OneSignal-Plan dieser App erlaubt
+  // 3 Data-Tags pro Gerät und weist einen Schreibvorgang mit mehr Keys
+  // KOMPLETT ab. Das alte Modell schrieb 13 Keys — deshalb kamen
+  // Zeitänderungen ab dem sechsten SMALL-Impuls nie an. Wer hier wieder
+  // Keys hinzufügt, bringt genau diesen Fehler zurück.
+  const allowedKeys = ['sched'];
   const safeTags = {};
   for (const key of allowedKeys) {
     if (tags[key] !== undefined) {

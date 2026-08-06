@@ -126,8 +126,11 @@ export async function requestNativePermission() {
 }
 
 /**
- * Schreibt die 12 Tags über das native SDK.
- * @param tags Fertiges Objekt aus buildTags() in js/push.js.
+ * Schreibt den Zeitplan über das native SDK.
+ * @param tags Fertiges Objekt aus buildTags() in js/push.js — seit dem
+ *             Umbau auf das `sched`-Format genau EIN Schlüssel. Mehr wären
+ *             fatal: Der OneSignal-Plan erlaubt 3 Tags pro Gerät und weist
+ *             einen Request mit zu vielen Keys komplett ab.
  *
  * Init wird hier bewusst NICHT erzwungen: Wie im Web (dort das
  * `if (window.OneSignal ...)`) passiert ohne geladenes SDK nichts.

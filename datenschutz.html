@@ -90,8 +90,7 @@
     <p>Nach deiner Aktivierung werden in beiden Fällen übertragen:</p>
     <ul>
       <li>Eine technische Push-Subscription-ID sowie der Push-Token deines Geräts bzw. Browsers (kein Klarname, keine E-Mail)</li>
-      <li>Deine gewünschten Erinnerungszeiten in UTC-Format (z.B. "06:00") für bis zu 12 Tags: morning_utc, evening_utc, small_1_utc bis small_10_utc</li>
-      <li>Nur in der iOS-App und nur, wenn du einen anderen als den Standard-Ton wählst: deine Ton-Wahl als Tag sound (nur die Kennung des Tons, z.B. "ton-2")</li>
+      <li>Deine gewünschten Erinnerungszeiten in UTC-Format, gebündelt in einem einzigen Merkmal namens "sched" — es enthält die Zeit für Morgenkompass und Abendreflexion sowie die SMALL-Zeiten des Tages (Beispiel: "v1;m=0500;e=1830;s=0530,0930"). In der iOS-App steht darin zusätzlich die Kennung deines Benachrichtigungstons, falls du vom Standardton abweichst (z.B. "t=ton-2")</li>
       <li>Deine IP-Adresse beim Verbindungsaufbau (OneSignal speichert die IP-Adressen von Nutzerinnen und Nutzern aus der EU nach eigenen Angaben nicht)</li>
     </ul>
     <p><strong>Nur im Browser:</strong> Das OneSignal-SDK wird von cdn.onesignal.com nachgeladen. Dabei werden zusätzlich technische Verbindungsdaten wie der Browsertyp übermittelt.</p>

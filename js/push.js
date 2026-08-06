@@ -293,9 +293,33 @@ export function localTimeToUTC(timeStr) {
   return `${String(utcH).padStart(2, '0')}:${String(utcM).padStart(2, '0')}`;
 }
 
-// --- Tag Sync: 13 Tags ---
-// morning_utc, evening_utc, small_1_utc .. small_10_utc, sound
-// push_enabled entfällt — wenn Push aus: alle Tags löschen
+// --- Tag Sync: EIN Tag ---
+//
+// `sched` trägt den kompletten Zeitplan in einem einzigen Wert:
+//
+//   v1;m=0500;e=1830;s=0530,0930,1000;t=ton-2
+//    │   │       │      │              └ Ton, nur wenn abweichend
+//    │   │       │      └ SMALL-Zeiten (UTC, HHMM), kann leer sein
+//    │   │       └ Abendreflexion (UTC)
+//    │   └ Morgenkompass (UTC)
+//    └ Formatversion — der Server prüft sie, bevor er parst
+//
+// WARUM EIN TAG: Der OneSignal-Plan dieser App erlaubt **3 Data-Tags pro
+// Gerät** — kumulativ, und ein Request mit mehr Keys wird KOMPLETT
+// abgewiesen ("App is limited to a maximum of 3 tags on a given player").
+// Das alte Modell schrieb 13 Keys (morning_utc, evening_utc, sound,
+// small_1..10_utc). Ergebnis: Ab dem sechsten SMALL-Impuls kam kein
+// einziger Wert mehr an — auch Morgen- und Abendzeit blieben auf dem
+// alten Stand, ohne jede Fehlermeldung. Nutzer sahen ihre neuen Zeiten
+// in der Vorschau und bekamen die alten zugestellt.
+//
+// Der Server kann auf einen zusammengesetzten Wert nicht mehr per
+// Tag-Filter zielen (OneSignal vergleicht nur exakt). Er holt deshalb die
+// Subscriptions über die API, parst diesen Wert selbst und sendet gezielt
+// an die passenden IDs — siehe api/send-notifications.js.
+//
+// Push deaktiviert → leerer Wert = Tag löschen (der Nutzer fällt damit aus
+// jeder Sendung, wie vorher mit den geleerten Zeit-Tags).
 
 /**
  * Stellt sicher, dass für heute ein Wurf existiert, ohne einen Tag-Sync
@@ -317,15 +341,17 @@ function fixedTimesInMinutes() {
   return [toMin(morning), toMin(evening)];
 }
 
+/** "HH:MM" → "HHMM". Im Tag-Wert sparen wir den Doppelpunkt: kürzer und
+ *  kein Sonderzeichen, das beim Transport umkodiert werden könnte. */
+function compact(hhmm) {
+  return hhmm.replace(':', '');
+}
+
 function buildTags() {
   const pushEnabled = localStorage.getItem('loewenherz_push_enabled') !== 'false';
 
-  // Push deaktiviert → alle Tags löschen (leerer String = Tag wird gelöscht)
-  if (!pushEnabled) {
-    const tags = { morning_utc: '', evening_utc: '', sound: '' };
-    for (let i = 1; i <= MAX_SLOTS; i++) tags[`small_${i}_utc`] = '';
-    return tags;
-  }
+  // Push deaktiviert → Tag löschen (leerer String = löschen)
+  if (!pushEnabled) return { sched: '' };
 
   const morningRaw = localStorage.getItem('loewenherz_morning_time') || '07:00';
   const eveningRaw = localStorage.getItem('loewenherz_evening_time') || '20:30';
@@ -333,17 +359,6 @@ function buildTags() {
   // roundTo15Min() ein "00:NaN" gespeichert hat, heilt hier still aus.
   const morning = roundTo15Min(morningRaw) || '07:00';
   const evening = roundTo15Min(eveningRaw) || '20:30';
-  const morningUTC = localTimeToUTC(morning);
-  const eveningUTC = localTimeToUTC(evening);
-
-  const tags = {
-    morning_utc: morningUTC,
-    evening_utc: eveningUTC,
-    // Ton-Wahl gibt es nur in der iOS-App; im Web bleibt der Tag gelöscht.
-    // Der Standardton braucht auch nativ keinen Tag (leer = löschen) —
-    // der Server erreicht Nutzer ohne sound-Tag über not_exists.
-    sound: isNative() ? soundTagValue() : ''
-  };
 
   // Der Aufruf ist idempotent: rollIfNeeded() würfelt nur bei Tageswechsel
   // oder geänderten Einstellungen. Deshalb darf er hier stehen, obwohl
@@ -351,17 +366,28 @@ function buildTags() {
   // an dieser Stelle würde dem Nutzer über den Tag ein Vielfaches der
   // eingestellten Anzahl schicken.
   rollIfNeeded(fixedTimesInMinutes());
-  const roll = getRoll();
 
-  // IMMER alle Slots schreiben, auch die ungenutzten. Stellt jemand von 10
-  // auf 3 zurück und wir schrieben nur drei, blieben small_4..10 bei
-  // OneSignal stehen und feuerten weiter — für immer, weil sie nie wieder
-  // angefasst würden.
-  for (let i = 1; i <= MAX_SLOTS; i++) {
-    tags[`small_${i}_utc`] = roll[i - 1] ? localTimeToUTC(roll[i - 1]) : '';
+  // Nur belegte Slots landen im Wert. Ungenutzte einfach weglassen ist hier
+  // gefahrlos — anders als beim alten Tag-pro-Slot-Modell, wo ein
+  // weggelassener Slot seinen alten Wert behalten und weiter gefeuert hätte.
+  const smalls = getRoll().slice(0, MAX_SLOTS).map((t) => compact(localTimeToUTC(t)));
+
+  const teile = [
+    'v1',
+    `m=${compact(localTimeToUTC(morning))}`,
+    `e=${compact(localTimeToUTC(evening))}`,
+    `s=${smalls.join(',')}`
+  ];
+
+  // Ton-Wahl gibt es nur in der iOS-App. Der Standardton wird bewusst NICHT
+  // geschrieben — fehlt `t`, nimmt der Server den Standard. So bleibt der
+  // Wert kurz und Altbestand fällt automatisch in den Standard.
+  if (isNative()) {
+    const ton = soundTagValue();
+    if (ton) teile.push(`t=${ton}`);
   }
 
-  return tags;
+  return { sched: teile.join(';') };
 }
 
 function syncTagsToOneSignal() {
@@ -418,7 +444,16 @@ function syncTagsViaServer(tags) {
   })
     .then(r => r.json())
     .then(data => {
-      console.log('[Push] Server sync result:', data);
+      // Laut werden, wenn OneSignal ablehnt. Vorher wurde die Antwort nur
+      // durchgeloggt — dadurch blieb monatelang unbemerkt, dass das
+      // Tag-Limit jeden Schreibvorgang mit zu vielen Keys komplett
+      // verwarf und Nutzer die Zeiten ihrer vorherigen Einstellung
+      // zugestellt bekamen.
+      if (data && data.success) {
+        console.log('[Push] Server sync ok:', data.tags_set);
+      } else {
+        console.error('[Push] Server sync ABGELEHNT — Zeiten sind NICHT aktiv:', data);
+      }
     })
     .catch(err => {
       console.warn('[Push] Server sync failed:', err);

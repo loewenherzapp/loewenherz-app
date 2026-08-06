@@ -148,12 +148,10 @@ Auswahl in den Einstellungen nur nativ (`js/components/sound-picker.js`,
 Vorschau über `assets/sounds/*.mp3`); Web/Android zeigen einen Hinweistext.
 
 Mechanik: Der Ton steckt im Push-Payload (`ios_sound`), nicht im Gerät.
-Standardton = lh-ton-1 wird OHNE Tag in die normalen Sammel-Sendungen
-geschrieben (Web ignoriert das Feld); nur Abweichler tragen den Tag `sound`
-(`ton-2`/`ton-3`/`system`) und bekommen eigene Sendungen — der Server
-(api/send-notifications.js, `SOUND_VARIANTS`) schickt deshalb 12 statt 3
-Calls pro 15-min-Slot. Die sound-Bedingung steht in JEDER OR-Gruppe des
-SMALL-Filters (benachbarte Filter-Einträge sind UND-verknüpft).
+Die Ton-Kennung ist Teil des `sched`-Tags (`;t=ton-2`); fehlt sie, gilt der
+Standardton lh-ton-1. `api/send-notifications.js` gruppiert die Empfänger
+beim Versand nach Ton und schickt pro Gruppe eine gezielte Sendung
+(`SOUND_FILES` dort ist die Zuordnung Kennung → .caf).
 
 Fallstricke:
 - Die .caf müssen ins Bundle-**Root** (Xcode-Gruppe, kein „blue folder" —
@@ -162,7 +160,7 @@ Fallstricke:
 - Foreground bleibt stumm (foregroundWillDisplay + preventDefault) —
   Ton-Test nur mit App im Hintergrund.
 - Neue/geänderte Töne = neue App-Version; Menü (notification-sound.js),
-  Server (SOUND_VARIANTS) und Bundle müssen zusammenpassen.
+  Server (`SOUND_FILES`) und Bundle müssen zusammenpassen.
 
 ## Bekannte Einschränkungen (Stand C3 — gewollt)
 
@@ -197,7 +195,7 @@ Datenstand direkt lesbar unter `~/Library/Developer/CoreSimulator/Devices/<UDID>
 
 - [x] C2: OneSignal-Migration (natives SDK, Tags, Soft-Ask) — Code steht, siehe Abschnitt f
 - [x] C3: Splash/StatusBar/Haptics, App-Icon, Datenexport-Fix, Store-Pflichten — siehe Abschnitt g
-- [ ] C2-Gerätetest (echtes iPhone, APNs-Key + Xcode-Capabilities Voraussetzung): Soft-Ask vor Apple-Dialog, iOS-Subscription im Dashboard, 12 Tags mit **denselben Wertformaten wie eine Web-Subscription** (direkt vergleichen), Test-Push im Hintergrund, kein Banner im Vordergrund, Zeitänderung aktualisiert den Tag
+- [ ] C2-Gerätetest (echtes iPhone, APNs-Key + Xcode-Capabilities Voraussetzung): Soft-Ask vor Apple-Dialog, iOS-Subscription im Dashboard, **ein** `sched`-Tag mit demselben Wertformat wie bei einer Web-Subscription (direkt vergleichen) — inkl. `;t=`-Anhang bei abweichendem Ton, der bisher nur im Web-Preview indirekt geprüft wurde, Test-Push im Hintergrund, kein Banner im Vordergrund, Zeitänderung aktualisiert den Tag
 - [ ] Ton-Gerätetest (mit C2-Gerätetest): Standardton = gedämpfter Löwenherz-Ton ohne Tag-Eintrag; Ton wechseln → Tag `sound` im Dashboard; Vorhören im Sheet; `system` → Apple-Dreiklang
 - [ ] C2-Cron-Realtest: Erinnerungszeit auf +20 min, App schließen, warten — kommt der Reminder über die bestehende Server-Route an, ist die Kette Server → OneSignal → APNs → Gerät komplett
 - [ ] C3-Gerätetest (Patricks Checkliste aus dem C3-Prompt): Tastatur, `tel:`-Links (Dialer!), externe Links → SFSafariViewController, Safe Areas, Splash, Statusbar hell/dunkel, Export→Import-Roundtrip, Haptik + Toggle, Rollover über Mitternacht, „Einstellungen öffnen"-Sprung
