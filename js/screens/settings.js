@@ -9,6 +9,8 @@ import { openCrisis } from '../components/crisis-modal.js';
 import { isNative } from '../platform.js';
 import { syncOneSignalTags, roundTo15Min, ensureOneSignalLoaded, getPermissionState, requestPushPermission, ensureRoll } from '../push.js';
 import { openTimePicker, renderTimeButton, setTimeButtonValue } from '../components/time-picker.js';
+import { openSoundPicker } from '../components/sound-picker.js';
+import { soundLabel } from '../notification-sound.js';
 import { getWindow, getCount, setSchedule, getRoll, migrateLegacySlots, maxCountFor, toMin, MAX_COUNT } from '../small-schedule.js';
 import { downloadBackup, importBackup } from '../data-export.js';
 import { isValidEmail, subscribeEmail, lockButton } from '../emailSignup.js';
@@ -29,6 +31,24 @@ function pushBlockedHintText() {
     return 'Benachrichtigungen sind für Löwenherz blockiert. So erlaubst du sie wieder: App-Symbol gedrückt halten → App-Info → Benachrichtigungen.';
   }
   return 'Push-Benachrichtigungen sind im Browser blockiert. Bitte aktiviere sie in deinen Browser-Einstellungen.';
+}
+
+/**
+ * Hinweis zum Benachrichtigungston außerhalb der iOS-App. Eine echte
+ * Auswahl gibt es nur nativ — der Ton steckt im Push-Payload und nur die
+ * iOS-App bringt eigene Ton-Dateien mit. Im Web bestimmt das System:
+ * Android-Nutzer können dort selbst wechseln (der Weg variiert je
+ * Hersteller, deshalb bewusst vage), iOS-Web-Push hat einen fest
+ * vorgegebenen Ton, am Desktop entscheidet Browser/Betriebssystem.
+ */
+function soundHintText() {
+  if (/Android/i.test(navigator.userAgent)) {
+    return 'Den Benachrichtigungston legt dein Android-System fest. Ändern: Halte eine Löwenherz-Benachrichtigung gedrückt und öffne dort die Einstellungen (der Weg ist je nach Gerät leicht anders).';
+  }
+  if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+    return 'Den Benachrichtigungston gibt iOS für Web-Apps fest vor.';
+  }
+  return 'Den Benachrichtigungston bestimmt dein Browser bzw. Betriebssystem.';
 }
 
 /**
@@ -182,6 +202,18 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
             <div id="push-small-config">
               ${renderSmallConfig()}
             </div>
+
+            <div class="push-settings-divider"></div>
+
+            <!-- Benachrichtigungston: nativ echte Auswahl (der Ton liegt im
+                 App-Bundle), im Web nur der ehrliche Hinweis, wer ihn
+                 wirklich bestimmt. -->
+            ${isNative() ? `
+            <div class="push-setting-time">
+              <div class="push-setting-label">Benachrichtigungston</div>
+              <button type="button" class="reminder-time" id="push-sound-btn"><span class="reminder-time-value">${soundLabel()}</span><span class="reminder-time-caret" aria-hidden="true">▾</span></button>
+            </div>` : `
+            <div class="push-setting-sublabel push-sound-hint">${soundHintText()}</div>`}
           </div>
         </div>
       </div>
@@ -364,6 +396,20 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
 
   bindTimeButton(document.getElementById('push-morning-time'), 'Morgenkompass', 'loewenherz_morning_time');
   bindTimeButton(document.getElementById('push-evening-time'), 'Abendreflexion', 'loewenherz_evening_time');
+
+  // ---- Nativ: Benachrichtigungston ----
+  // Die Auswahl gilt bei jedem Tap sofort (der Picker hat kein
+  // „Übernehmen") — deshalb wird auch pro Tap gesynct, wie beim
+  // Master-Toggle. setSound() übernimmt der Picker selbst.
+  const soundBtn = document.getElementById('push-sound-btn');
+  if (soundBtn) {
+    soundBtn.addEventListener('click', () => {
+      openSoundPicker(() => {
+        soundBtn.querySelector('.reminder-time-value').textContent = soundLabel();
+        syncOneSignalTags();
+      });
+    });
+  }
 
   // ---- Nativ: Sprung in die iOS-Einstellungen bei blockiertem Push ----
   // 'app-settings:' ist der Wert von UIApplication.openSettingsURLString —
@@ -682,6 +728,7 @@ const LEGAL_CONTENT = {
     <ul>
       <li>Eine technische Push-Subscription-ID sowie der Push-Token deines Geräts bzw. Browsers (kein Klarname, keine E-Mail)</li>
       <li>Deine gewünschten Erinnerungszeiten in UTC-Format (z.B. "06:00") für bis zu 12 Tags: morning_utc, evening_utc, small_1_utc bis small_10_utc</li>
+      <li>Nur in der iOS-App und nur, wenn du einen anderen als den Standard-Ton wählst: deine Ton-Wahl als Tag sound (nur die Kennung des Tons, z.B. "ton-2")</li>
       <li>Deine IP-Adresse beim Verbindungsaufbau (OneSignal speichert die IP-Adressen von Nutzerinnen und Nutzern aus der EU nach eigenen Angaben nicht)</li>
     </ul>
     <p><strong>Nur im Browser:</strong> Das OneSignal-SDK wird von cdn.onesignal.com nachgeladen. Dabei werden zusätzlich technische Verbindungsdaten wie der Browsertyp übermittelt.</p>

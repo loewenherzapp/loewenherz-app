@@ -2894,7 +2894,8 @@ button.settings-link, .settings-link-btn {
   .soft-prompt-overlay, .soft-prompt-modal {
     transition: none !important;
   }
-  .time-picker-overlay, .time-picker-sheet {
+  .time-picker-overlay, .time-picker-sheet,
+  .sound-picker-overlay, .sound-picker-sheet {
     transition: none !important;
   }
 }
@@ -2922,7 +2923,7 @@ button.reminder-time:active { background: var(--bg-hover); }
   flex-shrink: 0;
 }
 
-.time-picker-overlay {
+.time-picker-overlay, .sound-picker-overlay {
   position: fixed; inset: 0;
   background: var(--bg-overlay);
   z-index: 300;                  /* über dem SMALL-Sheet (201) */
@@ -2933,9 +2934,9 @@ button.reminder-time:active { background: var(--bg-hover); }
      verschwindende Sheet den nächsten Tipp auf die Seite darunter. */
   pointer-events: none;
 }
-.time-picker-overlay.open { opacity: 1; pointer-events: auto; }
+.time-picker-overlay.open, .sound-picker-overlay.open { opacity: 1; pointer-events: auto; }
 
-.time-picker-sheet {
+.time-picker-sheet, .sound-picker-sheet {
   position: fixed; bottom: 0; left: 50%;
   transform: translateX(-50%) translateY(100%);
   width: 100%; max-width: 480px;
@@ -2944,7 +2945,8 @@ button.reminder-time:active { background: var(--bg-hover); }
   padding: 12px 20px calc(24px + var(--safe-bottom));
   transition: transform var(--transition-sheet);
 }
-.time-picker-overlay.open .time-picker-sheet {
+.time-picker-overlay.open .time-picker-sheet,
+.sound-picker-overlay.open .sound-picker-sheet {
   transform: translateX(-50%) translateY(0);
 }
 
@@ -2997,5 +2999,56 @@ button.reminder-time:active { background: var(--bg-hover); }
   color: var(--bg-paper);
   font-weight: 600;
 }
+
+/* ---- Sound Picker (Benachrichtigungston, nur iOS-App) ---- */
+
+/* Overlay und Sheet teilen sich die Time-Picker-Regeln oben —
+   hier steht nur der Sheet-Inhalt: Hinweiszeile und Options-Liste. */
+
+.sound-picker-hint {
+  font-size: 13px;
+  color: var(--text-muted);
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.sound-picker-opts {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 20px;
+}
+
+.sound-picker-opt {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;              /* Touch-Ziel, nicht kleiner setzen */
+  padding: 0 14px;
+  background: transparent;
+  border: none; border-radius: var(--radius-sm);
+  color: var(--text-body);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+.sound-picker-opt:active { background: var(--bg-hover); }
+
+/* Auswahl als Häkchen statt Voll-Einfärbung: In einer Liste mit langen
+   Labels liest sich das ruhiger — und der Tap spielt ja außerdem den
+   Ton ab, die Rückmeldung ist also doppelt. */
+.sound-picker-check {
+  opacity: 0;
+  color: var(--gold);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.sound-picker-opt.is-selected {
+  background: var(--bg-inset);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.sound-picker-opt.is-selected .sound-picker-check { opacity: 1; }
 
 .time-picker-apply { width: 100%; }

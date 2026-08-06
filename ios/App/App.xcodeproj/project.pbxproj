@@ -17,6 +17,9 @@
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
 		9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9582B6822FE993A50072D4E8 /* SceneDelegate.swift */; };
 		C3D40002AB120805000000F2 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = C3D40001AB120805000000F1 /* PrivacyInfo.xcprivacy */; };
+		C3D41011AB120805000000B1 /* lh-ton-1.caf in Resources */ = {isa = PBXBuildFile; fileRef = C3D41001AB120805000000A1 /* lh-ton-1.caf */; };
+		C3D41012AB120805000000B2 /* lh-ton-2.caf in Resources */ = {isa = PBXBuildFile; fileRef = C3D41002AB120805000000A2 /* lh-ton-2.caf */; };
+		C3D41013AB120805000000B3 /* lh-ton-3.caf in Resources */ = {isa = PBXBuildFile; fileRef = C3D41003AB120805000000A3 /* lh-ton-3.caf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -32,6 +35,9 @@
 		9582B6822FE993A50072D4E8 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
 		C3D40001AB120805000000F1 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		C3D41001AB120805000000A1 /* lh-ton-1.caf */ = {isa = PBXFileReference; lastKnownFileType = audio.caf; path = "lh-ton-1.caf"; sourceTree = "<group>"; };
+		C3D41002AB120805000000A2 /* lh-ton-2.caf */ = {isa = PBXFileReference; lastKnownFileType = audio.caf; path = "lh-ton-2.caf"; sourceTree = "<group>"; };
+		C3D41003AB120805000000A3 /* lh-ton-3.caf */ = {isa = PBXFileReference; lastKnownFileType = audio.caf; path = "lh-ton-3.caf"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -76,8 +82,19 @@
 				C3D40001AB120805000000F1 /* PrivacyInfo.xcprivacy */,
 				2FAD9762203C412B000D30F8 /* config.xml */,
 				50B271D01FEDC1A000F3C39B /* public */,
+				C3D41000AB120805000000A0 /* sounds */,
 			);
 			path = App;
+			sourceTree = "<group>";
+		};
+		C3D41000AB120805000000A0 /* sounds */ = {
+			isa = PBXGroup;
+			children = (
+				C3D41001AB120805000000A1 /* lh-ton-1.caf */,
+				C3D41002AB120805000000A2 /* lh-ton-2.caf */,
+				C3D41003AB120805000000A3 /* lh-ton-3.caf */,
+			);
+			path = sounds;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -152,6 +169,9 @@
 				504EC30D1FED79650016851F /* Main.storyboard in Resources */,
 				2FAD9763203C412B000D30F8 /* config.xml in Resources */,
 				C3D40002AB120805000000F2 /* PrivacyInfo.xcprivacy in Resources */,
+				C3D41011AB120805000000B1 /* lh-ton-1.caf in Resources */,
+				C3D41012AB120805000000B2 /* lh-ton-2.caf in Resources */,
+				C3D41013AB120805000000B3 /* lh-ton-3.caf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

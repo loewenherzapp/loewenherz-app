@@ -24,6 +24,7 @@
 import { isNative } from './platform.js';
 import { API_BASE, ONESIGNAL_APP_ID } from './config.js';
 import { rollIfNeeded, getRoll, toMin, MAX_SLOTS, migrateLegacySlots } from './small-schedule.js';
+import { soundTagValue } from './notification-sound.js';
 
 const ONESIGNAL_SDK_URL = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';
 let oneSignalLoadPromise = null;
@@ -292,8 +293,8 @@ export function localTimeToUTC(timeStr) {
   return `${String(utcH).padStart(2, '0')}:${String(utcM).padStart(2, '0')}`;
 }
 
-// --- Tag Sync: 12 Tags ---
-// morning_utc, evening_utc, small_1_utc .. small_10_utc
+// --- Tag Sync: 13 Tags ---
+// morning_utc, evening_utc, small_1_utc .. small_10_utc, sound
 // push_enabled entfällt — wenn Push aus: alle Tags löschen
 
 /**
@@ -321,7 +322,7 @@ function buildTags() {
 
   // Push deaktiviert → alle Tags löschen (leerer String = Tag wird gelöscht)
   if (!pushEnabled) {
-    const tags = { morning_utc: '', evening_utc: '' };
+    const tags = { morning_utc: '', evening_utc: '', sound: '' };
     for (let i = 1; i <= MAX_SLOTS; i++) tags[`small_${i}_utc`] = '';
     return tags;
   }
@@ -337,7 +338,11 @@ function buildTags() {
 
   const tags = {
     morning_utc: morningUTC,
-    evening_utc: eveningUTC
+    evening_utc: eveningUTC,
+    // Ton-Wahl gibt es nur in der iOS-App; im Web bleibt der Tag gelöscht.
+    // Der Standardton braucht auch nativ keinen Tag (leer = löschen) —
+    // der Server erreicht Nutzer ohne sound-Tag über not_exists.
+    sound: isNative() ? soundTagValue() : ''
   };
 
   // Der Aufruf ist idempotent: rollIfNeeded() würfelt nur bei Tageswechsel

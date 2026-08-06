@@ -34,7 +34,7 @@ Erst diagnostizieren, nicht blind neuen Code schreiben:
 2. **Vercel deployed?** — `curl -s https://loewenherz-app.vercel.app/[datei]` prüfen.
 3. **Browser-Cache?** — SW serviert index.html als Fallback. Neue HTML-Dateien vom SW-Fetch ausschließen.
 4. **IndexedDB Version-Konflikt?** — Anderer Tab hat alte DB-Version offen.
-5. **OneSignal-Tags: es sind 12** — `morning_utc`, `evening_utc`, `small_1_utc` … `small_10_utc` (Zeitfenster+Anzahl-Modell seit `c5b14bb`; gewürfelt wird NUR in `rollIfNeeded()`, `js/small-schedule.js`). Werte immer String `"HH:MM"` in UTC, 15-Minuten-Raster; „aus" = leerer String (nativ: Tag gelöscht). Ein `push_enabled`-Tag gibt es nicht. Berechnet in `buildTags()` (`js/push.js`) — dieselbe Funktion für Web und nativ. Der Server filtert auf exakte Stringgleichheit; jede Formatabweichung bricht das Scheduling lautlos.
+5. **OneSignal-Tags: es sind 13** — `morning_utc`, `evening_utc`, `small_1_utc` … `small_10_utc` (Zeitfenster+Anzahl-Modell seit `c5b14bb`; gewürfelt wird NUR in `rollIfNeeded()`, `js/small-schedule.js`) sowie `sound` (Benachrichtigungston, nur iOS-App). Zeit-Werte immer String `"HH:MM"` in UTC, 15-Minuten-Raster; „aus" = leerer String (nativ: Tag gelöscht). `sound` trägt NUR Abweichler-Werte (`ton-2`/`ton-3`/`system` — Standardton = Tag gelöscht, Server nutzt `not_exists`; ids müssen zu `js/notification-sound.js` UND `SOUND_VARIANTS` in `api/send-notifications.js` passen). Ein `push_enabled`-Tag gibt es nicht. Berechnet in `buildTags()` (`js/push.js`) — dieselbe Funktion für Web und nativ. Der Server filtert auf exakte Stringgleichheit; jede Formatabweichung bricht das Scheduling lautlos.
 
 ## Deployment-Checkliste
 

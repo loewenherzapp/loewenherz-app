@@ -8,7 +8,7 @@ importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
 
 // === Cache Service Worker ===
 
-const CACHE_NAME = 'loewenherz-v100';
+const CACHE_NAME = 'loewenherz-v101';
 
 const URLS_TO_CACHE = [
   './',
@@ -24,6 +24,7 @@ const URLS_TO_CACHE = [
   './js/external-links.js',
   './js/haptics.js',
   './js/small-schedule.js',
+  './js/notification-sound.js',
   './js/db.js',
   './js/data-export.js',
   './js/emailSignup.js',
@@ -40,6 +41,7 @@ const URLS_TO_CACHE = [
   './js/components/bottom-sheet.js',
   './js/components/week-dots.js',
   './js/components/time-picker.js',
+  './js/components/sound-picker.js',
   './js/components/balance-bar.js',
   './js/components/crisis-modal.js',
   './js/components/email-soft-prompt.js',

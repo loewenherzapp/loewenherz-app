@@ -28,6 +28,34 @@ export default async function handler(req, res) {
   const results = [];
 
   // ============================================================
+  // TON-VARIANTEN (iOS-Benachrichtigungston)
+  //
+  // Der Ton steckt im Payload, nicht im Gerät — deshalb wird jede
+  // Sendung pro gewähltem Ton aufgeteilt. Der Löwenherz-Standardton
+  // hat KEINEN Tag: Er geht per not_exists an alle ohne sound-Tag,
+  // also auch an alle Web-Nutzer — die ignorieren ios_sound einfach.
+  // Nur Abweichler (Tag sound=ton-2/ton-3/system) bekommen eigene
+  // Sendungen. iosSound=null heißt: Feld weglassen → iOS-Systemton.
+  //
+  // Die .caf-Dateien liegen im iOS-App-Bundle (ios/App/App/sounds/).
+  // Tag-Werte müssen zu js/notification-sound.js passen — eine
+  // Abweichung bricht nur den betroffenen Ton, aber lautlos.
+  // ============================================================
+  const SOUND_VARIANTS = [
+    { tag: null,     iosSound: 'lh-ton-1.caf' },
+    { tag: 'ton-2',  iosSound: 'lh-ton-2.caf' },
+    { tag: 'ton-3',  iosSound: 'lh-ton-3.caf' },
+    { tag: 'system', iosSound: null }
+  ];
+
+  // Filter-Baustein je Variante. OneSignal-Filter sind eine flache
+  // Liste: benachbarte Einträge sind UND-verknüpft, OR trennt Gruppen —
+  // die sound-Bedingung muss deshalb in JEDE OR-Gruppe hinein.
+  const soundCondition = (variant) => variant.tag === null
+    ? { field: 'tag', key: 'sound', relation: 'not_exists' }
+    : { field: 'tag', key: 'sound', relation: '=', value: variant.tag };
+
+  // ============================================================
   // MORGEN-NOTIFICATION
   // Filter: morning_utc = currentSlot
   // (push_enabled entfällt — wer Tags hat, will Push.
@@ -41,20 +69,24 @@ export default async function handler(req, res) {
     "Gundula ist schon wach. Gib ihr eine Richtung, bevor Quatschi es tut."
   ];
 
-  try {
-    const morningResult = await sendNotification({
-      appId: ONESIGNAL_APP_ID,
-      apiKey: ONESIGNAL_API_KEY,
-      filters: [
-        { field: 'tag', key: 'morning_utc', relation: '=', value: currentSlot }
-      ],
-      title: 'Löwenherz',
-      body: morningTexts[dayOfYear % morningTexts.length],
-      url: 'https://loewenherz-app.vercel.app/?tab=reflexion'
-    });
-    results.push({ type: 'morning', ...morningResult });
-  } catch (e) {
-    results.push({ type: 'morning', error: e.message });
+  for (const variant of SOUND_VARIANTS) {
+    try {
+      const morningResult = await sendNotification({
+        appId: ONESIGNAL_APP_ID,
+        apiKey: ONESIGNAL_API_KEY,
+        filters: [
+          { field: 'tag', key: 'morning_utc', relation: '=', value: currentSlot },
+          soundCondition(variant)
+        ],
+        title: 'Löwenherz',
+        body: morningTexts[dayOfYear % morningTexts.length],
+        url: 'https://loewenherz-app.vercel.app/?tab=reflexion',
+        iosSound: variant.iosSound
+      });
+      results.push({ type: 'morning', sound: variant.tag || 'standard', ...morningResult });
+    } catch (e) {
+      results.push({ type: 'morning', sound: variant.tag || 'standard', error: e.message });
+    }
   }
 
   // ============================================================
@@ -69,20 +101,24 @@ export default async function handler(req, res) {
     "Was zählt heute aufs Gelassenheitskonto? Auch Kleinigkeiten zählen."
   ];
 
-  try {
-    const eveningResult = await sendNotification({
-      appId: ONESIGNAL_APP_ID,
-      apiKey: ONESIGNAL_API_KEY,
-      filters: [
-        { field: 'tag', key: 'evening_utc', relation: '=', value: currentSlot }
-      ],
-      title: 'Löwenherz',
-      body: eveningTexts[(dayOfYear + 2) % eveningTexts.length],
-      url: 'https://loewenherz-app.vercel.app/?tab=reflexion'
-    });
-    results.push({ type: 'evening', ...eveningResult });
-  } catch (e) {
-    results.push({ type: 'evening', error: e.message });
+  for (const variant of SOUND_VARIANTS) {
+    try {
+      const eveningResult = await sendNotification({
+        appId: ONESIGNAL_APP_ID,
+        apiKey: ONESIGNAL_API_KEY,
+        filters: [
+          { field: 'tag', key: 'evening_utc', relation: '=', value: currentSlot },
+          soundCondition(variant)
+        ],
+        title: 'Löwenherz',
+        body: eveningTexts[(dayOfYear + 2) % eveningTexts.length],
+        url: 'https://loewenherz-app.vercel.app/?tab=reflexion',
+        iosSound: variant.iosSound
+      });
+      results.push({ type: 'evening', sound: variant.tag || 'standard', ...eveningResult });
+    } catch (e) {
+      results.push({ type: 'evening', sound: variant.tag || 'standard', error: e.message });
+    }
   }
 
   // ============================================================
@@ -143,25 +179,33 @@ export default async function handler(req, res) {
     "Ein Punkt aufs Konto? Alles über null zählt."
   ];
 
-  try {
-    // OR-combined: match if ANY of the 10 slots equals currentSlot
-    const smallFilters = [];
-    for (let i = 1; i <= 10; i++) {
-      if (i > 1) smallFilters.push({ operator: 'OR' });
-      smallFilters.push({ field: 'tag', key: `small_${i}_utc`, relation: '=', value: currentSlot });
-    }
+  for (const variant of SOUND_VARIANTS) {
+    try {
+      // OR-combined: match if ANY of the 10 slots equals currentSlot.
+      // Die sound-Bedingung steht in jeder OR-Gruppe — benachbarte
+      // Einträge sind UND-verknüpft: (slot1 UND sound) ODER (slot2 UND
+      // sound) … Nur ans Ende gehängt, gälte sie allein für die letzte
+      // Gruppe.
+      const smallFilters = [];
+      for (let i = 1; i <= 10; i++) {
+        if (i > 1) smallFilters.push({ operator: 'OR' });
+        smallFilters.push({ field: 'tag', key: `small_${i}_utc`, relation: '=', value: currentSlot });
+        smallFilters.push(soundCondition(variant));
+      }
 
-    const smallResult = await sendNotification({
-      appId: ONESIGNAL_APP_ID,
-      apiKey: ONESIGNAL_API_KEY,
-      filters: smallFilters,
-      title: 'SMALL-Reminder',
-      body: smallTexts[(dayOfYear + parseInt(currentSlot.replace(':', ''), 10)) % smallTexts.length],
-      url: 'https://loewenherz-app.vercel.app/?tab=heute'
-    });
-    results.push({ type: 'small', ...smallResult });
-  } catch (e) {
-    results.push({ type: 'small', error: e.message });
+      const smallResult = await sendNotification({
+        appId: ONESIGNAL_APP_ID,
+        apiKey: ONESIGNAL_API_KEY,
+        filters: smallFilters,
+        title: 'SMALL-Reminder',
+        body: smallTexts[(dayOfYear + parseInt(currentSlot.replace(':', ''), 10)) % smallTexts.length],
+        url: 'https://loewenherz-app.vercel.app/?tab=heute',
+        iosSound: variant.iosSound
+      });
+      results.push({ type: 'small', sound: variant.tag || 'standard', ...smallResult });
+    } catch (e) {
+      results.push({ type: 'small', sound: variant.tag || 'standard', error: e.message });
+    }
   }
 
   return res.status(200).json({
@@ -176,7 +220,7 @@ export default async function handler(req, res) {
 // Hilfsfunktionen
 // ============================================================
 
-async function sendNotification({ appId, apiKey, filters, title, body, url }) {
+async function sendNotification({ appId, apiKey, filters, title, body, url, iosSound }) {
   const response = await fetch('https://onesignal.com/api/v1/notifications', {
     method: 'POST',
     headers: {
@@ -194,6 +238,9 @@ async function sendNotification({ appId, apiKey, filters, title, body, url }) {
       // kein Deep-Link, kein Routing). Web-Verhalten unverändert.
       web_url: url,
       chrome_web_icon: 'https://loewenherz-app.vercel.app/assets/icons/icon-192.png',
+      // ios_sound: Dateiname im App-Bundle. Ohne das Feld spielt iOS den
+      // Systemton. Web-Push ignoriert es komplett.
+      ...(iosSound ? { ios_sound: iosSound } : {}),
       ttl: 900 // 15 Minuten — danach nicht mehr zustellen
     })
   });

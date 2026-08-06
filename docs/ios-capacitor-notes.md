@@ -140,6 +140,30 @@ Umgesetzt 05.08.2026. Neun offizielle Plugins dazu: `app`, `app-launcher`, `brow
 
 **Manuell in Xcode/App Store Connect (Patrick):** unverändert aus C2 — Signing-Team, Capabilities Push + Background Modes/Remote notifications, APNs-Key im OneSignal-Dashboard. Neu dazu: beim ersten Upload prüfen, dass keine ITMS-91053-Warnmail kommt (fehlende API-Deklaration); falls doch, den genannten API-Typ im App-Manifest nachtragen.
 
+## h) Benachrichtigungston (06.08.2026)
+
+Drei eigene Töne (`ios/App/App/sounds/lh-ton-{1,2,3}.caf`, Herkunft/Lizenz:
+[sound-licenses.md](sound-licenses.md)) + „iOS-Standardton" als vierte Option.
+Auswahl in den Einstellungen nur nativ (`js/components/sound-picker.js`,
+Vorschau über `assets/sounds/*.mp3`); Web/Android zeigen einen Hinweistext.
+
+Mechanik: Der Ton steckt im Push-Payload (`ios_sound`), nicht im Gerät.
+Standardton = lh-ton-1 wird OHNE Tag in die normalen Sammel-Sendungen
+geschrieben (Web ignoriert das Feld); nur Abweichler tragen den Tag `sound`
+(`ton-2`/`ton-3`/`system`) und bekommen eigene Sendungen — der Server
+(api/send-notifications.js, `SOUND_VARIANTS`) schickt deshalb 12 statt 3
+Calls pro 15-min-Slot. Die sound-Bedingung steht in JEDER OR-Gruppe des
+SMALL-Filters (benachbarte Filter-Einträge sind UND-verknüpft).
+
+Fallstricke:
+- Die .caf müssen ins Bundle-**Root** (Xcode-Gruppe, kein „blue folder" —
+  ein Unterordner im Bundle wird von APNs nicht gefunden → stiller
+  Systemton). Prüfbar am Build: `App.app/lh-ton-1.caf` muss existieren.
+- Foreground bleibt stumm (foregroundWillDisplay + preventDefault) —
+  Ton-Test nur mit App im Hintergrund.
+- Neue/geänderte Töne = neue App-Version; Menü (notification-sound.js),
+  Server (SOUND_VARIANTS) und Bundle müssen zusammenpassen.
+
 ## Bekannte Einschränkungen (Stand C3 — gewollt)
 
 - **Native App startet bei null:** iOS-PWA-Bestandsdaten (IndexedDB/localStorage aus Safari) werden nicht migriert — bewusste Entscheidung.
@@ -174,6 +198,7 @@ Datenstand direkt lesbar unter `~/Library/Developer/CoreSimulator/Devices/<UDID>
 - [x] C2: OneSignal-Migration (natives SDK, Tags, Soft-Ask) — Code steht, siehe Abschnitt f
 - [x] C3: Splash/StatusBar/Haptics, App-Icon, Datenexport-Fix, Store-Pflichten — siehe Abschnitt g
 - [ ] C2-Gerätetest (echtes iPhone, APNs-Key + Xcode-Capabilities Voraussetzung): Soft-Ask vor Apple-Dialog, iOS-Subscription im Dashboard, 12 Tags mit **denselben Wertformaten wie eine Web-Subscription** (direkt vergleichen), Test-Push im Hintergrund, kein Banner im Vordergrund, Zeitänderung aktualisiert den Tag
+- [ ] Ton-Gerätetest (mit C2-Gerätetest): Standardton = gedämpfter Löwenherz-Ton ohne Tag-Eintrag; Ton wechseln → Tag `sound` im Dashboard; Vorhören im Sheet; `system` → Apple-Dreiklang
 - [ ] C2-Cron-Realtest: Erinnerungszeit auf +20 min, App schließen, warten — kommt der Reminder über die bestehende Server-Route an, ist die Kette Server → OneSignal → APNs → Gerät komplett
 - [ ] C3-Gerätetest (Patricks Checkliste aus dem C3-Prompt): Tastatur, `tel:`-Links (Dialer!), externe Links → SFSafariViewController, Safe Areas, Splash, Statusbar hell/dunkel, Export→Import-Roundtrip, Haptik + Toggle, Rollover über Mitternacht, „Einstellungen öffnen"-Sprung
 - [ ] App-Store-Connect-Anlage (Name, Metadaten, Screenshots iPhone-only, Review Notes aus docs/app-store-review-notes.md)
