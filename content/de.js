@@ -322,6 +322,16 @@ export const TEXTS = {
 
   ui: {
     tabs: { today: "Heute", reflection: "Reflexion", history: "Verlauf" },
+
+    // Erscheint, wenn die App ihre gespeicherten Daten während der Nutzung
+    // nicht mehr findet (Datenräumung durch das System, Löschen in einem
+    // zweiten Tab, Lesefehler). Bewusst ruhig und ohne Schuldzuweisung —
+    // und ohne Versprechen, dass alles noch da ist.
+    dataLost: {
+      text: "Deine gespeicherten Daten sind gerade nicht auffindbar. Starte die App einmal neu — dann sehen wir, was noch da ist.",
+      button: "Neu starten"
+    },
+
     onboarding: {
       welcome: "Willkommen, Löwenherz.",
       askName: "Wie heißt du?",

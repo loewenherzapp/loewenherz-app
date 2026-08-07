@@ -25,6 +25,80 @@ import './push.js'; // OneSignal init (side-effect import)
 let currentTab = 'today';
 let profile = null;
 
+// --- Profil-Verlust bei laufender App ---
+//
+// Beim Start wird sauber geprüft: kein Profil → Landing/Onboarding. Danach
+// galt „wir laufen, also gibt es ein Profil" als gesetzt — und genau das
+// stimmt nicht. Verschwindet das Profil, während die App offen ist, endet
+// jeder Tab-Wechsel und jeder Weg in die Einstellungen in einem
+// TypeError: switchTab() und showSettings() holen es neu und reichen es
+// ungeprüft weiter (dashboard.js/reflection.js lesen profile.name,
+// settings.js gibt es an migrateToV2() weiter).
+//
+// Sichtbar wurde das als Sackgasse: Der Einstellungen-Container wird
+// eingeblendet, der Renderer bricht vor der ersten Zeile ab, das
+// Dashboard ist bereits ausgeblendet — weiße Fläche ohne Zurück-Button.
+// Nur ein Neustart half.
+//
+// Auslöser sind selten, aber real: ein zweiter Tab, der „Alle Daten
+// löschen" ausführt; Datenräumung durch das System (Storage-Persistenz
+// ist im Web nicht garantiert); ein Lesefehler der Datenbank.
+//
+// Bewusst zentral statt als null-Prüfung an jeder Verbrauchsstelle: Sonst
+// ist die nächste neue Ansicht wieder ungeschützt.
+
+/**
+ * Holt das Profil für einen laufenden Bildschirm. Liefert null, wenn es
+ * nicht mehr da ist — dann hat der Aufrufer sofort abzubrechen, die
+ * Meldung übernimmt diese Funktion.
+ */
+async function profilFuerAnsicht() {
+  try {
+    const p = await getProfile();
+    if (p) return p;
+  } catch (e) {
+    // Lesefehler wie „weg" behandeln: Weiterlaufen mit halbem Zustand
+    // wäre schlimmer als ein ehrlicher Neustart.
+    console.warn('[App] Profil nicht lesbar:', e);
+  }
+  zeigeProfilVerlust();
+  return null;
+}
+
+/**
+ * Erklärt den Verlust und bietet den einzigen sinnvollen Weg an: neu
+ * starten. Der Start entscheidet dann regulär — ist wirklich alles weg,
+ * landet der Nutzer im Onboarding; war nur das Lesen gestört, läuft die
+ * App normal weiter.
+ *
+ * Bewusst KEIN automatisch angelegtes Ersatzprofil: Die Reflexionen und
+ * SMALL-Punkte liegen in derselben Datenbank. Weiterzumachen, als sei
+ * nichts gewesen, würde den Verlust verschleiern statt ihn zu zeigen.
+ */
+function zeigeProfilVerlust() {
+  // Am DOM festgemacht statt an einem Merker: Verschwindet das Overlay
+  // doch einmal, erscheint es beim nächsten Tipp wieder. Ein Merker würde
+  // den Nutzer sonst vor einer App zurücklassen, die auf nichts mehr
+  // reagiert und auch nicht mehr sagt, warum.
+  if (document.getElementById('datenverlust-overlay')) return;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'datenverlust-overlay';
+  overlay.className = 'confirm-overlay active';
+  overlay.style.zIndex = '900';
+  overlay.innerHTML = `
+    <div class="confirm-dialog">
+      <p class="confirm-text">${TEXTS.ui.dataLost.text}</p>
+      <div class="confirm-buttons">
+        <button class="btn-primary" id="datenverlust-neustart">${TEXTS.ui.dataLost.button}</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  document.getElementById('datenverlust-neustart')
+    .addEventListener('click', () => window.location.reload());
+}
+
 // Check if running as installed PWA (or as native Capacitor app)
 function isStandalone() {
   return isNative()
@@ -302,7 +376,8 @@ async function switchTab(tab) {
   }
 
   // Re-fetch profile in case name changed
-  profile = await getProfile();
+  profile = await profilFuerAnsicht();
+  if (!profile) return;
 
   const contentEl = document.getElementById('main-content');
 
@@ -333,6 +408,13 @@ async function switchTab(tab) {
 }
 
 async function showSettings() {
+  // Profil VOR dem Umschalten holen: Wäre das Dashboard schon
+  // ausgeblendet und der Einstellungs-Container schon sichtbar, bliebe
+  // bei einem Abbruch genau die weiße Fläche ohne Zurück-Button zurück.
+  const geladen = await profilFuerAnsicht();
+  if (!geladen) return;
+  profile = geladen;
+
   hideAll();
   const container = document.getElementById('settings-container');
   container.classList.remove('hidden');
@@ -342,8 +424,6 @@ async function showSettings() {
   appEl.classList.remove('reflexion-mode');
   appEl.removeAttribute('data-mood');
   setThemeColor('#f7ead8');
-
-  profile = await getProfile();
 
   await renderSettings(
     container,
