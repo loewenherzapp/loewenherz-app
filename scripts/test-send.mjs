@@ -67,6 +67,20 @@ const now = new Date();
 const SLOT = `${String(now.getUTCHours()).padStart(2, '0')}${String(Math.floor(now.getUTCMinutes() / 15) * 15).padStart(2, '0')}`;
 const ANDERER = SLOT === '0300' ? '0400' : '0300';
 
+// Termine, die garantiert NICHT der aktuelle Slot sind. Feste Literale
+// (früher 0500/1830/1345) machten diesen Test zweimal täglich für je eine
+// Viertelstunde rot: Läuft er um 18:30 UTC, ist 1830 der aktuelle Slot —
+// dann lösen die Testgeräte zusätzlich über ihren Abendtermin aus und es
+// kommen doppelt so viele Sendungen heraus wie erwartet.
+const versetzt = (viertelstunden) => {
+  const min = (Number(SLOT.slice(0, 2)) * 60 + Number(SLOT.slice(2)) + viertelstunden * 15) % 1440;
+  return String(Math.floor(min / 60)).padStart(2, '0') + String(min % 60).padStart(2, '0');
+};
+const MORGENS = versetzt(20);   // +5 h
+const ABENDS  = versetzt(52);   // +13 h
+const SMALL2  = versetzt(33);   // +8¼ h
+const mitDoppelpunkt = (s) => s.slice(0, 2) + ':' + s.slice(2);
+
 // --- 1) Format-Parsing ---
 const p = MOD.parseSched('v1;m=0500;e=1830;s=0530,0930,1000;t=ton-2');
 check(p.morning === '0500' && p.evening === '1830', 'parseSched: Morgen/Abend');
@@ -76,16 +90,16 @@ check(MOD.parseSched('v2;m=0500') === null, 'parseSched: unbekannte Version → 
 check(MOD.parseSched('') === null && MOD.parseSched(null) === null, 'parseSched: Müll → null');
 check(MOD.parseSched('v1;m=0500;e=1830;s=').smalls.length === 0, 'parseSched: leere SMALL-Liste erlaubt');
 check(MOD.parseSched('v1;s=0507,0530').smalls.join(',') === '0530', 'parseSched: krumme Zeit fliegt raus');
-check(MOD.parseSched('v1;m=0500').sound === 'ton-1', 'parseSched: fehlender Ton → Standard');
-check(MOD.parseSched('v1;t=quatsch').sound === 'ton-1', 'parseSched: unbekannter Ton → Standard');
+check(MOD.parseSched('v1;m=0500').sound === 'ton-4', 'parseSched: fehlender Ton → Standard');
+check(MOD.parseSched('v1;t=quatsch').sound === 'ton-4', 'parseSched: unbekannter Ton → Standard');
 
 // --- 2) Zielt der Versand exakt? ---
 {
   const players = [
-    { id: 'A', tags: { sched: `v1;m=${SLOT};e=1830;s=` } },              // Morgen jetzt
-    { id: 'B', tags: { sched: `v1;m=0500;e=1830;s=${ANDERER},${SLOT}` } }, // SMALL jetzt
-    { id: 'C', tags: { sched: `v1;m=0500;e=${SLOT};s=` } },              // Abend jetzt
-    { id: 'D', tags: { sched: `v1;m=0500;e=1830;s=${ANDERER}` } },       // gar nicht
+    { id: 'A', tags: { sched: `v1;m=${SLOT};e=${ABENDS};s=` } },              // Morgen jetzt
+    { id: 'B', tags: { sched: `v1;m=${MORGENS};e=${ABENDS};s=${ANDERER},${SLOT}` } }, // SMALL jetzt
+    { id: 'C', tags: { sched: `v1;m=${MORGENS};e=${SLOT};s=` } },              // Abend jetzt
+    { id: 'D', tags: { sched: `v1;m=${MORGENS};e=${ABENDS};s=${ANDERER}` } },       // gar nicht
     { id: 'E', tags: {} },                                               // ohne Zeitplan
     { id: 'F', tags: { sched: '' } }                                     // Push aus
   ];
@@ -111,18 +125,24 @@ check(MOD.parseSched('v1;t=quatsch').sound === 'ton-1', 'parseSched: unbekannter
 // --- 4) Ton-Gruppierung: ein Call pro Ton, richtige Datei ---
 {
   const players = [
-    { id: 'A', tags: { sched: `v1;m=0500;e=1830;s=${SLOT}` } },            // Standard
-    { id: 'B', tags: { sched: `v1;m=0500;e=1830;s=${SLOT};t=ton-1` } },    // explizit Standard
-    { id: 'C', tags: { sched: `v1;m=0500;e=1830;s=${SLOT};t=ton-2` } },
-    { id: 'D', tags: { sched: `v1;m=0500;e=1830;s=${SLOT};t=system` } }
+    { id: 'A', tags: { sched: `v1;m=${MORGENS};e=${ABENDS};s=${SLOT}` } },            // Standard
+    { id: 'B', tags: { sched: `v1;m=${MORGENS};e=${ABENDS};s=${SLOT};t=ton-4` } },    // explizit Standard
+    { id: 'C', tags: { sched: `v1;m=${MORGENS};e=${ABENDS};s=${SLOT};t=ton-2` } },
+    { id: 'D', tags: { sched: `v1;m=${MORGENS};e=${ABENDS};s=${SLOT};t=system` } },
+    { id: 'E', tags: { sched: `v1;m=${MORGENS};e=${ABENDS};s=${SLOT};t=ton-6` } }
   ];
   const { sends } = await run(players);
-  check(sends.length === 3, `3 Sendungen (Standard, ton-2, system) — waren ${sends.length}`);
-  const std = sends.find(s => s.ios_sound === 'lh-ton-1.caf');
+  check(sends.length === 4, `4 Sendungen (Standard, ton-2, system, ton-6) — waren ${sends.length}`);
+  // Wer nie gewählt hat, bekommt den Löwen — das ist der Sinn der
+  // Voreinstellung, und genau das bricht, wenn Client und Server beim
+  // DEFAULT_SOUND auseinanderlaufen.
+  const std = sends.find(s => s.ios_sound === 'lh-ton-4.caf');
   check(std && std.include_subscription_ids.sort().join('') === 'AB',
-    'A und B teilen die Standard-Sendung');
+    'A (ohne Wahl) und B (explizit ton-4) teilen die Standard-Sendung');
   check(sends.find(s => s.ios_sound === 'lh-ton-2.caf').include_subscription_ids[0] === 'C',
     'C bekommt lh-ton-2.caf');
+  check(sends.find(s => s.ios_sound === 'lh-ton-6.caf').include_subscription_ids[0] === 'E',
+    'E bekommt lh-ton-6.caf — ein neuer Ton kostet genau eine eigene Sendung');
   const sys = sends.find(s => !('ios_sound' in s));
   check(sys && sys.include_subscription_ids[0] === 'D', 'system → gar kein ios_sound-Feld');
 }
@@ -130,8 +150,8 @@ check(MOD.parseSched('v1;t=quatsch').sound === 'ton-1', 'parseSched: unbekannter
 // --- 5) Altbestand: wird bedient UND migriert ---
 {
   const alt = {
-    morning_utc: '05:00', evening_utc: '18:30', sound: 'ton-2',
-    small_1_utc: SLOT.slice(0, 2) + ':' + SLOT.slice(2), small_2_utc: '13:45'
+    morning_utc: mitDoppelpunkt(MORGENS), evening_utc: mitDoppelpunkt(ABENDS), sound: 'ton-2',
+    small_1_utc: mitDoppelpunkt(SLOT), small_2_utc: mitDoppelpunkt(SMALL2)
   };
   const { sends, puts, payload } = await run([{ id: 'OLD', tags: alt }]);
   check(sends.some(s => s.include_subscription_ids.includes('OLD')),
@@ -149,23 +169,23 @@ check(MOD.parseSched('v1;t=quatsch').sound === 'ton-1', 'parseSched: unbekannter
   const geleert = puts.slice(0, -1).flatMap(p => Object.keys(p.tags)).sort().join(',');
   check(geleert === 'evening_utc,morning_utc,small_1_utc,small_2_utc,sound',
     `genau die vorhandenen Alt-Keys werden geleert (war: ${geleert})`);
-  check(letzter.tags.sched === `v1;m=0500;e=1830;s=${SLOT},1345;t=ton-2`,
+  check(letzter.tags.sched === `v1;m=${MORGENS};e=${ABENDS};s=${SLOT},${SMALL2};t=ton-2`,
     `migrierter Wert stimmt (war: ${letzter.tags.sched})`);
   check(payload.migrations[0].ok === true, 'Migration als erfolgreich gemeldet');
 }
 
 // --- 6) Bereits migrierte Geräte werden nicht erneut angefasst ---
 {
-  const { puts } = await run([{ id: 'NEW', tags: { sched: `v1;m=${SLOT};e=1830;s=` } }]);
+  const { puts } = await run([{ id: 'NEW', tags: { sched: `v1;m=${SLOT};e=${ABENDS};s=` } }]);
   check(puts.length === 0, 'kein Schreibvorgang bei bereits migrierten Geräten');
 }
 
 // --- 7) Abgemeldete und ungültige Geräte fliegen raus ---
 {
   const players = [
-    { id: 'OK',   tags: { sched: `v1;m=${SLOT};e=1830;s=` } },
-    { id: 'DEAD', tags: { sched: `v1;m=${SLOT};e=1830;s=` }, invalid_identifier: true },
-    { id: 'OFF',  tags: { sched: `v1;m=${SLOT};e=1830;s=` }, notification_types: -2 }
+    { id: 'OK',   tags: { sched: `v1;m=${SLOT};e=${ABENDS};s=` } },
+    { id: 'DEAD', tags: { sched: `v1;m=${SLOT};e=${ABENDS};s=` }, invalid_identifier: true },
+    { id: 'OFF',  tags: { sched: `v1;m=${SLOT};e=${ABENDS};s=` }, notification_types: -2 }
   ];
   const { sends } = await run(players);
   const alle = sends.flatMap(s => s.include_subscription_ids);

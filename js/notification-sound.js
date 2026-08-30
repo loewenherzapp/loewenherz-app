@@ -9,7 +9,7 @@
 // oder iOS-Systemton), bekommt einen `sound`-Tag und eine eigene Sendung.
 //
 // Die Zuordnung id → .caf-Datei lebt ausschließlich im Server
-// (SOUND_VARIANTS in api/send-notifications.js). Die ids hier und dort
+// (SOUND_FILES in api/send-notifications.js). Die ids hier und dort
 // müssen exakt übereinstimmen — eine Abweichung bricht nur den
 // betroffenen Ton, aber lautlos.
 //
@@ -21,17 +21,25 @@
 
 const STORAGE_KEY = 'loewenherz_sound';
 
-export const DEFAULT_SOUND = 'ton-1';
+export const DEFAULT_SOUND = 'ton-4';
 
 // preview: Pfad für das Vorhören in den Einstellungen (liegt über die
 // assets-Allowlist von build-ios.mjs auch im nativen Bundle). Der
 // iOS-Systemton hat bewusst keine Vorschau — Apple gibt Dritt-Apps
 // keinen Zugriff auf die Systemton-Dateien.
+//
+// Reihenfolge: erst die drei Löwen (der Standard zuerst), dann die drei
+// leisen Töne, zuletzt der Systemton. Die ids sind fortlaufend vergeben
+// und werden NIE neu belegt — ein gespeicherter Tag `t=ton-2` muss auch
+// nach jeder Umsortierung denselben Ton meinen.
 export const SOUND_OPTIONS = [
-  { id: 'ton-1',  label: 'Gedämpfter Tupfer', preview: 'assets/sounds/lh-ton-1.mp3' },
-  { id: 'ton-2',  label: 'Sanfter Impuls',    preview: 'assets/sounds/lh-ton-2.mp3' },
-  { id: 'ton-3',  label: 'Sanfter Impuls II', preview: 'assets/sounds/lh-ton-3.mp3' },
-  { id: 'system', label: 'iOS-Standardton',   preview: null }
+  { id: 'ton-4',  label: 'König der Welt', preview: 'assets/sounds/lh-ton-4.mp3' },
+  { id: 'ton-5',  label: 'Radau',          preview: 'assets/sounds/lh-ton-5.mp3' },
+  { id: 'ton-6',  label: 'Sofalöwe',       preview: 'assets/sounds/lh-ton-6.mp3' },
+  { id: 'ton-1',  label: 'Räuspern',       preview: 'assets/sounds/lh-ton-1.mp3' },
+  { id: 'ton-2',  label: 'Aufatmen',       preview: 'assets/sounds/lh-ton-2.mp3' },
+  { id: 'ton-3',  label: 'Nachhall',       preview: 'assets/sounds/lh-ton-3.mp3' },
+  { id: 'system', label: 'iOS-Standardton', preview: null }
 ];
 
 /** Gewählter Ton, gegen die bekannten ids validiert — ein kaputter

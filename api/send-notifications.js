@@ -39,9 +39,12 @@ const SOUND_FILES = {
   'ton-1': 'lh-ton-1.caf',
   'ton-2': 'lh-ton-2.caf',
   'ton-3': 'lh-ton-3.caf',
+  'ton-4': 'lh-ton-4.caf',
+  'ton-5': 'lh-ton-5.caf',
+  'ton-6': 'lh-ton-6.caf',
   'system': null
 };
-const DEFAULT_SOUND = 'ton-1';
+const DEFAULT_SOUND = 'ton-4';
 
 // Sicherheitsdeckel. Beide werden geloggt, wenn sie greifen — ein
 // stiller Deckel würde aussehen wie „alle bedient".
