@@ -81,6 +81,15 @@ export function initNative() {
     const { default: OneSignal } = await import(SDK_PATH);
     await OneSignal.initialize(ONESIGNAL_APP_ID);
 
+    // Standort hart aus. Die App braucht ihn nirgends, und OneSignal
+    // bringt mit OneSignalLocation.framework ein Modul mit, dessen
+    // Privacy Manifest Coarse UND Precise Location deklariert. Ohne
+    // NSLocation*-Schlüssel in der Info.plist könnte iOS die Freigabe
+    // ohnehin nie erteilen — diese Zeile hält es auch dann aus, wenn
+    // später jemand so einen Schlüssel einträgt. Grundlage dafür, im
+    // App-Store-Fragebogen „kein Standort" angeben zu können.
+    OneSignal.Location.setShared(false);
+
     // Foreground unterdrücken: Es sind Reminder („öffne die App").
     // Wer die App gerade offen hat, braucht den Reminder nicht — ein
     // Banner über der offenen App wirkt kaputt.

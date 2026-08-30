@@ -182,19 +182,7 @@ function showLanding() {
   hideAll();
   const container = document.getElementById('landing-container');
   container.classList.remove('hidden');
-  renderLanding(container);
-
-  const skipEl = document.createElement('button');
-  skipEl.className = 'landing-toggle';
-  skipEl.textContent = TEXTS.ui.landing.continueAnyway;
-  skipEl.style.marginTop = '32px';
-  skipEl.addEventListener('click', () => {
-    showOnboarding();
-  });
-  setTimeout(() => {
-    const landingScreen = container.querySelector('.landing-screen');
-    if (landingScreen) landingScreen.appendChild(skipEl);
-  }, 500);
+  renderLanding(container, () => showOnboarding());
 }
 
 function showOnboarding() {

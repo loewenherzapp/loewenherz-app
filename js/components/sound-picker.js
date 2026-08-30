@@ -55,7 +55,7 @@ export function openSoundPicker(onChange) {
       <div class="sound-picker-hint">Tippen spielt den Ton ab</div>
       <div class="sound-picker-opts">
         ${SOUND_OPTIONS.map(o =>
-          `<button type="button" class="sound-picker-opt${o.id === getSound() ? ' is-selected' : ''}" data-id="${o.id}"><span>${o.label}</span><span class="sound-picker-check" aria-hidden="true">✓</span></button>`
+          `<button type="button" class="sound-picker-opt${o.id === getSound() ? ' is-selected' : ''}" data-id="${o.id}"><span class="sound-picker-opt-label">${o.label}${o.preview ? '' : '<span class="sound-picker-note">kein Vorhören möglich</span>'}</span><span class="sound-picker-check" aria-hidden="true">✓</span></button>`
         ).join('')}
       </div>
       <button type="button" class="btn-primary sound-picker-done">Fertig</button>

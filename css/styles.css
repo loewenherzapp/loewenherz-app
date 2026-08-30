@@ -477,6 +477,10 @@ a:active { opacity: 0.7; }
 }
 .step-text { padding-top: 3px; line-height: 1.5; }
 
+/* Abstand vorher inline in app.js gesetzt — gehört hierher, seit der
+   Button Teil des Landing-Templates ist. */
+.landing-skip { margin-top: 32px; }
+
 .landing-toggle {
   margin-top: 24px;
   background: none; border: none;
@@ -2561,8 +2565,62 @@ button.settings-link, .settings-link-btn {
   width: auto;
 }
 
+/* ---- Benachrichtigungston ----
+   Eigener Auslöser statt .reminder-time. Grund: Die Zeit-Pille ist für
+   fünf Zeichen gebaut ("07:00"), die Tonnamen sind 14-17 Zeichen lang.
+   Neben dem 20 Zeichen langen Label passt das auf 375pt nicht auf eine
+   Zeile — die Pille brach zweizeilig um und riss den Rhythmus der
+   übrigen Zeilen auseinander. Deshalb Label darüber, Auslöser über die
+   volle Breite: Jeder Name hat Platz, egal wie lang er wird. */
+.push-setting-sound {
+  padding: 8px 0;
+}
+
+.sound-trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px 12px;
+  min-height: 44px;
+  background: var(--bg-card);
+  border: 1px solid var(--divider);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.sound-trigger:active { background: var(--bg-hover); }
+
+.sound-trigger-icon {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* Ellipsis nur als Notnagel: Die volle Breite reicht für alle heutigen
+   Namen. Bricht aber nie um, falls später ein längerer dazukommt. */
+.sound-trigger-value {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sound-trigger-caret {
+  color: var(--text-muted);
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
 .push-settings-disabled .push-setting-row,
-.push-settings-disabled .push-setting-time {
+.push-settings-disabled .push-setting-time,
+.push-settings-disabled .push-setting-sound {
   opacity: 0.4;
   pointer-events: none;
 }
@@ -3050,5 +3108,15 @@ button.reminder-time:active { background: var(--bg-hover); }
   font-weight: 600;
 }
 .sound-picker-opt.is-selected .sound-picker-check { opacity: 1; }
+
+/* iOS-Standardton liegt nicht im Bundle, er lässt sich nicht vorhören.
+   Ohne diesen Hinweis wirkt der stumme Tap wie ein Fehler. */
+.sound-picker-note {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
 
 .time-picker-apply { width: 100%; }

@@ -209,9 +209,9 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
                  App-Bundle), im Web nur der ehrliche Hinweis, wer ihn
                  wirklich bestimmt. -->
             ${isNative() ? `
-            <div class="push-setting-time">
+            <div class="push-setting-sound">
               <div class="push-setting-label">Benachrichtigungston</div>
-              <button type="button" class="reminder-time" id="push-sound-btn"><span class="reminder-time-value">${soundLabel()}</span><span class="reminder-time-caret" aria-hidden="true">▾</span></button>
+              <button type="button" class="sound-trigger" id="push-sound-btn"><span class="sound-trigger-icon" aria-hidden="true">♪</span><span class="sound-trigger-value">${soundLabel()}</span><span class="sound-trigger-caret" aria-hidden="true">▾</span></button>
             </div>` : `
             <div class="push-setting-sublabel push-sound-hint">${soundHintText()}</div>`}
           </div>
@@ -405,7 +405,7 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
   if (soundBtn) {
     soundBtn.addEventListener('click', () => {
       openSoundPicker(() => {
-        soundBtn.querySelector('.reminder-time-value').textContent = soundLabel();
+        soundBtn.querySelector('.sound-trigger-value').textContent = soundLabel();
         syncOneSignalTags();
       });
     });
@@ -671,6 +671,8 @@ const LEGAL_CONTENT = {
     E-Mail: <a href="mailto:pe@angstdoc.de">pe@angstdoc.de</a></p>
     <p>Handelsregister: Rumänisches Handelsregister<br>
     VAT: RO48978340</p>
+    <h3>Hinweis zu KI-generierten und KI-modifizierten Inhalten</h3>
+    <p>Verwendete Bilder sind Eigenproduktionen, stammen aus Bilddatenbanken oder wurden mit Künstlicher Intelligenz (KI) generiert und/oder modifiziert. KI-generierte oder KI-modifizierte Bilder mit Deepfake-Charakter im Sinne des Art. 50 Abs. 4 der Verordnung (EU) 2024/1689 (KI-Verordnung) werden zusätzlich unmittelbar am Bild gekennzeichnet.</p>
     <div class="legal-notice">
       <p><strong>Hinweis:</strong> Diese App dient ausschließlich der allgemeinen Information und Selbstreflexion. Sie ersetzt keine ärztliche oder psychotherapeutische Behandlung. In Krisensituationen erreichst du rund um die Uhr: Telefonseelsorge Deutschland 0800 111 0 111 (kostenlos) · Telefonseelsorge Österreich 142 · Die Dargebotene Hand Schweiz 143. In akuten Notfällen wähle den Notruf 112.</p>
     </div>

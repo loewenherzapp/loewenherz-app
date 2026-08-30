@@ -4,7 +4,12 @@
 
 import { TEXTS } from '../../content/de.js';
 
-export function renderLanding(container) {
+/**
+ * @param {HTMLElement} container
+ * @param {function} onContinue  Ausweg für alle, die ohne Installation
+ *                               weiterwollen (Desktop, unpassender Browser).
+ */
+export function renderLanding(container, onContinue) {
   const t = TEXTS.ui.landing;
   let showAndroid = false;
 
@@ -33,6 +38,7 @@ export function renderLanding(container) {
         <button class="landing-toggle" id="landing-toggle-btn">
           ${showAndroid ? t.iosToggle : t.androidToggle}
         </button>
+        <button class="landing-toggle landing-skip" id="landing-skip-btn">${t.continueAnyway}</button>
       </div>
     `;
 
@@ -40,6 +46,11 @@ export function renderLanding(container) {
       showAndroid = !showAndroid;
       render();
     });
+
+    // Muss im Template stehen, nicht nachträglich angehängt werden:
+    // render() ersetzt das gesamte innerHTML, ein von außen eingefügter
+    // Button verschwand beim ersten Umschalten iOS/Android spurlos.
+    document.getElementById('landing-skip-btn').addEventListener('click', onContinue);
   }
 
   render();
