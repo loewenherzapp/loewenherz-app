@@ -26,6 +26,16 @@ getrimmt, eine Ausblende gesetzt und der Pegel auf die Lautheit der
 bestehenden Töne gebracht (Ziel −19 LUFS, True Peak −1,5 dBFS; das Schnurren
 landet peak-begrenzt bei −22,8 LUFS).
 
+**Globale Absenkung am 01.09.2026:** Nach dem Hörtest am Gerät wurden ALLE
+sechs Töne um exakt 3 dB abgesenkt — die Abstände zwischen ihnen bleiben
+dadurch unverändert, nur das Niveau der ganzen Familie liegt tiefer.
+Gerechnet auf der fertigen PCM-Datei (`volume=-3dB`), Format und Länge
+unangetastet. Stand danach (integriert / Momentan-Max):
+Räuspern −20,6/−16,1 · Aufatmen −23,6/−23,3 · Nachhall −27,0/−24,9 ·
+König der Welt −22,2/−19,0 · Radau −22,0/−20,6 · Sofalöwe −25,8/−20,9 LUFS.
+Wer den Pegel erneut ändert: immer alle sechs zusammen, sonst zerfällt die
+Familie.
+
 Die Vorschau-MP3s werden aus den fertigen `.caf` erzeugt (192 kbps, mono,
 44,1 kHz) — nicht aus den Originalen. Sonst hört man in den Einstellungen
 etwas anderes, als das Gerät später spielt: Die ersten drei Vorschauen waren
