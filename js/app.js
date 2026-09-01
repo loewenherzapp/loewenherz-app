@@ -495,10 +495,10 @@ function showAppInfo() {
     <div class="info-sheet">
       <div class="info-sheet-grip"></div>
       <h3>Löwenherz</h3>
-      <p class="info-subtitle">Angst wird erlernt. Gelassenheit auch.</p>
-      <p>Die Begleit-App zum Buch.</p>
+      <p>Die Begleit-App zum Buch. Ihr Herzstück sind die Erinnerungen: Mehrmals am Tag meldet sich die App und holt dich für einen Moment aus dem Autopilot.</p>
       <p><strong>Heute-Tab:</strong> Tippe die SMALL-Buchstaben, wenn du einen bewussten Moment hattest — jeder Tap zählt als Punkt. Gundula zeigt dir, wie dein System gerade steht.</p>
       <p><strong>Reflexion-Tab:</strong> Morgens eine Intention setzen, abends kurz reflektieren — zwei Minuten, die den Tag einrahmen.</p>
+      <p><strong>Einstellungen (⚙ oben):</strong> Zeitraum, wie oft am Tag und der Benachrichtigungston — alles jederzeit änderbar.</p>
       <p>Kein Programm. Drei Leitplanken. Alles über null ist Gewinn.</p>
       <button class="info-sheet-close">Verstanden</button>
     </div>

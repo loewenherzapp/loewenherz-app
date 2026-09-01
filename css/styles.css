@@ -914,12 +914,6 @@ a:active { opacity: 0.7; }
   margin: 0 0 12px;
 }
 
-.info-sheet .info-subtitle {
-  font-style: italic;
-  color: var(--text-muted);
-  margin-bottom: 16px;
-}
-
 .info-states {
   display: flex;
   flex-direction: column;
