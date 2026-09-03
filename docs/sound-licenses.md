@@ -33,8 +33,14 @@ Gerechnet auf der fertigen PCM-Datei (`volume=-3dB`), Format und Länge
 unangetastet. Stand danach (integriert / Momentan-Max):
 Räuspern −20,6/−16,1 · Aufatmen −23,6/−23,3 · Nachhall −27,0/−24,9 ·
 König der Welt −22,2/−19,0 · Radau −22,0/−20,6 · Sofalöwe −25,8/−20,9 LUFS.
-Wer den Pegel erneut ändert: immer alle sechs zusammen, sonst zerfällt die
-Familie.
+**Zweite Absenkung am 01.09.2026, nur die beiden Brüller:** `lh-ton-4` und
+`lh-ton-5` noch einmal −3 dB, nachdem sie am Gerät weiter zu präsent
+wirkten. Ein Brüllen ist breitbandig und wirkt bei gleichem Messwert
+lauter als ein schmaler Tupfer — die Familie ist hier also bewusst NICHT
+gleichmäßig. Stand jetzt (Momentan-Max, der für kurze Alerts zählt):
+Räuspern −16,1 · Sofalöwe −20,9 · König der Welt −22,0 · Aufatmen −23,3 ·
+Radau −23,6 · Nachhall −24,9 LUFS. Der Standardton ist damit rund 6 dB
+leiser als Räuspern.
 
 Die Vorschau-MP3s werden aus den fertigen `.caf` erzeugt (192 kbps, mono,
 44,1 kHz) — nicht aus den Originalen. Sonst hört man in den Einstellungen
