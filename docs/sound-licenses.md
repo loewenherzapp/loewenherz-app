@@ -39,8 +39,15 @@ wirkten. Ein Brüllen ist breitbandig und wirkt bei gleichem Messwert
 lauter als ein schmaler Tupfer — die Familie ist hier also bewusst NICHT
 gleichmäßig. Stand jetzt (Momentan-Max, der für kurze Alerts zählt):
 Räuspern −16,1 · Sofalöwe −20,9 · König der Welt −22,0 · Aufatmen −23,3 ·
-Radau −23,6 · Nachhall −24,9 LUFS. Der Standardton ist damit rund 6 dB
-leiser als Räuspern.
+Radau −23,6 · Nachhall −24,9 LUFS.
+
+**Dritte Absenkung am 05.09.2026, wieder nur die Brüller:** `lh-ton-4` und
+`lh-ton-5` ein drittes Mal −3 dB. Damit sind sie die beiden leisesten Töne
+der App (Momentan-Max): Räuspern −16,1 · Sofalöwe −20,9 · Aufatmen −23,3 ·
+Nachhall −24,9 · König der Welt −25,0 · Radau −26,6 LUFS. Der Standardton
+liegt rund 9 dB unter Räuspern — Absicht, weil ein Brüllen breitbandig und
+tieffrequent ist und deshalb weit lauter wirkt, als der Messwert nahelegt.
+Wer die Zahlen ohne diesen Kontext liest, hält die Brüller für zu leise.
 
 Die Vorschau-MP3s werden aus den fertigen `.caf` erzeugt (192 kbps, mono,
 44,1 kHz) — nicht aus den Originalen. Sonst hört man in den Einstellungen
