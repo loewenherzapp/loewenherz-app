@@ -259,6 +259,91 @@ Falls Apple widerspricht, ist der Weg nach oben offen („Auf höhere Altersfrei
 - [x] **30.08.2026 — Build 1.0 (1) hochgeladen** über Xcode-Organizer → Distribute App →
       App Store Connect. Signiert mit **Apple Distribution: Patrick Eberle (794H5P8UPY)**.
 
+- [x] **01.09.2026 — Build 1.0 (2) hochgeladen.** Grund: Build 1 war veraltet — er kannte
+      nur 3 Töne (Samtpfote/Aufatmen/Nachhall), inzwischen sind es **6**
+      (König der Welt, Radau, Sofalöwe, Räuspern, Aufatmen, Nachhall) plus Änderungen in
+      `app.js` und `styles.css`. `CURRENT_PROJECT_VERSION` von 1 auf 2 erhöht (zwei
+      Stellen in project.pbxproj) — Apple lehnt gleiche Version+Build ab.
+- [x] **01.09.2026 — App-Datenschutz veröffentlicht.**
+- [x] **01.09.2026 — Build 1.0 (2) der Version zugewiesen.**
+- [x] **01.09.2026 — ZUR PRÜFUNG EINGEREICHT.** Status: *1.0 Bereit zur Prüfung*.
+      Apple nennt bis zu 48 Stunden, Rückmeldung per E-Mail.
+
+### Ablehnung 02.09.2026 — Guideline 2.1 Information Needed
+
+**Keine Ablehnung wegen eines Mangels.** Standard-Nachfrage bei Konten ohne
+Prüfhistorie („a developer account that has a limited App Review history").
+Submission-ID `634e1634-e9a5-4a36-9bd9-d18aa2539faf`, Status *1.0 Abgelehnt*,
+Grund im Portal: *2.1.0 Performance: App Completeness*.
+
+Apple fordert sechs Dinge. Stand 06.09.2026:
+
+- [x] **Notes-Feld** neu befüllt (3953 Zeichen): Zweck, Zielgruppe, Zugang ohne Konto,
+      Feature-Wegweiser, externe Dienste, regionale Gleichheit, Regulierungsstatus,
+      Drittanbieter-Material, „keine nutzergenerierten Inhalte".
+- [x] **Antwort an die App-Prüfung als Entwurf gesichert** (3877 Zeichen), beantwortet
+      Punkte 1–6. Volltext auch in [app-store-review-reply.md](app-store-review-reply.md).
+- [x] **08.09.2026 — Antwort abgesendet**, inklusive Bildschirmaufnahme (68 s, iPhone,
+      384×848 nach WhatsApp-Kompression, lesbar geprüft). Zeigt Onboarding,
+      E-Mail-Seite mit „Erstmal ohne", Push-Erklärung, SMALL-Auswahl, **laufende
+      Abendreflexion**, Einstellungen. Nachrichtenverlauf steht auf 2.
+
+**Kein erneutes Einreichen nötig — und auch nicht möglich.** „Erneut zur App-Prüfung
+übermitteln" ist nach der Antwort **deaktiviert**. Bei einer 2.1-Informationsanfrage
+nimmt der Prüfer die Antwort selbst auf; es wird nichts neu eingereicht.
+
+**Zeitsteuerung der Reflexion im Antworttext ergänzt** (Morgen 5–11, Abend ab 18 Uhr).
+Grund: Ein Prüfer, der die App mittags öffnet, sieht sonst zwei ausgegraute Karten und
+könnte das für einen Defekt halten — genau der abgelehnte Punkt.
+
+**Falle beim Anhängen:** Der Upload meldete zweimal „never delivered", ging aber beide
+Male durch — die Datei hing doppelt dran. Nach einem solchen Fehler **immer im Dialog
+nachsehen**; Löschen geht über den roten Knopf, der erst beim Überfahren erscheint.
+
+**Wichtig für den Ablauf:** Der Antwort-Dialog kennt „Entwurf sichern" und
+„Datei anhängen". Der Entwurf bleibt im Nachrichtenverlauf stehen und lässt sich über
+„Entwurf fortsetzen" wieder öffnen.
+
+**Der Zurücksetzen-Trick für das Video:** In der App unter Zahnrad → „Alle Daten
+löschen" wird IndexedDB *und* localStorage geleert (`clearAllData()` +
+`localStorage.clear()` in `js/screens/settings.js`). Danach startet die App wieder mit
+dem Onboarding — ohne die App zu löschen oder neu zu installieren.
+
+### Falle: ITMS-90683 — fehlender Zweck-Text für Standort
+
+Nach dem Upload von Build 2 kam per Mail die Warnung ITMS-90683
+(`NSLocationWhenInUseUsageDescription` fehlt). **Keine Ablehnung** — „delivery was
+successful, you may want to correct this in your next delivery".
+
+Ursache: `OneSignalLocation.framework` liegt im Bundle und referenziert Standort-APIs.
+
+**Nicht** den `NSLocation*`-Schlüssel eintragen — das würde behaupten, die App wolle
+Standortdaten, und der veröffentlichten Datenschutzangabe „kein Standort" widersprechen.
+
+**Richtige Reparatur, zwei Teile, gehören zusammen:**
+1. Mit `ONESIGNAL_DISABLE_LOCATION=true` bauen. Das Plugin wertet die Variable in seiner
+   `Package.swift` aus und lässt `OneSignalLocation` dann weg.
+2. Die Zeile `OneSignal.Location.setShared(false)` in `js/push-native.js` entfernen —
+   sie steht **ungeschützt** in der Init-Kette; ohne das Framework könnte sie werfen und
+   die gesamte Push-Initialisierung abbrechen.
+
+Offen für den nächsten Build.
+
+### Falle: Inhaltsrechte fallen zurück
+
+Die am 28.08. gesetzte Inhaltsrechte-Angabe war am 01.09. **wieder leer** und blockierte
+die Einreichung („Kann nicht zur Prüfung hinzugefügt werden — Richte die Informationen zu
+den Inhaltsrechten in den App-Informationen ein"). Vor jeder Einreichung gegenprüfen:
+App-Informationen → Inhaltsrechte.
+
+**Wichtig zur Fehlersuche:** Diese Blockade steht als roter Kasten **oben** auf der
+Versionsseite. Der Knopf „Zur Prüfung hinzufügen" bleibt dabei aktiv und reagiert
+scheinbar gar nicht — ohne Scrollen nach oben sieht man den Grund nicht.
+
+**Zweite Falle:** Ein Klick auf den Knopf über die Element-Referenz (DOM) löst nichts
+aus; nötig ist ein echter Koordinaten-Klick. Danach öffnet sich rechts der
+„Übermittlungsentwurf" mit dem eigentlichen Knopf **„Zur Prüfung übermitteln"**.
+
 ### Falle: Distribution-Zertifikat und Organizer
 
 **Es gab kein Apple-Distribution-Zertifikat.** `xcodebuild … archive` weicht in dem Fall

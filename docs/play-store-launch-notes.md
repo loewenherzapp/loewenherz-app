@@ -98,12 +98,156 @@ Datei — der Manifest-Eintrag (`purpose: "maskable"`) bleibt unverändert.
 
 ---
 
+---
+
+## Bau-Protokoll v2 (01.09.2026, versionCode 2)
+
+Gebaut **lokal mit Bubblewrap** statt über die PWABuilder-Website — dieselbe Engine,
+die PWABuilder intern benutzt, nur ohne Keystore-Upload im Browser.
+
+Anlass: Der Wrapper lädt die Website live, inhaltliche Änderungen brauchen also
+**keinen** neuen Build. Das **Icon** steckt dagegen fest im Paket — das hochgeladene
+v1 (21.07.2026) trug auf Launcher, Splash und Benachrichtigungen noch das alte Icon.
+Der Neubau hebt nebenbei `targetSdk` von 35 auf 36.
+
+| | v1 (21.07.2026) | v2 (01.09.2026) |
+|---|---|---|
+| versionCode / versionName | 1 / 1.0.0.0 | 2 / 1.0.1 |
+| targetSdk / compileSdk | 35 / 36 | 36 / 36 |
+| minSdk | 23 | 23 |
+| Icon | alt (oranger Löwe auf Creme) | neu (Petrol-Designer-Icon) |
+| `AD_ID` im Merged Manifest | nein | nein |
+
+Ablage des Pakets: `/Users/Katana/Buch/Löwenherz - Google Play package v2 (versionCode 2)/`
+(nicht im Repo — `.aab`, `.apk`, Store-Icon, `twa-manifest.json`).
+
+**Hochgeladen am 08.09.2026** in den Track *Interner Test*, Release „2 (1.0.1)", vollständiger
+Roll-out. Das alte Bundle 1 (1.0.0.0) wurde dabei bewusst **nicht** mit eingeschlossen und ist
+damit ersetzt. Google meldete keine Geräteverluste; Downloadgröße 1,46 MB (+207 KB).
+
+Toolchain, einmalig eingerichtet:
+
+```bash
+brew install openjdk@17
+brew install --cask android-commandlinetools
+```
+
+`~/.bubblewrap/config.json`:
+
+```json
+{"jdkPath":"/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk",
+ "androidSdkPath":"/opt/homebrew/share/android-commandlinetools"}
+```
+
+Bau ohne die interaktiven `init`-Fragen: `twa-manifest.json` von Hand schreiben, dann
+`bubblewrap update --skipVersionUpgrade` und `bubblewrap build --skipPwaValidation`.
+Passwörter über `BUBBLEWRAP_KEYSTORE_PASSWORD` / `BUBBLEWRAP_KEY_PASSWORD`.
+
+### Fallen aus diesem Bau
+
+- **Bubblewraps eigener JDK-Download ist kaputt** (`end of central directory record
+  signature not found`). JDK deshalb über Homebrew. Auf macOS muss `jdkPath` auf den
+  Ordner zeigen, der `Contents/Home/bin/java` *enthält* — also
+  `…/openjdk@17/libexec/openjdk.jdk`, nicht auf `Contents/Home` selbst.
+- **Bubblewrap sucht `sdkmanager` unter `<sdk>/bin/` oder `<sdk>/tools/bin/`.** Der
+  Homebrew-Cask legt ihn nach `<sdk>/cmdline-tools/latest/bin/` → Symlink nötig:
+  `ln -sfn "$SDK/cmdline-tools/latest/bin" "$SDK/bin"`.
+- **`signing-key-info.txt` hat CRLF-Zeilenenden.** Ein daraus gelesenes Passwort trägt
+  ein `\r` am Ende, und apksigner meldet dann irreführend
+  `keystore password was incorrect / Password is not ASCII`. Immer `tr -d '\r\n'`.
+
+### Nach dem Bau verifiziert
+
+- APK-Signatur-Fingerprint `8D:94:10:…:A0:70:71` — identisch mit dem Upload-Key in der
+  live ausgelieferten `assetlinks.json`. Play akzeptiert das Update.
+- Kein `AD_ID` im Merged Manifest (beide Merge-Stufen geprüft).
+- `POST_NOTIFICATIONS` und `DelegationService` vorhanden — Web-Push wird weiter an die
+  App delegiert.
+
+### Offene Designentscheidung: Splash
+
+`backgroundColor` steht auf `#f7ead8` (Creme, aus dem Web-Manifest). Weil das neue Icon
+einen Petrol-Hintergrund mitbringt, zeigt der Startbildschirm jetzt ein petrolfarbenes
+Quadrat auf Creme. Nahtlos wäre er mit `"backgroundColor": "#39828b"` in der
+`twa-manifest.json`. Bewusst offen gelassen.
+
+---
+
+## Geschlossener Test (Stand 08.09.2026)
+
+Der geschlossene Test ist die Pflichtstation vor dem Produktionszugriff — bei privaten
+Entwicklerkonten verlangt Google einen bestandenen geschlossenen Test. Der **interne**
+Test zählt dafür nicht.
+
+**Verbindliche Kriterien** (aus der Play Console, nicht aus dem Hilfe-Center):
+
+- Einen Release im geschlossenen Test veröffentlichen
+- **Mindestens 12 Tester müssen sich anmelden** — Anmelden heißt: den Opt-in-Link öffnen
+  und annehmen. Auf der Liste stehen genügt nicht.
+- Test mit mindestens 12 Testern **mindestens 14 Tage** laufen lassen
+
+Track: **„Geschlossener Test - Alpha"** (`tracks/4700151773270654677`).
+
+Eingerichtet am 08.09.2026:
+
+- Release-Entwurf „2 (1.0.1)" mit Bundle versionCode 2 (aus der Bibliothek, kein zweiter Upload)
+- Versionshinweise de-DE für die Tester
+- **177 Länder/Regionen** (alle) — bewusst nicht auf DACH begrenzt, damit kein Proband
+  wegen seines Play-Store-Landes aus der Anmeldezahl fällt
+- Offen: Testerliste, danach Vorschau bestätigen und zur Prüfung einreichen
+
+**Anders als beim internen Test geht dieser Release durch Googles Prüfung.** Mit ihm gehen
+alle offenen Änderungen aus „Veröffentlichungen – Übersicht" mit raus.
+
+### Datenschutz-URL korrigiert (08.09.2026)
+
+In der Play Console stand `https://angstdoc.de/datenschutz` — die Praxis-Seite, generischer
+Boilerplate über 92.000 Zeichen ohne eine einzige Erwähnung von OneSignal oder Löwenherz.
+Ersetzt durch `https://app.angstdoc.de/datenschutz`, die app-spezifische Erklärung (nennt
+OneSignal, die Push-Verarbeitung und Apple/Google als Empfänger) und die kanonische URL
+laut [store-readiness.md](store-readiness.md).
+
+Warum das zählt: Google gleicht die Datensicherheits-Angaben gegen die verlinkte Erklärung
+ab. Eine Erklärung, die die deklarierte Datenverarbeitung nicht beschreibt, ist ein
+Ablehnungsgrund — und unabhängig davon ein DSGVO-Problem.
+
+### App-Inhalte sind vollständig
+
+Am 08.09.2026 geprüft: „App-Inhalte → Überprüfung erforderlich" meldet **„Alles erledigt"**,
+10 abgeschlossene Deklarationen (Gesundheits-Apps, Werbe-ID, Finanzfunktionen, Behörden-Apps,
+Datensicherheit, Zielgruppe, Altersfreigaben, Anzeigen, Anmeldedaten, Datenschutzerklärung).
+Store-Eintrag de-DE und Kategorie „Gesundheit & Fitness" ebenfalls gesetzt.
+
+---
+
+## Identitätsbestätigung für Android-Entwickler (Frist 30.09.2026)
+
+**Nichts zu tun — am 08.09.2026 in der Play Console geprüft.**
+
+Google verschickt dazu Erinnerungsmails („Registriere deine Apps und Signaturschlüssel bis
+zum 30. September 2026"). Der Stand für dieses Konto:
+
+- `de.angstdoc.loewenherz` → Status **Registriert**, 1 Schlüssel, seit 20.07.2026.
+- Identität (Name + Anschrift) wird automatisch aus dem Entwicklerkonto übernommen.
+
+Warum ohne Zutun erfüllt: Die App läuft über **Play App Signing**, also hat Google den
+Verteilschlüssel selbst registriert. Der Upload-Key muss **nicht** zusätzlich eingetragen
+werden — registrierungspflichtig sind nur Schlüssel, mit denen *ausgelieferte* Pakete
+signiert werden. Löwenherz wird ausschließlich über Google Play vertrieben, also entfällt
+auch der Punkt „Apps außerhalb von Google Play registrieren".
+
+Falls das je relevant wird: Der Status steht unter *Identitätsbestätigung für
+Android-Entwickler* im Menü des Entwicklerkontos (nicht auf App-Ebene).
+
 ## Offene Punkte vor Launch
 
-- [ ] SHA-256-Fingerprint in `assetlinks.json` nachtragen (nach Play-Console-Upload)
-- [ ] Merged Manifest auf `AD_ID` prüfen (siehe b)
-- [ ] Target-API gegen Play-Deadline (31.08.2026) gegenprüfen (siehe c)
-- [ ] Provisorisches Maskable-Icon gegen finales Designer-Icon tauschen
+- [x] SHA-256-Fingerprint in `assetlinks.json` nachtragen — erledigt (`bad710d`); beide
+      Fingerprints live, `curl` liefert HTTP 200
+- [x] Merged Manifest auf `AD_ID` prüfen (siehe b) — v2 enthält die Berechtigung nicht
+- [x] Target-API gegen Play-Deadline gegenprüfen (siehe c) — v2 baut auf `targetSdk 36`
+- [x] Provisorisches Maskable-Icon gegen finales Designer-Icon tauschen — final seit
+      `bd42ca1`, in v2 enthalten
 - [ ] Disclaimer-Text juristisch prüfen lassen (aktuell Entwurf)
-- [ ] Datenschutz-URL `https://app.angstdoc.de/datenschutz` (Konstante `PRIVACY_URL`
-      in `js/config.js`) in der Play Console hinterlegen
+- [x] Datenschutz-URL `https://app.angstdoc.de/datenschutz` (Konstante `PRIVACY_URL`
+      in `js/config.js`) in der Play Console hinterlegen — erledigt 08.09.2026, siehe oben
+- [ ] Testerliste für den geschlossenen Test eintragen (mindestens 12 Anmeldungen nötig)

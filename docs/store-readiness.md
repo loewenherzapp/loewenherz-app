@@ -73,7 +73,9 @@ Kanonische URL: **`https://app.angstdoc.de/datenschutz`**
 
 ## Offene Punkte vor Launch
 
-- [ ] SHA-256-Fingerprint in `assetlinks.json` nachtragen (nach Play-Console-Upload)
-- [ ] Finales Designer-Icon gegen das provisorische maskable Icon tauschen
+- [x] SHA-256-Fingerprint in `assetlinks.json` nachtragen — erledigt (`bad710d`)
+- [x] Finales Designer-Icon gegen das provisorische maskable Icon tauschen — erledigt
+      (`bd42ca1`); im Paket steckt es ab **v2**, siehe Bau-Protokoll in
+      [play-store-launch-notes.md](play-store-launch-notes.md)
 - [ ] Disclaimer-Text juristisch prüfen lassen (aktuell Entwurf)
 - [ ] `PRIVACY_URL` in der Play Console hinterlegen
