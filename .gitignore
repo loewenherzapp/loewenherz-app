@@ -1,3 +1,7 @@
 .vercel
 node_modules/
 www/
+
+# Systemdateien und lokale Secrets
+.DS_Store
+.env*

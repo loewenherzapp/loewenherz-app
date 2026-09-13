@@ -8,3 +8,13 @@ package.json
 package-lock.json
 capacitor.config.json
 .gitattributes
+
+# Interne Doku, Previews und lokale Dateien — gehören nicht auf app.angstdoc.de.
+# (.well-known/ muss ausgeliefert bleiben: assetlinks.json für Android.)
+docs/
+CLAUDE.md
+README.md
+.claude/
+preview-*.html
+.env*
+.DS_Store
