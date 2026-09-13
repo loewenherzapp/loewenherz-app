@@ -2370,10 +2370,13 @@ button.settings-link, .settings-link-btn {
 .crisis-overlay {
   position: fixed; inset: 0; background: var(--bg-overlay);
   z-index: 400; display: flex; align-items: center; justify-content: center; padding: 20px;
+  /* Sechs Abschnitte passen auf kleine Displays nicht mehr ganz: Overlay
+     scrollt, margin:auto zentriert nur, solange Platz ist (kein Abschneiden). */
+  overflow-y: auto; -webkit-overflow-scrolling: touch;
 }
 .crisis-modal {
   background: var(--bg-paper); border-radius: var(--radius);
-  padding: 28px 24px; width: 100%; max-width: 360px;
+  padding: 28px 24px; width: 100%; max-width: 360px; margin: auto;
   animation: fadeIn 150ms ease;
 }
 .crisis-title { font-family: var(--font-serif); font-size: 20px; text-align: center; margin-bottom: 20px; color: var(--text-primary); }
