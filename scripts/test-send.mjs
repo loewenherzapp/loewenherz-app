@@ -26,7 +26,8 @@ let fails = 0;
 const check = (ok, msg) => { if (!ok) { fails++; console.log('FAIL  ' + msg); } };
 
 process.env.ONESIGNAL_API_KEY = 'test-key';
-delete process.env.CRON_SECRET;
+process.env.CRON_SECRET = 'test-secret';
+const AUTH = { authorization: 'Bearer test-secret' };
 
 // --- Attrappe: sammelt Sendungen und Tag-Schreibvorgänge ---
 function mock(players) {
@@ -54,12 +55,27 @@ function mock(players) {
   return { sends, puts };
 }
 
-async function run(players) {
+async function run(players, headers = AUTH) {
   const m = mock(players);
-  let payload = null;
-  const res = { status() { return this; }, json(p) { payload = p; return this; } };
-  await handler({ method: 'GET', headers: {} }, res);
-  return { ...m, payload };
+  let payload = null, status = 200;
+  const res = { status(c) { status = c; return this; }, json(p) { payload = p; return this; } };
+  await handler({ method: 'GET', headers }, res);
+  return { ...m, payload, status };
+}
+
+// --- 0) Zugang: fail-closed und nur mit exaktem Secret ---
+{
+  const ohne = await run([{ id: 'A', tags: { sched: 'v1;m=0000;e=0000;s=' } }], {});
+  check(ohne.status === 401 && ohne.sends.length === 0, 'ohne Bearer → 401, nichts gesendet');
+  const falsch = await run([], { authorization: 'Bearer test-secret-x' });
+  check(falsch.status === 401, 'falsches Secret → 401');
+  const nurPrefix = await run([], { authorization: 'Bearer test' });
+  check(nurPrefix.status === 401, 'Teil-Secret → 401');
+  delete process.env.CRON_SECRET;
+  const leer = await run([{ id: 'A', tags: { sched: 'v1;m=0000;e=0000;s=' } }], {});
+  check(leer.status === 500 && leer.sends.length === 0,
+    'ohne CRON_SECRET in der Umgebung → 500 statt offen (fail-closed)');
+  process.env.CRON_SECRET = 'test-secret';
 }
 
 // Aktueller Slot in derselben Rechnung wie der Server.
@@ -92,6 +108,9 @@ check(MOD.parseSched('v1;m=0500;e=1830;s=').smalls.length === 0, 'parseSched: le
 check(MOD.parseSched('v1;s=0507,0530').smalls.join(',') === '0530', 'parseSched: krumme Zeit fliegt raus');
 check(MOD.parseSched('v1;m=0500').sound === 'ton-4', 'parseSched: fehlender Ton → Standard');
 check(MOD.parseSched('v1;t=quatsch').sound === 'ton-4', 'parseSched: unbekannter Ton → Standard');
+check(MOD.parseSched('v1;m=0500').origin === 'a', 'parseSched: ohne Herkunft → app.angstdoc.de');
+check(MOD.parseSched('v1;m=0500;o=v').origin === 'v', 'parseSched: o=v → vercel.app');
+check(MOD.parseSched('v1;m=0500;o=x').origin === 'a', 'parseSched: unbekannte Herkunft → app.angstdoc.de');
 
 // --- 2) Zielt der Versand exakt? ---
 {
@@ -113,6 +132,24 @@ check(MOD.parseSched('v1;t=quatsch').sound === 'ton-4', 'parseSched: unbekannter
   check(!alle.includes('D') && !alle.includes('E') && !alle.includes('F'),
     'D/E/F bekommen NICHTS — genau hier lag der alte Bug');
   check(sends.every(s => s.ttl === 900 && s.web_url && !s.url), 'ttl + web_url unverändert');
+  check(sends.every(s => s.web_url.startsWith('https://app.angstdoc.de/')),
+    'ohne Herkunfts-Marker zeigt der Tap auf app.angstdoc.de');
+  check(sends.every(s => s.chrome_web_icon.startsWith('https://app.angstdoc.de/')), 'Icon von app.angstdoc.de');
+}
+
+// --- 2b) Herkunft: vercel.app-Geräte bekommen ihre eigene Sendung und URL ---
+{
+  const players = [
+    { id: 'NEU', tags: { sched: `v1;m=${SLOT};e=${ABENDS};s=` } },
+    { id: 'ALT', tags: { sched: `v1;m=${SLOT};e=${ABENDS};s=;o=v` } }
+  ];
+  const { sends } = await run(players);
+  check(sends.length === 2, `zwei Sendungen (eine je Herkunft) — waren ${sends.length}`);
+  const neu = sends.find(s => s.include_subscription_ids.includes('NEU'));
+  const alt = sends.find(s => s.include_subscription_ids.includes('ALT'));
+  check(neu && neu.web_url === 'https://app.angstdoc.de/?tab=reflexion', 'NEU → app.angstdoc.de');
+  check(alt && alt.web_url === 'https://loewenherz-app.vercel.app/?tab=reflexion',
+    'ALT (o=v) → vercel.app, dort liegen seine Daten');
 }
 
 // --- 3) Keine Sendung ohne Empfänger ---

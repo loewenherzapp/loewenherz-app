@@ -29,8 +29,20 @@
 // die alten Keys das Tag-Limit blockieren.
 // ============================================================
 
+import { timingSafeEqual } from 'node:crypto';
+
 const ONESIGNAL_APP_ID = '1aeeca68-13c9-400a-a243-dd749527c49f';
 const ONESIGNAL_BASE = 'https://onesignal.com/api/v1';
+
+// Ziel des Push-Taps je Herkunfts-Domain. Web-Push und IndexedDB sind an
+// den Origin gebunden: Öffnet der Tap eine andere Domain, steht der Nutzer
+// in einer leeren App. Der Client markiert nur die alte vercel.app-Domain
+// (`o=v` im sched-Tag); alles andere gilt als app.angstdoc.de.
+const WEB_ORIGINS = {
+  a: 'https://app.angstdoc.de',
+  v: 'https://loewenherz-app.vercel.app'
+};
+const DEFAULT_ORIGIN = 'a';
 
 // Zuordnung Ton-Kennung → Datei im iOS-Bundle. Muss zu SOUND_OPTIONS in
 // js/notification-sound.js passen. Fehlt `t` im Zeitplan, gilt der
@@ -62,9 +74,14 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const authHeader = req.headers.authorization;
+  // Fail-closed: Ohne konfiguriertes Secret läuft hier NICHTS — sonst wäre
+  // der Versand nach einem Env-Umzug für jeden aufrufbar. Zeitkonstanter
+  // Vergleich, damit die Antwortzeit nichts über das Secret verrät.
   const expectedToken = process.env.CRON_SECRET;
-  if (expectedToken && authHeader !== `Bearer ${expectedToken}`) {
+  if (!expectedToken) {
+    return res.status(500).json({ error: 'CRON_SECRET not configured' });
+  }
+  if (!tokenPasst(req.headers.authorization, expectedToken)) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
@@ -105,9 +122,11 @@ export default async function handler(req, res) {
     if (!tags.sched && hatAltKeys(tags)) altbestand.push({ sub, plan });
 
     const ton = SOUND_FILES[plan.sound] !== undefined ? plan.sound : DEFAULT_SOUND;
-    if (plan.morning === currentSlot) push(empfaenger.morning, ton, sub.id);
-    if (plan.evening === currentSlot) push(empfaenger.evening, ton, sub.id);
-    if (plan.smalls.includes(currentSlot)) push(empfaenger.small, ton, sub.id);
+    // Gruppenschlüssel = Ton + Herkunft: beides steckt im Payload.
+    const gruppe = `${ton}|${plan.origin || DEFAULT_ORIGIN}`;
+    if (plan.morning === currentSlot) push(empfaenger.morning, gruppe, sub.id);
+    if (plan.evening === currentSlot) push(empfaenger.evening, gruppe, sub.id);
+    if (plan.smalls.includes(currentSlot)) push(empfaenger.small, gruppe, sub.id);
   }
 
   // --- 3) Senden ---
@@ -123,7 +142,8 @@ export default async function handler(req, res) {
     const cfg = TEXTE[typ];
     const body = cfg.texte[(dayOfYear + cfg.offset) % cfg.texte.length];
 
-    for (const [ton, ids] of Object.entries(gruppen)) {
+    for (const [gruppe, ids] of Object.entries(gruppen)) {
+      const [ton, origin] = gruppe.split('|');
       // Sehr große Gruppen aufteilen — OneSignal nimmt 2.000 IDs pro Call.
       for (let i = 0; i < ids.length; i += MAX_IDS_PER_SEND) {
         const teil = ids.slice(i, i + MAX_IDS_PER_SEND);
@@ -133,12 +153,12 @@ export default async function handler(req, res) {
             subscriptionIds: teil,
             title: cfg.title,
             body,
-            url: `https://loewenherz-app.vercel.app/?tab=${cfg.tab}`,
+            url: `${WEB_ORIGINS[origin] || WEB_ORIGINS[DEFAULT_ORIGIN]}/?tab=${cfg.tab}`,
             iosSound: SOUND_FILES[ton]
           });
-          results.push({ type: typ, sound: ton, targeted: teil.length, ...r });
+          results.push({ type: typ, sound: ton, origin, targeted: teil.length, ...r });
         } catch (e) {
-          results.push({ type: typ, sound: ton, targeted: teil.length, error: e.message });
+          results.push({ type: typ, sound: ton, origin, targeted: teil.length, error: e.message });
         }
       }
     }
@@ -169,7 +189,9 @@ export default async function handler(req, res) {
 // ============================================================
 
 /**
- * Parst den `sched`-Tag:  v1;m=0500;e=1830;s=0530,0930;t=ton-2
+ * Parst den `sched`-Tag:  v1;m=0500;e=1830;s=0530,0930;t=ton-2;o=v
+ * (`o` = Herkunfts-Domain des Web-Geräts, siehe WEB_ORIGINS; fehlt es,
+ * gilt app.angstdoc.de.)
  *
  * Unbekannte Formatversion → null. Das ist Absicht: Läge hier eine
  * Fehlinterpretation vor, würden Erinnerungen zu falschen Zeiten
@@ -180,7 +202,7 @@ export function parseSched(wert) {
   const teile = wert.split(';');
   if (teile[0] !== 'v1') return null;
 
-  const plan = { morning: null, evening: null, smalls: [], sound: DEFAULT_SOUND };
+  const plan = { morning: null, evening: null, smalls: [], sound: DEFAULT_SOUND, origin: DEFAULT_ORIGIN };
   for (const teil of teile.slice(1)) {
     const [schluessel, roh = ''] = teil.split('=');
     if (schluessel === 'm') plan.morning = gueltigerSlot(roh);
@@ -189,6 +211,8 @@ export function parseSched(wert) {
       plan.smalls = roh.split(',').map(gueltigerSlot).filter(Boolean);
     } else if (schluessel === 't' && SOUND_FILES[roh] !== undefined) {
       plan.sound = roh;
+    } else if (schluessel === 'o' && WEB_ORIGINS[roh]) {
+      plan.origin = roh;
     }
   }
   return plan;
@@ -228,8 +252,18 @@ function hatAltKeys(tags) {
   return ALT_KEYS.some((k) => tags[k] !== undefined);
 }
 
-function push(gruppen, ton, id) {
-  (gruppen[ton] = gruppen[ton] || []).push(id);
+function push(gruppen, gruppe, id) {
+  (gruppen[gruppe] = gruppen[gruppe] || []).push(id);
+}
+
+/** Bearer-Token zeitkonstant vergleichen; alles außer exaktem Treffer ist falsch. */
+function tokenPasst(authHeader, expected) {
+  const given = typeof authHeader === 'string' && authHeader.startsWith('Bearer ')
+    ? authHeader.slice(7)
+    : '';
+  const a = Buffer.from(given);
+  const b = Buffer.from(expected);
+  return a.length === b.length && timingSafeEqual(a, b);
 }
 
 // ============================================================
@@ -272,7 +306,7 @@ async function sendNotification({ apiKey, subscriptionIds, title, body, url, ios
       // web_url statt url: `url` gilt für ALLE Plattformen und wäre auf iOS
       // die Launch-URL — der Tap würde die Website öffnen statt der App.
       web_url: url,
-      chrome_web_icon: 'https://loewenherz-app.vercel.app/assets/icons/icon-192.png',
+      chrome_web_icon: 'https://app.angstdoc.de/assets/icons/icon-192.png',
       // Ohne ios_sound spielt iOS den Systemton. Web-Push ignoriert das Feld.
       ...(iosSound ? { ios_sound: iosSound } : {}),
       ttl: 900 // 15 Minuten — danach nicht mehr zustellen
