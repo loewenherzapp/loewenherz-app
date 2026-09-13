@@ -31,6 +31,14 @@
   "rewrites": [
     { "source": "/datenschutz", "destination": "/datenschutz.html" }
   ],
+  "redirects": [
+    {
+      "source": "/install.html",
+      "has": [{ "type": "host", "value": "loewenherz-app.vercel.app" }],
+      "destination": "https://app.angstdoc.de/install.html",
+      "permanent": false
+    }
+  ],
   "functions": {
     "api/send-notifications.js": {
       "maxDuration": 30

@@ -387,6 +387,15 @@ function buildTags() {
     if (ton) teile.push(`t=${ton}`);
   }
 
+  // Herkunfts-Domain: Web-Push und IndexedDB sind an den Origin gebunden.
+  // Der Server lenkt den Push-Tap auf die Domain, auf der die Daten liegen.
+  // Markiert wird nur die alte vercel.app-Domain; ohne Marker gilt
+  // app.angstdoc.de (Gegenstück: WEB_ORIGINS in api/send-notifications.js).
+  if (!isNative() && typeof location !== 'undefined'
+      && location.hostname === 'loewenherz-app.vercel.app') {
+    teile.push('o=v');
+  }
+
   return { sched: teile.join(';') };
 }
 
