@@ -4,6 +4,7 @@
 // ============================================================
 
 import { getAllPoints, getAllReflections, getAllMilestonesDB, getMilestone, saveMilestone, getPointsByDate } from './db.js';
+import { getWeekNumber } from './components/week-dots.js';
 
 // --- Milestone Catalog ---
 
@@ -38,12 +39,12 @@ const MILESTONES = {
 
 // --- ISO Week helper ---
 
+// Gleiche Rechnung wie getISOWeekId() in weekly-cards.js (ISO-8601).
 function getISOWeek(dateStr) {
   const d = new Date(dateStr + 'T12:00:00');
-  d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7));
-  const yearStart = new Date(d.getFullYear(), 0, 4);
-  const weekNum = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-  return `${d.getFullYear()}-W${String(weekNum).padStart(2, '0')}`;
+  const thursday = new Date(d);
+  thursday.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7));
+  return `${thursday.getFullYear()}-W${String(getWeekNumber(d)).padStart(2, '0')}`;
 }
 
 // --- Morning reflection helper ---
