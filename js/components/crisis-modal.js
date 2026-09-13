@@ -18,16 +18,11 @@ function renderCrisisContent() {
       <div class="crisis-modal">
         <h2 class="crisis-title">${t.title}</h2>
 
+        ${t.sections.map((sec) => `
         <div class="crisis-section">
-          <div class="crisis-section-label">${t.telefonseelsorge}</div>
-          <a href="tel:${t.phone1.replace(/\s/g, '')}" class="crisis-phone">${t.phone1}</a>
-          <a href="tel:${t.phone2.replace(/\s/g, '')}" class="crisis-phone">${t.phone2}</a>
-        </div>
-
-        <div class="crisis-section">
-          <div class="crisis-section-label">${t.krisentelefon}</div>
-          <a href="tel:${t.phone3.replace(/\s/g, '')}" class="crisis-phone">${t.phone3}</a>
-        </div>
+          <div class="crisis-section-label">${sec.label}</div>
+          ${sec.phones.map((nr) => `<a href="tel:${nr.replace(/\s/g, '')}" class="crisis-phone">${nr}</a>`).join('')}
+        </div>`).join('')}
 
         <div class="crisis-section">
           <div class="crisis-section-label">${t.online}</div>

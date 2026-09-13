@@ -479,11 +479,18 @@ export const TEXTS = {
     },
     crisis: {
       title: "Du bist nicht allein.",
-      telefonseelsorge: "Telefonseelsorge (24/7, kostenlos, anonym)",
-      phone1: "0800 111 0 111",
-      phone2: "0800 111 0 222",
-      krisentelefon: "Krisentelefon",
-      phone3: "0800 116 016",
+      // Reihenfolge = Dringlichkeit. Nummern verifiziert (Stand 09/2026):
+      // 112 EU-Notruf; Telefonseelsorge DE; 116 117 ärztlicher
+      // Bereitschaftsdienst DE; 142 Telefonseelsorge AT; 143 Die Dargebotene
+      // Hand CH. Die frühere „Krisentelefon 0800 116 016" war falsch
+      // (Hilfetelefon Gewalt gegen Frauen lautet 08000 116 016).
+      sections: [
+        { label: "Notruf bei akuter Gefahr (europaweit)", phones: ["112"] },
+        { label: "Telefonseelsorge Deutschland (24/7, kostenlos, anonym)", phones: ["0800 111 0 111", "0800 111 0 222"] },
+        { label: "Ärztlicher Bereitschaftsdienst Deutschland (24/7, kostenlos)", phones: ["116 117"] },
+        { label: "Telefonseelsorge Österreich (24/7, kostenlos)", phones: ["142"] },
+        { label: "Die Dargebotene Hand, Schweiz (24/7)", phones: ["143"] }
+      ],
       online: "Online-Beratung",
       onlineUrl: "online.telefonseelsorge.de",
       onlineHref: "https://online.telefonseelsorge.de",
