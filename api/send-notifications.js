@@ -29,7 +29,7 @@
 // die alten Keys das Tag-Limit blockieren.
 // ============================================================
 
-import { timingSafeEqual } from 'node:crypto';
+import { timingSafeEqual, createHash } from 'node:crypto';
 
 const ONESIGNAL_APP_ID = '1aeeca68-13c9-400a-a243-dd749527c49f';
 const ONESIGNAL_BASE = 'https://onesignal.com/api/v1';
@@ -54,7 +54,9 @@ const SOUND_FILES = {
   'ton-4': 'lh-ton-4.caf',
   'ton-5': 'lh-ton-5.caf',
   'ton-6': 'lh-ton-6.caf',
-  'system': null
+  // 'default' ist der explizite APNs-Wert für den Systemton. Das Feld
+  // wegzulassen hieße laut OneSignal-Doku „stumm zustellen".
+  'system': 'default'
 };
 const DEFAULT_SOUND = 'ton-4';
 
@@ -62,12 +64,15 @@ const DEFAULT_SOUND = 'ton-4';
 // stiller Deckel würde aussehen wie „alle bedient".
 const MAX_PAGES = 40;          // 40 × 300 = 12.000 Subscriptions
 const PAGE_SIZE = 300;
-const MAX_MIGRATIONS = 40;     // pro Lauf, damit kein Timeout entsteht
+const MAX_MIGRATIONS = 5;      // pro Lauf — der 15-Minuten-Takt holt den Rest
+const ZEITBUDGET_MS = 20000;   // Migration nur, solange die Function (30 s) Luft hat
 const MAX_IDS_PER_SEND = 2000; // OneSignal-Grenze für include_subscription_ids
 
-// Die alten Keys, die bei einer Migration weichen müssen.
-const ALT_KEYS = ['morning_utc', 'evening_utc', 'sound']
-  .concat(Array.from({ length: 10 }, (_, i) => `small_${i + 1}_utc`));
+// Die alten Keys, die bei einer Migration weichen müssen. Reihenfolge =
+// Lösch-Reihenfolge: erst die SMALL-Slots, zuletzt Morgen/Abend/Ton — bricht
+// eine Migration mittendrin ab, bleiben die wichtigen Zeiten stehen.
+const ALT_KEYS = Array.from({ length: 10 }, (_, i) => `small_${i + 1}_utc`)
+  .concat(['morning_utc', 'evening_utc', 'sound']);
 
 export default async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'POST') {
@@ -91,6 +96,7 @@ export default async function handler(req, res) {
   }
 
   // Aktueller UTC-Slot im 15-Minuten-Raster, als "HHMM" wie im Tag-Wert.
+  const start = Date.now();
   const now = new Date();
   const utcH = now.getUTCHours();
   const utcM = Math.floor(now.getUTCMinutes() / 15) * 15;
@@ -119,7 +125,9 @@ export default async function handler(req, res) {
     const tags = sub.tags || {};
     const plan = tags.sched ? parseSched(tags.sched) : planAusAltTags(tags);
     if (!plan) continue;
-    if (!tags.sched && hatAltKeys(tags)) altbestand.push({ sub, plan });
+    // Alt-Keys räumen, sobald sie existieren — auch NEBEN einem sched. Sonst
+    // leben sie wieder auf, sobald der Nutzer Push ausschaltet (sched leer).
+    if (hatAltKeys(tags)) altbestand.push({ sub, plan, nurRaeumen: !!tags.sched });
 
     const ton = SOUND_FILES[plan.sound] !== undefined ? plan.sound : DEFAULT_SOUND;
     // Gruppenschlüssel = Ton + Herkunft: beides steckt im Payload.
@@ -138,6 +146,7 @@ export default async function handler(req, res) {
                offset: parseInt(currentSlot, 10) }
   };
 
+  const utcDatum = now.toISOString().slice(0, 10);
   for (const [typ, gruppen] of Object.entries(empfaenger)) {
     const cfg = TEXTE[typ];
     const body = cfg.texte[(dayOfYear + cfg.offset) % cfg.texte.length];
@@ -154,7 +163,10 @@ export default async function handler(req, res) {
             title: cfg.title,
             body,
             url: `${WEB_ORIGINS[origin] || WEB_ORIGINS[DEFAULT_ORIGIN]}/?tab=${cfg.tab}`,
-            iosSound: SOUND_FILES[ton]
+            iosSound: SOUND_FILES[ton],
+            // Gleicher Slot, gleiche Gruppe → gleicher Schlüssel: Ein zweiter
+            // Lauf im selben Slot (Retry, Doppelaufruf) sendet nicht erneut.
+            idempotencyKey: idempotenzSchluessel(`${utcDatum}|${currentSlot}|${typ}|${ton}|${origin}|${i}`)
           });
           results.push({ type: typ, sound: ton, origin, targeted: teil.length, ...r });
         } catch (e) {
@@ -167,10 +179,14 @@ export default async function handler(req, res) {
   // --- 4) Altbestand einmalig auf `sched` umschreiben ---
   const migriert = [];
   for (const eintrag of altbestand.slice(0, MAX_MIGRATIONS)) {
-    migriert.push(await migrateAltTags(apiKey, eintrag.sub, eintrag.plan));
+    if (Date.now() - start > ZEITBUDGET_MS) {
+      console.log('[send] Zeitbudget erschöpft — restliche Migrationen beim nächsten Lauf');
+      break;
+    }
+    migriert.push(await migrateAltTags(apiKey, eintrag.sub, eintrag.plan, eintrag.nurRaeumen));
   }
-  if (altbestand.length > MAX_MIGRATIONS) {
-    console.log(`[send] Migration gedeckelt: ${altbestand.length - MAX_MIGRATIONS} Geräte warten auf den nächsten Lauf`);
+  if (altbestand.length > migriert.length) {
+    console.log(`[send] Migration gedeckelt: ${altbestand.length - migriert.length} Geräte warten auf den nächsten Lauf`);
   }
 
   return res.status(200).json({
@@ -180,7 +196,7 @@ export default async function handler(req, res) {
     calls: results.length,
     results,
     migrations: migriert.length ? migriert : 'keine offen',
-    migrations_pending: Math.max(0, altbestand.length - MAX_MIGRATIONS)
+    migrations_pending: Math.max(0, altbestand.length - migriert.length)
   });
 }
 
@@ -283,7 +299,9 @@ async function fetchSubscriptions(apiKey) {
     // Payload — sie können keine Zustellung mehr annehmen.
     for (const p of players) {
       if (p.invalid_identifier === true) continue;
-      if (p.notification_types === -2) continue;
+      // 1 = abonniert. Alles andere (-2 abgemeldet, 0 keine Berechtigung,
+      // -31 usw.) kann keine Zustellung annehmen.
+      if (p.notification_types !== 1) continue;
       alle.push(p);
     }
     if (players.length < PAGE_SIZE) return alle;
@@ -292,12 +310,13 @@ async function fetchSubscriptions(apiKey) {
   return alle;
 }
 
-async function sendNotification({ apiKey, subscriptionIds, title, body, url, iosSound }) {
+async function sendNotification({ apiKey, subscriptionIds, title, body, url, iosSound, idempotencyKey }) {
   const resp = await fetch(`${ONESIGNAL_BASE}/notifications`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Basic ${apiKey}` },
     body: JSON.stringify({
       app_id: ONESIGNAL_APP_ID,
+      idempotency_key: idempotencyKey,
       // Gezielt statt per Filter — die Zuordnung passiert oben in diesem
       // Server, weil sie im Tag-Wert steckt.
       include_subscription_ids: subscriptionIds,
@@ -307,13 +326,16 @@ async function sendNotification({ apiKey, subscriptionIds, title, body, url, ios
       // die Launch-URL — der Tap würde die Website öffnen statt der App.
       web_url: url,
       chrome_web_icon: 'https://app.angstdoc.de/assets/icons/icon-192.png',
-      // Ohne ios_sound spielt iOS den Systemton. Web-Push ignoriert das Feld.
+      // Web-Push ignoriert das Feld; 'default' = Apple-Systemton.
       ...(iosSound ? { ios_sound: iosSound } : {}),
       ttl: 900 // 15 Minuten — danach nicht mehr zustellen
     })
   });
 
   const data = await resp.json();
+  if (!resp.ok) {
+    throw new Error(`notifications HTTP ${resp.status}: ${JSON.stringify(data.errors || data)}`);
+  }
   return {
     sent: true,
     recipients: data.recipients || 0,
@@ -332,8 +354,9 @@ async function sendNotification({ apiKey, subscriptionIds, title, body, url, ios
  * - In 3er-Häppchen: Ein Request mit mehr Keys wird ebenfalls abgewiesen —
  *   das gilt auch fürs Löschen.
  */
-async function migrateAltTags(apiKey, sub, plan) {
+async function migrateAltTags(apiKey, sub, plan, nurRaeumen = false) {
   const vorhanden = ALT_KEYS.filter((k) => (sub.tags || {})[k] !== undefined);
+  const kurz = String(sub.id).slice(0, 8);
   try {
     for (let i = 0; i < vorhanden.length; i += 3) {
       const haeppchen = {};
@@ -341,18 +364,34 @@ async function migrateAltTags(apiKey, sub, plan) {
       await putTags(apiKey, sub.id, haeppchen);
     }
 
+    // Gerät trägt schon ein sched: nur die Alt-Keys räumen, den aktuellen
+    // Plan des Clients nicht überschreiben.
+    if (nurRaeumen) return { id: kurz, ok: true, cleared: vorhanden.length };
+
     const teile = ['v1', `m=${plan.morning || ''}`, `e=${plan.evening || ''}`,
                    `s=${plan.smalls.join(',')}`];
     if (plan.sound && plan.sound !== DEFAULT_SOUND) teile.push(`t=${plan.sound}`);
     const antwort = await putTags(apiKey, sub.id, { sched: teile.join(';') });
 
     const ok = antwort.success === true || antwort.success === 'true';
-    if (!ok) console.error(`[send] Migration von ${sub.id} fehlgeschlagen:`, antwort.errors);
-    return { id: sub.id, ok, errors: antwort.errors || null };
+    if (!ok) console.error(`[send] Migration von ${kurz}… fehlgeschlagen:`, antwort.errors);
+    return { id: kurz, ok, errors: antwort.errors || null };
   } catch (e) {
-    console.error(`[send] Migration von ${sub.id} abgebrochen:`, e.message);
-    return { id: sub.id, ok: false, errors: e.message };
+    console.error(`[send] Migration von ${kurz}… abgebrochen:`, e.message);
+    return { id: kurz, ok: false, errors: e.message };
   }
+}
+
+/**
+ * Deterministische UUID (RFC 9562, Version 5 aus SHA-1) für OneSignals
+ * idempotency_key: gleicher Text → gleicher Schlüssel, 30 Tage gültig.
+ */
+export function idempotenzSchluessel(text) {
+  const h = createHash('sha1').update(`loewenherz-send|${text}`).digest();
+  h[6] = (h[6] & 0x0f) | 0x50;
+  h[8] = (h[8] & 0x3f) | 0x80;
+  const hex = h.subarray(0, 16).toString('hex');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
 }
 
 async function putTags(apiKey, playerId, tags) {

@@ -35,12 +35,17 @@ function mock(players) {
   globalThis.fetch = async (url, opts = {}) => {
     if (url.includes('/players?')) {
       const offset = Number(new URL(url).searchParams.get('offset'));
-      return { ok: true, json: async () => ({ players: offset === 0 ? players : [] }) };
+      // Wie die echte API: jedes Gerät trägt notification_types (1 = abonniert).
+      const seite = players.map((p) => ({ notification_types: 1, ...p }));
+      return { ok: true, json: async () => ({ players: offset === 0 ? seite : [] }) };
     }
     if (url.includes('/notifications')) {
       const b = JSON.parse(opts.body);
       sends.push(b);
-      return { json: async () => ({ id: 'x', recipients: b.include_subscription_ids.length }) };
+      if (b.contents && b.contents.en === undefined) {
+        return { ok: false, status: 400, json: async () => ({ errors: ['contents required'] }) };
+      }
+      return { ok: true, json: async () => ({ id: 'x', recipients: b.include_subscription_ids.length }) };
     }
     // PUT /players/<id> — das Tag-Limit der echten API nachbilden:
     // mehr als 3 Keys in einem Request werden komplett abgewiesen.
@@ -180,8 +185,23 @@ check(MOD.parseSched('v1;m=0500;o=x').origin === 'a', 'parseSched: unbekannte He
     'C bekommt lh-ton-2.caf');
   check(sends.find(s => s.ios_sound === 'lh-ton-6.caf').include_subscription_ids[0] === 'E',
     'E bekommt lh-ton-6.caf — ein neuer Ton kostet genau eine eigene Sendung');
-  const sys = sends.find(s => !('ios_sound' in s));
-  check(sys && sys.include_subscription_ids[0] === 'D', 'system → gar kein ios_sound-Feld');
+  const sys = sends.find(s => s.ios_sound === 'default');
+  check(sys && sys.include_subscription_ids[0] === 'D',
+    'system → ios_sound "default" (Feld weglassen hieße laut Doku: stumm)');
+  check(sends.every(s => /^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(s.idempotency_key)),
+    'jede Sendung trägt einen idempotency_key als UUID v5');
+  check(new Set(sends.map(s => s.idempotency_key)).size === sends.length,
+    'Schlüssel unterscheiden sich je Gruppe');
+}
+
+// --- 4b) Idempotenz: zwei Läufe im selben Slot → identische Schlüssel ---
+{
+  const players = [{ id: 'A', tags: { sched: `v1;m=${SLOT};e=${ABENDS};s=` } }];
+  const erster = await run(players);
+  const zweiter = await run(players);
+  check(erster.sends[0].idempotency_key === zweiter.sends[0].idempotency_key,
+    'gleicher Slot + gleiche Gruppe → gleicher idempotency_key (OneSignal verwirft die Wiederholung)');
+  check(MOD.idempotenzSchluessel('a') !== MOD.idempotenzSchluessel('b'), 'verschiedene Texte → verschiedene Schlüssel');
 }
 
 // --- 5) Altbestand: wird bedient UND migriert ---
@@ -217,16 +237,62 @@ check(MOD.parseSched('v1;m=0500;o=x').origin === 'a', 'parseSched: unbekannte He
   check(puts.length === 0, 'kein Schreibvorgang bei bereits migrierten Geräten');
 }
 
+// --- 6b) sched UND Alt-Keys nebeneinander: Alt-Keys werden geräumt, sched bleibt ---
+{
+  const tags = { sched: `v1;m=${SLOT};e=${ABENDS};s=`, morning_utc: mitDoppelpunkt(MORGENS), evening_utc: mitDoppelpunkt(ABENDS) };
+  const { sends, puts, payload } = await run([{ id: 'MIX', tags }]);
+  check(sends.flatMap(s => s.include_subscription_ids).join('') === 'MIX', 'Plan kommt aus sched, nicht aus den Alt-Keys');
+  check(puts.length === 1 && Object.keys(puts[0].tags).sort().join(',') === 'evening_utc,morning_utc'
+    && Object.values(puts[0].tags).every(v => v === ''), 'genau ein PUT, der nur die Alt-Keys leert');
+  check(!puts.some(p => 'sched' in p.tags), 'sched wird NICHT neu geschrieben (Client-Stand bleibt)');
+  check(payload.migrations[0].ok === true && payload.migrations[0].cleared === 2, 'Räumung gemeldet');
+}
+
+// --- 6c) Lösch-Reihenfolge: SMALL-Slots zuerst, Morgen/Abend/Ton zuletzt ---
+{
+  const alt = { morning_utc: mitDoppelpunkt(MORGENS), evening_utc: mitDoppelpunkt(ABENDS), sound: 'ton-2',
+    small_1_utc: mitDoppelpunkt(SLOT), small_2_utc: mitDoppelpunkt(SMALL2), small_3_utc: mitDoppelpunkt(SMALL2) };
+  const { puts } = await run([{ id: 'ALT6', tags: alt }]);
+  check(Object.keys(puts[0].tags).every(k => k.startsWith('small_')),
+    'erstes Häppchen leert nur SMALL-Slots — ein Teilabbruch lässt Morgen/Abend stehen');
+}
+
+// --- 6d) Migrations-Deckel: höchstens 5 Geräte pro Lauf, Rest gemeldet ---
+{
+  const viele = Array.from({ length: 7 }, (_, i) => ({ id: `ALT${i}`, tags: { morning_utc: mitDoppelpunkt(MORGENS) } }));
+  const { payload } = await run(viele);
+  check(payload.migrations.length === 5 && payload.migrations_pending === 2,
+    `5 migriert, 2 offen gemeldet (waren ${payload.migrations.length}/${payload.migrations_pending})`);
+  check(payload.migrations.every(m => m.id.length <= 8), 'Antwort trägt nur gekürzte IDs');
+}
+
+// --- 6e) HTTP-Fehler der Notifications-API wird als Fehler gemeldet, nicht als Erfolg ---
+{
+  const alt = globalThis.fetch;
+  const m = mock([{ id: 'A', tags: { sched: `v1;m=${SLOT};e=${ABENDS};s=` } }]);
+  const innen = globalThis.fetch;
+  globalThis.fetch = async (url, opts) => url.includes('/notifications')
+    ? { ok: false, status: 429, json: async () => ({ errors: ['rate limited'] }) }
+    : innen(url, opts);
+  let payload = null;
+  await handler({ method: 'GET', headers: AUTH }, { status() { return this; }, json(p) { payload = p; return this; } });
+  check(payload.results.length === 1 && payload.results[0].error && !payload.results[0].sent,
+    'HTTP 429 → result.error statt sent:true');
+  globalThis.fetch = alt;
+}
+
 // --- 7) Abgemeldete und ungültige Geräte fliegen raus ---
 {
   const players = [
     { id: 'OK',   tags: { sched: `v1;m=${SLOT};e=${ABENDS};s=` } },
     { id: 'DEAD', tags: { sched: `v1;m=${SLOT};e=${ABENDS};s=` }, invalid_identifier: true },
-    { id: 'OFF',  tags: { sched: `v1;m=${SLOT};e=${ABENDS};s=` }, notification_types: -2 }
+    { id: 'OFF',  tags: { sched: `v1;m=${SLOT};e=${ABENDS};s=` }, notification_types: -2 },
+    { id: 'NOPERM', tags: { sched: `v1;m=${SLOT};e=${ABENDS};s=` }, notification_types: 0 },
+    { id: 'ERR',  tags: { sched: `v1;m=${SLOT};e=${ABENDS};s=` }, notification_types: -31 }
   ];
   const { sends } = await run(players);
   const alle = sends.flatMap(s => s.include_subscription_ids);
-  check(alle.join('') === 'OK', `nur lebende Geräte werden adressiert (waren: ${alle.join(',')})`);
+  check(alle.join('') === 'OK', `nur abonnierte Geräte (notification_types 1) werden adressiert (waren: ${alle.join(',')})`);
 }
 
 console.log(fails === 0 ? 'Alle Tests bestanden.' : `\n${fails} FEHLER`);
