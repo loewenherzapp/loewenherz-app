@@ -4,7 +4,7 @@
 // ============================================================
 
 import { getAllPoints, getAllReflections, getAllMilestonesDB, getMilestone, saveMilestone, getPointsByDate } from './db.js';
-import { getWeekNumber } from './components/week-dots.js';
+import { getWeekNumber, formatDate } from './components/week-dots.js';
 
 // --- Milestone Catalog ---
 
@@ -14,7 +14,9 @@ const MILESTONES = {
   P2: { type: 'premiere', check: (ctx) => ctx.totalReflections >= 1 },
   P3: { type: 'premiere', check: (ctx) => ctx.daysWithBothReflections >= 1 },
   P4: { type: 'premiere', check: (ctx) => ctx.daysWithAll5Letters >= 1 },
-  P5: { type: 'premiere', check: (ctx) => ctx.weeksWithActivity >= 1 },
+  // „Deine erste Woche“: sieben Tage seit dem ersten Punkt – die Woche muss
+  // vergangen sein, nicht nur begonnen haben (vorher feuerte P5 am Tag 1).
+  P5: { type: 'premiere', check: (ctx) => ctx.daysSinceFirstPoint >= 7 },
 
   // Kumulativ 🏔
   K1:  { type: 'cumulative', check: (ctx) => ctx.totalPoints >= 10 },
@@ -104,6 +106,12 @@ async function buildContext() {
   }
   const weeksWithActivity = weekSet.size;
 
+  // Tage seit dem ersten Punkt (P5)
+  const firstPointDate = allPoints.length ? allPoints.map(p => p.date).sort()[0] : null;
+  const daysSinceFirstPoint = firstPointDate
+    ? Math.round((new Date(formatDate(new Date()) + 'T12:00:00') - new Date(firstPointDate + 'T12:00:00')) / 86400000)
+    : -1;
+
   // Lion mood count (E1)
   const lionMoodCount = allReflections.filter(r => r.mood === 'lion').length;
 
@@ -113,6 +121,7 @@ async function buildContext() {
     daysWithBothReflections,
     daysWithAll5Letters,
     weeksWithActivity,
+    daysSinceFirstPoint,
     lionMoodCount,
     allPoints,
     allReflections,
@@ -154,7 +163,12 @@ function findRetroactiveDate(milestoneId, ctx) {
       }
       return null;
     }
-    case 'P5': return sortedPoints[0]?.date || null;
+    case 'P5': {
+      if (!sortedPoints[0]) return null;
+      const d = new Date(sortedPoints[0].date + 'T12:00:00');
+      d.setDate(d.getDate() + 7);
+      return formatDate(d);
+    }
 
     // Cumulative: find the point at which threshold was reached
     case 'K1': case 'K2': case 'K3': case 'K4': case 'K5':

@@ -3,6 +3,7 @@
 // ============================================================
 
 import { TEXTS } from '../../content/de.js';
+import { esc } from '../escape.js';
 import { saveProfile } from '../db.js';
 import { openTimePicker, renderTimeButton } from '../components/time-picker.js';
 import { getWindow, setSchedule, DEFAULT_COUNT } from '../small-schedule.js';
@@ -50,7 +51,7 @@ export function renderOnboarding(container, onComplete) {
     const win = getWindow();
     container.innerHTML = `
       <div class="onboarding-screen">
-        <h2 class="onboarding-reminder-title">${title}</h2>
+        <h2 class="onboarding-reminder-title">${esc(title)}</h2>
         <p class="onboarding-reminder-hint">${t.reminderHint}</p>
 
         <div class="reminder-slot">

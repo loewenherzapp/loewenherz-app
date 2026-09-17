@@ -3,6 +3,10 @@
 // ============================================================
 
 import { TEXTS } from '../../content/de.js';
+
+// Einzahl/Mehrzahl: „1 Punkt“, „2 Punkte“
+const anzahl = (n, eins, viele) => `${n} ${n === 1 ? eins : viele}`;
+import { esc } from '../escape.js';
 import { getPointsByDate, getPointsByDateRange, getReflectionByDate, getReflectionsByDateRange } from '../db.js';
 import { formatDate, getMonday, renderWeekCircles } from '../components/week-dots.js';
 import { buildFeed, milestoneDisplayNames, milestoneIcons, milestoneTexts } from '../weekly-cards.js';
@@ -100,7 +104,7 @@ function getEarliestMorningDate() {
 function buildSummary(reflCount, pointCount) {
   const parts = [];
   if (reflCount > 0) parts.push(`${reflCount} Refl.`);
-  if (pointCount > 0) parts.push(`${pointCount} Punkte`);
+  if (pointCount > 0) parts.push(anzahl(pointCount, 'Punkt', 'Punkte'));
   return parts.join(' · ');
 }
 
@@ -145,7 +149,7 @@ export async function showDayDetail(dateStr) {
     html += `</div>`;
   }
   if (reflection && reflection.gratitude) {
-    html += `<div class="detail-popup-section"><div class="detail-popup-section-title">${TEXTS.ui.reflection.gratitudeTitle}</div><div class="detail-popup-gratitude">"${reflection.gratitude}"</div></div>`;
+    html += `<div class="detail-popup-section"><div class="detail-popup-section-title">${TEXTS.ui.reflection.gratitudeTitle}</div><div class="detail-popup-gratitude">"${esc(reflection.gratitude)}"</div></div>`;
   }
   html += `<button class="btn-secondary detail-popup-close" id="detail-close">${TEXTS.ui.reflection.close}</button></div></div>`;
 
@@ -197,8 +201,8 @@ function renderWeekCard(item) {
   if (!isZero) {
     // Stats
     const statParts = [];
-    if (d.points > 0) statParts.push(`${d.points} Punkte`);
-    if (d.activeDays > 0) statParts.push(`${d.activeDays} aktive Tage`);
+    if (d.points > 0) statParts.push(anzahl(d.points, 'Punkt', 'Punkte'));
+    if (d.activeDays > 0) statParts.push(anzahl(d.activeDays, 'aktiver Tag', 'aktive Tage'));
     if (statParts.length > 0) {
       html += `<div class="feed-card-stats">${statParts.join(' · ')}</div>`;
     }
@@ -371,7 +375,7 @@ export async function renderHistory(container, profile) {
     html += `<div class="history-hero-number">${totalMoments}</div>`;
     html += `<div class="history-hero-label">SMALL-Punkte</div>`;
     const detailParts = [];
-    if (totalReflections > 0) detailParts.push(`${totalReflections} Reflexionen`);
+    if (totalReflections > 0) detailParts.push(anzahl(totalReflections, 'Reflexion', 'Reflexionen'));
     if (daysSinceStart > 1) detailParts.push(`seit ${daysSinceStart} Tagen dabei`);
     if (detailParts.length > 0) {
       html += `<div class="history-hero-detail">${detailParts.join(' · ')}</div>`;
@@ -444,7 +448,7 @@ export async function renderHistory(container, profile) {
           html += `<div class="feed-month-info">`;
           html += `<span class="feed-month-label">${month.label}</span>`;
           if (statParts.length > 0) html += `<span class="feed-month-stats">${statParts.join(' · ')}</span>`;
-          if (stats.points > 0) html += `<span class="feed-month-points">${stats.points} Punkte</span>`;
+          if (stats.points > 0) html += `<span class="feed-month-points">${anzahl(stats.points, 'Punkt', 'Punkte')}</span>`;
           html += `</div>`;
           html += `</div>`;
           html += `<div class="feed-month-content">`;

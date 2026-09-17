@@ -3,11 +3,12 @@
 // ============================================================
 
 import { TEXTS } from '../../content/de.js';
+import { esc } from '../escape.js';
 import { PRIVACY_URL } from '../config.js';
 import { saveProfile, clearAllData, migrateToV2 } from '../db.js';
 import { openCrisis } from '../components/crisis-modal.js';
 import { isNative } from '../platform.js';
-import { syncOneSignalTags, roundTo15Min, ensureOneSignalLoaded, getPermissionState, requestPushPermission, ensureRoll } from '../push.js';
+import { syncOneSignalTags, roundTo15Min, ensureOneSignalLoaded, getPermissionState, requestPushPermission, ensureRoll, revokePush, optInPush } from '../push.js';
 import { openTimePicker, renderTimeButton, setTimeButtonValue } from '../components/time-picker.js';
 import { openSoundPicker } from '../components/sound-picker.js';
 import { soundLabel } from '../notification-sound.js';
@@ -152,7 +153,7 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
       <div class="settings-section">
         <div class="settings-label">${t.nameLabel}</div>
         <div class="settings-card">
-          <input type="text" class="settings-input" id="settings-name" value="${profile.name}" maxlength="30">
+          <input type="text" class="settings-input" id="settings-name" value="${esc(profile.name)}" maxlength="30">
         </div>
       </div>
 
@@ -164,7 +165,7 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
           <div class="push-setting-row">
             <div class="push-setting-labels">
               <div class="push-setting-label">Push-Benachrichtigungen</div>
-              <div class="push-setting-sublabel">Morgen- & Abendreflexion, SMALL-Reminder</div>
+              <div class="push-setting-sublabel">Morgenkompass, Abendreflexion, SMALL-Reminder</div>
             </div>
             <label class="toggle">
               <input type="checkbox" id="push-main-toggle" ${pushEnabled ? 'checked' : ''}>
@@ -370,12 +371,16 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
       localStorage.setItem('loewenherz_push_enabled', 'true');
       localStorage.setItem('loewenherz_push_asked', 'true');
       updatePushSubState();
-      // SDK ggf. nachladen (falls Permission schon granted aber SDK noch nicht da)
-      ensureOneSignalLoaded().then(() => syncOneSignalTags());
+      // SDK ggf. nachladen (falls Permission schon granted aber SDK noch nicht da);
+      // nach einem früheren Widerruf (optOut) das Abo wieder aktivieren.
+      ensureOneSignalLoaded()
+        .then(() => (getPermissionState() === 'granted' ? optInPush() : null))
+        .then(() => syncOneSignalTags());
     } else {
+      // Widerruf: Tag löschen UND Abo abmelden – nicht nur den Tag leeren.
       localStorage.setItem('loewenherz_push_enabled', 'false');
       updatePushSubState();
-      syncOneSignalTags();
+      revokePush().catch(() => {});
     }
   });
 
@@ -816,6 +821,9 @@ function showDeleteConfirm(t, onConfirm) {
   });
   document.getElementById('confirm-yes').addEventListener('click', async () => {
     el.remove();
+    // Erst Push bei OneSignal zurückbauen (liest localStorage, muss also
+    // VOR dem Leeren laufen) – sonst kämen nach dem Löschen weiter Pushes.
+    await revokePush().catch(() => {});
     await clearAllData();
     // Auch localStorage leeren (E-Mail, Push-Zeiten, Flags) —
     // "Alle Daten löschen" muss alle lokalen Daten meinen.

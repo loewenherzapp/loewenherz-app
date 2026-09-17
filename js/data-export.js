@@ -189,6 +189,17 @@ async function shareBackupNative(filename, json) {
  * Validiert ein Backup-Objekt. Wirft mit klarer Fehlermeldung
  * wenn die Daten kaputt sind.
  */
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const LETTERS = ['S', 'M', 'A', 'L1', 'L2'];
+const istText = (v, max) => typeof v === 'string' && v.length <= max;
+const optionalText = (v, max) => v === undefined || v === null || istText(v, max);
+
+/**
+ * Prüft jeden Datensatz, BEVOR irgendetwas gelöscht wird. Ein inhaltlich
+ * kaputtes Backup (Punkt ohne Datum, Morgen-Eintrag ohne JSON) ließ vorher
+ * Meilenstein-Checks und den Heute-Tab beim Rendern scheitern – nach dem
+ * Löschen der alten Daten.
+ */
 function validateBackup(data) {
   if (!data || typeof data !== 'object') {
     throw new Error('Backup-Datei ist leer oder beschädigt.');
@@ -196,8 +207,10 @@ function validateBackup(data) {
   if (data.schemaVersion !== SCHEMA_VERSION) {
     throw new Error(`Schema-Version ${data.schemaVersion} wird nicht unterstützt (erwartet: ${SCHEMA_VERSION}).`);
   }
-  if (data.profile !== null && (typeof data.profile !== 'object' || !data.profile.name)) {
-    throw new Error('Profil-Daten sind ungültig.');
+  if (data.profile !== null) {
+    if (typeof data.profile !== 'object' || !istText(data.profile.name, 30) || !data.profile.name.trim()) {
+      throw new Error('Profil-Daten sind ungültig.');
+    }
   }
   if (!Array.isArray(data.points)) {
     throw new Error('SMALL-Punkte fehlen oder sind ungültig.');
@@ -207,6 +220,35 @@ function validateBackup(data) {
   }
   if (!Array.isArray(data.milestones)) {
     throw new Error('Meilensteine fehlen oder sind ungültig.');
+  }
+  data.points.forEach((pt, i) => {
+    if (!pt || typeof pt !== 'object' || !DATE_RE.test(String(pt.date)) || !LETTERS.includes(pt.letter)
+        || !optionalText(pt.time, 5) || !optionalText(pt.category, 60) || !optionalText(pt.categoryLabel, 60)) {
+      throw new Error(`SMALL-Punkt ${i + 1} im Backup ist beschädigt.`);
+    }
+  });
+  data.reflections.forEach((r, i) => {
+    if (!r || typeof r !== 'object' || !DATE_RE.test(String(r.date)) || !/^[a-z]{1,20}$/.test(String(r.mood))
+        || !(r.helped === undefined || (Array.isArray(r.helped) && r.helped.every((h) => istText(h, 20))))
+        || !optionalText(r.gratitude, 500) || !optionalText(r.quatschiComment, 300)) {
+      throw new Error(`Reflexion ${i + 1} im Backup ist beschädigt.`);
+    }
+  });
+  data.milestones.forEach((m, i) => {
+    if (!m || typeof m !== 'object' || !/^[A-Z]\d{1,2}$/.test(String(m.id)) || !optionalText(m.date, 40)) {
+      throw new Error(`Meilenstein ${i + 1} im Backup ist beschädigt.`);
+    }
+  });
+  if (data.localStorage !== undefined && data.localStorage !== null) {
+    if (typeof data.localStorage !== 'object') throw new Error('Einstellungen im Backup sind ungültig.');
+    for (const [k, v] of Object.entries(data.localStorage)) {
+      if (typeof v !== 'string' || v.length > 2000) throw new Error(`Einstellung „${k}“ im Backup ist beschädigt.`);
+      if (k.startsWith('morningReflection_')) {
+        let parsed = null;
+        try { parsed = JSON.parse(v); } catch (e) { parsed = null; }
+        if (!parsed || typeof parsed !== 'object') throw new Error(`Einstellung „${k}“ im Backup ist beschädigt.`);
+      }
+    }
   }
 }
 

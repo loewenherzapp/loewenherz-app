@@ -5,6 +5,9 @@
 let sheetOverlay = null;
 let sheetContainer = null;
 let onCloseCallback = null;
+// Sperre gegen Doppel-Tap: Während das Sheet zufährt (200 ms), bleiben die
+// Optionen sonst antippbar – zwei Taps buchten zwei Punkte.
+let auswahlGetroffen = false;
 
 export function initBottomSheet() {
   sheetOverlay = document.getElementById('sheet-overlay');
@@ -17,11 +20,18 @@ export function openSheet(title, options, onSelect) {
   const optionsEl = sheetContainer.querySelector('.sheet-options');
   titleEl.textContent = title;
   optionsEl.innerHTML = '';
+  auswahlGetroffen = false;
   options.forEach(opt => {
     const btn = document.createElement('button');
     btn.className = 'sheet-option';
     btn.innerHTML = `<span class="sheet-option-emoji">${opt.emoji}</span><span>${opt.label}</span>`;
-    btn.addEventListener('click', () => { if (navigator.vibrate) navigator.vibrate(50); onSelect(opt); closeSheet(); });
+    btn.addEventListener('click', () => {
+      if (auswahlGetroffen) return;
+      auswahlGetroffen = true;
+      if (navigator.vibrate) navigator.vibrate(50);
+      onSelect(opt);
+      closeSheet();
+    });
     optionsEl.appendChild(btn);
   });
   sheetOverlay.classList.add('open');

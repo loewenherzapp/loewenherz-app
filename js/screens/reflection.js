@@ -3,6 +3,7 @@
 // ============================================================
 
 import { TEXTS } from '../../content/de.js';
+import { esc } from '../escape.js';
 import { getReflectionByDate, getReflectionsByDateRange, saveReflection, addSmallPoint } from '../db.js';
 import { formatDate } from '../components/week-dots.js';
 import { getReflectionEndComment } from '../quatschi.js';
@@ -276,7 +277,7 @@ function startMorningFlow(container, profile) {
     html += `<div class="morning-sun">☀️</div>`;
 
     if (showCustomLabel) {
-      html += `<div class="morning-custom-label">${customText}</div>`;
+      html += `<div class="morning-custom-label">${esc(customText)}</div>`;
     }
 
     html += `<div class="morning-wenn-dann">${wennDannText}</div>`;
@@ -297,7 +298,12 @@ function startMorningFlow(container, profile) {
     container.innerHTML = html;
     animateStepEntrance(container);
 
-    document.getElementById('morning-close').addEventListener('click', async () => {
+    let morgenAbgeschlossen = false;
+    document.getElementById('morning-close').addEventListener('click', async (ev) => {
+      // Doppel-Tap-Sperre: drei awaits, sonst 6 statt 3 Punkte
+      if (morgenAbgeschlossen) return;
+      morgenAbgeschlossen = true;
+      ev.currentTarget.disabled = true;
       const todayStr = formatDate(new Date());
       const now = new Date();
       const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
@@ -337,6 +343,7 @@ function startReflectionFlow(container, profile) {
   let selectedMood = null;
   let selectedHelped = [];
   let helpedAlt = null;
+  let reflexionAbgeschlossen = false;   // Doppel-Tap-Sperre für „Fertig“/„Nicht heute“
   let gratitudeText = '';
 
   renderStep1();
@@ -360,7 +367,7 @@ function startReflectionFlow(container, profile) {
     const title = t.title.replace('{name}', name);
     let html = `<div class="reflection-screen">`;
     html += progressDots(1);
-    html += `<div class="ref-question">${title}</div>`;
+    html += `<div class="ref-question">${esc(title)}</div>`;
     html += `<div class="mood-list" id="mood-list">`;
 
     t.moods.forEach(m => {
@@ -489,14 +496,22 @@ function startReflectionFlow(container, profile) {
     const skipBtn = document.getElementById('gratitude-skip');
     const doneBtn = document.getElementById('gratitude-done');
 
+    // Doppel-Tap-Sperre: finishReflection() bucht zwei Punkte
+    const abschliessen = () => {
+      if (reflexionAbgeschlossen) return;
+      reflexionAbgeschlossen = true;
+      skipBtn.disabled = true;
+      doneBtn.disabled = true;
+      finishReflection();
+    };
     skipBtn.addEventListener('click', () => {
       gratitudeText = '';
-      finishReflection();
+      abschliessen();
     });
 
     doneBtn.addEventListener('click', () => {
       gratitudeText = input.value.trim();
-      finishReflection();
+      abschliessen();
     });
 
     setTimeout(() => input.focus(), 300);
@@ -540,7 +555,7 @@ function startReflectionFlow(container, profile) {
     // Quote block with animated text
     html += `<div class="ref-quote-block">`;
     html += `<div class="ref-quotemark">"</div>`;
-    html += `<div class="ref-quote-text">${comment}</div>`;
+    html += `<div class="ref-quote-text">${esc(comment)}</div>`;
     html += `</div>`;
 
     // Goodnight
@@ -565,6 +580,9 @@ function startReflectionFlow(container, profile) {
         <div class="points-feedback"><span class="completion-check">✓</span> +2 Gundula-Punkte</div>
       </div>`;
       setTimeout(() => {
+        // Nutzer kann inzwischen den Tab gewechselt haben: dann nicht in
+        // den fremden Screen hineinrendern.
+        if (!container.querySelector('.reflection-screen')) return;
         renderReflection(container, profile);
       }, 2500);
 

@@ -52,7 +52,7 @@ export const TEXTS = {
       "Kaffeemaschine an — ach ja. Wie geht's dir, {name}?",
       "Der Tag ist noch jung, {name}. Dein Autopilot nicht.",
       "Quatschis To-Do-Liste hat 47 Einträge. Deine nur einen, {name}.",
-      "Gundula fragt, ob du mit ihr Gassi gehst?"
+      "Gundula fragt, ob du mit ihr Gassi gehst."
     ],
 
     afternoon: [
@@ -338,7 +338,7 @@ export const TEXTS = {
       namePlaceholder: "Dein Vorname",
       next: "Weiter →",
       reminderTitle: "Hey {name}, wann darf ich dich ansprechen?",
-      reminderHint: "Kurze Impulse im Alltag sind das Herzstück von Löwenherz. Sie holen dich aus dem Autopilot und erinnern dich an das, was du dir vorgenommen hast. Die Uhrzeiten wechseln täglich — damit sie nicht zur Gewohnheit werden.",
+      reminderHint: "Kurze Impulse im Alltag sind das Herzstück von Löwenherz. Sie holen dich aus dem Autopiloten und erinnern dich an das, was du dir vorgenommen hast. Die Uhrzeiten wechseln täglich — damit sie nicht zur Gewohnheit werden.",
       windowFrom: "Ab",
       windowTo: "Bis",
       go: "Los geht's 🦁"
@@ -447,7 +447,6 @@ export const TEXTS = {
       morningRitualLabel: "Morgenritual",
       morningRitualHint: "Dein täglicher Start: Cocktail-Check, Tagesintention, Autopilot aus.",
       eveningReflectionHint: "60 Sekunden Rückblick: Stimmung, was geholfen hat, Dankbarkeit.",
-      pushHint: "Push-Benachrichtigungen werden in einem Update aktiviert.",
       dataLabel: "Daten",
       dataHint: "Deine Daten werden nur auf diesem Gerät gespeichert. Es gibt kein Cloud-Backup. Wenn du die App deinstallierst, gehen deine Daten verloren — wenn du nicht vorher exportierst.",
       backupLabel: "Backup",

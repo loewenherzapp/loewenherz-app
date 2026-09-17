@@ -3,6 +3,7 @@
 // ============================================================
 
 import { TEXTS } from '../../content/de.js';
+import { esc } from '../escape.js';
 import { getPointsByDate, addSmallPoint, getPointsByDateRange, getReflectionsByDateRange } from '../db.js';
 import { openSheet } from '../components/bottom-sheet.js';
 import { renderWeekCircles, formatDate, getMonday } from '../components/week-dots.js';
@@ -14,7 +15,7 @@ import { hapticSelection } from '../haptics.js';
 import { getDashboardQuatschiText, getTapFeedback, showTapToast } from '../quatschi.js';
 
 const MORNING_NUDGE_TEXTS = [
-  "Quatschi fragt, ob du heute einen Plan hast?",
+  "Quatschi fragt, ob du heute einen Plan hast.",
   "Gundula wartet auf deinen Morgenkompass.",
   "Wie willst du heute sein? Quatschi hat schon Vorschläge. Ignoriere sie.",
   "Die Weiche stellt sich nicht von allein."
@@ -110,8 +111,8 @@ export async function renderDashboard(container, profile, { animate = true } = {
     : await getDashboardQuatschiText(name);
 
   const quatschiTextHtml = showMorningNudge
-    ? `<div class="quatschi-nudge" id="quatschi-nudge"><span class="quatschi-text">${quatschi}</span><span class="quatschi-nudge-arrow">\u2192</span></div>`
-    : `<div class="quatschi-text">${quatschi}</div>`;
+    ? `<div class="quatschi-nudge" id="quatschi-nudge"><span class="quatschi-text">${esc(quatschi)}</span><span class="quatschi-nudge-arrow">\u2192</span></div>`
+    : `<div class="quatschi-text">${esc(quatschi)}</div>`;
 
   container.innerHTML = `
     <div class="dashboard-screen">
@@ -243,6 +244,8 @@ export async function renderDashboard(container, profile, { animate = true } = {
 
           // Nach 600ms: Re-Render OHNE Animation
           setTimeout(async () => {
+            // Tab inzwischen gewechselt? Dann gehört der Container einem anderen Screen.
+            if (!container.querySelector('.dashboard-screen')) return;
             await renderDashboard(container, profile, { animate: false });
           }, 600);
         } catch (e) {
