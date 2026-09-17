@@ -22,6 +22,7 @@ export function renderEmailGate(container, onDone) {
       <form id="email-gate-form" novalidate>
         <input type="email" class="onboarding-input" id="email-gate-input"
                placeholder="${t.placeholder}" autocomplete="email" inputmode="email" maxlength="254">
+        <input type="text" name="website" class="hp-field" id="email-gate-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
         <div class="email-gate-error hidden" id="email-gate-error"></div>
         <div class="mt-24">
           <button type="submit" class="btn-primary" id="email-gate-submit">${t.submit}</button>
@@ -83,7 +84,7 @@ export function renderEmailGate(container, onDone) {
     lockButton(submitBtn, 60);
     submitBtn.textContent = t.sending;
 
-    const result = await subscribeEmail(email);
+    const result = await subscribeEmail(email, (document.getElementById('email-gate-hp') || {}).value);
 
     if (result.ok) {
       localStorage.setItem('userEmail', email);

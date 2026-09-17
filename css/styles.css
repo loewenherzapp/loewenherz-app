@@ -2443,6 +2443,8 @@ button.settings-link, .settings-link-btn {
 
 /* ---- Utilities ---- */
 .hidden { display: none !important; }
+/* Honeypot-Feld der E-Mail-Formulare: für Menschen unsichtbar, für Bots ein Formularfeld */
+.hp-field { position: absolute; left: -9999px; top: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .text-center { text-align: center; }
 .mt-8 { margin-top: 8px; }
 .mt-16 { margin-top: 16px; }

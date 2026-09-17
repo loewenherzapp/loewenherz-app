@@ -5,7 +5,8 @@
   "scripts": {
     "build:ios": "node scripts/build-ios.mjs && cap sync ios",
     "test:schedule": "node scripts/test-schedule.mjs",
-    "test:send": "node scripts/test-send.mjs"
+    "test:send": "node scripts/test-send.mjs",
+    "test:api": "node scripts/test-api.mjs"
   },
   "dependencies": {
     "@capacitor/app": "^8.1.1",

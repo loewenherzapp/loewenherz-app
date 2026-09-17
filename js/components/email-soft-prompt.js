@@ -58,6 +58,7 @@ function showModal() {
         <form id="soft-prompt-form" novalidate>
           <input type="email" class="onboarding-input" id="soft-prompt-input"
                  placeholder="${tg.placeholder}" autocomplete="email" inputmode="email" maxlength="254">
+          <input type="text" name="website" class="hp-field" id="soft-prompt-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
           <div class="email-gate-error hidden" id="soft-prompt-error"></div>
           <div class="mt-16">
             <button type="submit" class="btn-primary" id="soft-prompt-submit">${t.submit}</button>
@@ -137,7 +138,7 @@ function showModal() {
     lockButton(submitBtn, 60);
     submitBtn.textContent = tg.sending;
 
-    const result = await subscribeEmail(email);
+    const result = await subscribeEmail(email, (document.getElementById('soft-prompt-hp') || {}).value);
 
     if (result.ok) {
       localStorage.setItem('userEmail', email);

@@ -563,6 +563,7 @@ function renderEmailCard(t) {
     <form class="settings-email-form hidden" id="settings-email-form" novalidate>
       <input type="email" class="settings-input" id="settings-email-input"
              placeholder="${tg.placeholder}" autocomplete="email" inputmode="email" maxlength="254">
+      <input type="text" name="website" class="hp-field" id="settings-email-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
       <div class="email-gate-error hidden" id="settings-email-error"></div>
       <button type="submit" class="btn-primary" id="settings-email-submit">${tg.settingsSubmit}</button>
       <p class="email-gate-info">${tg.infoPre} <a href="#" id="settings-email-privacy">${tg.infoLink}</a></p>
@@ -602,7 +603,7 @@ function renderEmailCard(t) {
     lockButton(submitBtn, 60);
     submitBtn.textContent = tg.sending;
 
-    const result = await subscribeEmail(email);
+    const result = await subscribeEmail(email, (document.getElementById('settings-email-hp') || {}).value);
 
     if (result.ok) {
       localStorage.setItem('userEmail', email);

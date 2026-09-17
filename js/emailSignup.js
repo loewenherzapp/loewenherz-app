@@ -17,12 +17,14 @@ export function isValidEmail(email) {
 
 // Sendet die E-Mail an den Endpoint und gibt ein klares Ergebnis zurück.
 // Rückgabe: { ok: true } | { ok: false, error: "<Text für den User>" }
-export async function subscribeEmail(email) {
+// `honeypot` ist der Wert des unsichtbaren Feldes im Formular: Menschen
+// lassen es leer, Bots füllen es – der Server verwirft dann still.
+export async function subscribeEmail(email, honeypot = '') {
   try {
     const res = await fetch(API_BASE + '/api/subscribe', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email })
+      body: JSON.stringify({ email, website: honeypot || '' })
     });
     const data = await res.json().catch(() => ({}));
     if (res.ok && data.success) return { ok: true };
@@ -32,8 +34,8 @@ export async function subscribeEmail(email) {
   }
 }
 
-// Sperrt einen Button für `seconds` Sekunden (Missbrauchs-Schutz,
-// kein Server-seitiges Rate Limiting).
+// Sperrt einen Button für `seconds` Sekunden (Missbrauchs-Schutz; der
+// Server hat zusätzlich Honeypot und ein einfaches Rate-Limit pro IP).
 export function lockButton(btn, seconds = 60) {
   btn.disabled = true;
   setTimeout(() => { btn.disabled = false; }, seconds * 1000);

@@ -18,6 +18,32 @@ const ALLOWED_ORIGINS = [
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_EMAIL_LEN = 254;
 
+// Einfaches Rate-Limit pro IP, im Speicher der Function-Instanz. Kein
+// vollwertiger Schutz (jede Instanz zählt für sich), aber es stoppt das
+// Skript, das in einer Schleife DOI-Mails an fremde Adressen auslöst.
+const LIMIT_ANFRAGEN = 5;
+const LIMIT_FENSTER_MS = 10 * 60 * 1000;
+const anfragenJeIp = new Map();
+
+function rateLimited(ip) {
+  const jetzt = Date.now();
+  const liste = (anfragenJeIp.get(ip) || []).filter((t) => jetzt - t < LIMIT_FENSTER_MS);
+  if (liste.length >= LIMIT_ANFRAGEN) { anfragenJeIp.set(ip, liste); return true; }
+  liste.push(jetzt);
+  anfragenJeIp.set(ip, liste);
+  // Karteileichen anderer IPs gelegentlich wegräumen
+  if (anfragenJeIp.size > 1000) {
+    for (const [k, v] of anfragenJeIp) if (!v.some((t) => jetzt - t < LIMIT_FENSTER_MS)) anfragenJeIp.delete(k);
+  }
+  return false;
+}
+
+function clientIp(req) {
+  const xff = req.headers['x-forwarded-for'];
+  if (typeof xff === 'string' && xff.length) return xff.split(',')[0].trim();
+  return (req.socket && req.socket.remoteAddress) || 'unbekannt';
+}
+
 // Datenminimierung: E-Mail in Logs maskieren (p***@beispiel.de)
 function maskEmail(email) {
   const at = email.indexOf('@');
@@ -37,6 +63,7 @@ function applyCors(req, res) {
 
 export default async function handler(req, res) {
   applyCors(req, res);
+  res.setHeader('Cache-Control', 'no-store');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -45,8 +72,20 @@ export default async function handler(req, res) {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 
+  const body = req.body && typeof req.body === 'object' ? req.body : {};
+
+  // Honeypot: das unsichtbare Feld `website` füllt nur ein Bot. Still mit
+  // Erfolg antworten, damit er nichts lernt — Brevo wird nicht angefasst.
+  if (typeof body.website === 'string' && body.website.trim() !== '') {
+    return res.status(200).json({ success: true, message: 'Bestätigungsmail gesendet' });
+  }
+
+  if (rateLimited(clientIp(req))) {
+    return res.status(429).json({ success: false, error: 'Zu viele Versuche — bitte in ein paar Minuten nochmal' });
+  }
+
   // --- Eigen-Validierung ---
-  const email = typeof req.body?.email === 'string' ? req.body.email.trim() : '';
+  const email = typeof body.email === 'string' ? body.email.trim() : '';
   if (!email || email.length > MAX_EMAIL_LEN || !EMAIL_RE.test(email)) {
     return res.status(400).json({ success: false, error: 'Ungültige E-Mail-Adresse' });
   }
