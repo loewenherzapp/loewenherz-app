@@ -477,6 +477,9 @@ a:active { opacity: 0.7; }
 }
 .step-text { padding-top: 3px; line-height: 1.5; }
 
+/* App-Store-Link im Look des Primär-Buttons (ist ein <a>, kein <button>). */
+.landing-appstore { display: flex; align-items: center; justify-content: center; max-width: 300px; margin: 0 auto; text-decoration: none; }
+
 /* Abstand vorher inline in app.js gesetzt — gehört hierher, seit der
    Button Teil des Landing-Templates ist. */
 .landing-skip { margin-top: 32px; }

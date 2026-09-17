@@ -3,6 +3,7 @@
 // ============================================================
 
 import { TEXTS } from '../../content/de.js';
+import { APP_STORE_URL } from '../config.js';
 
 /**
  * @param {HTMLElement} container
@@ -14,11 +15,9 @@ export function renderLanding(container, onContinue) {
   let showAndroid = false;
 
   function render() {
-    const iosSteps = `
-      <div class="landing-step"><span class="step-number">1</span><span class="step-text">${t.step1}</span></div>
-      <div class="landing-step"><span class="step-number">2</span><span class="step-text">${t.step2}</span></div>
-      <div class="landing-step"><span class="step-number">3</span><span class="step-text">${t.step3}</span></div>
-      <div class="landing-step"><span class="step-number">4</span><span class="step-text">${t.step4}</span></div>
+    // iPhone: nativer Weg über den App Store statt Homescreen-Anleitung.
+    const appStore = `
+      <a class="btn-primary landing-appstore" href="${APP_STORE_URL}" target="_blank" rel="noopener noreferrer">${t.appStoreButton}</a>
     `;
 
     const androidSteps = `
@@ -31,9 +30,9 @@ export function renderLanding(container, onContinue) {
       <div class="landing-screen">
         <img src="assets/icons/icon-192.png" alt="Löwenherz" class="landing-lion" width="96" height="96">
         <h1 class="landing-title">${t.title}</h1>
-        <p class="landing-subtitle">${t.subtitle}</p>
+        <p class="landing-subtitle">${showAndroid ? t.subtitle : t.appStoreSubtitle}</p>
         <div class="landing-steps">
-          ${showAndroid ? androidSteps : iosSteps}
+          ${showAndroid ? androidSteps : appStore}
         </div>
         <button class="landing-toggle" id="landing-toggle-btn">
           ${showAndroid ? t.iosToggle : t.androidToggle}

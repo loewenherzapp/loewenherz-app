@@ -526,10 +526,8 @@ export const TEXTS = {
     landing: {
       title: "Löwenherz installieren",
       subtitle: "Damit alles funktioniert, füge Löwenherz zu deinem Homescreen hinzu:",
-      step1: "Tippe auf das Teilen-Symbol",
-      step2: "Scrolle zu ›Zum Home-Bildschirm‹",
-      step3: "Tippe ›Hinzufügen‹",
-      step4: "Öffne Löwenherz von deinem Homescreen",
+      appStoreSubtitle: "Für dein iPhone gibt es Löwenherz im App Store:",
+      appStoreButton: "Im App Store laden",
       androidToggle: "Ich nutze Android →",
       iosToggle: "← iOS",
       continueAnyway: "Trotzdem fortfahren →",

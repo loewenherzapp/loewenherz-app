@@ -25,3 +25,7 @@ export const ONESIGNAL_APP_ID = '1aeeca68-13c9-400a-a243-dd749527c49f';
 // Inhalt der öffentlichen Seite synchron halten mit dem In-App-Modal
 // (LEGAL_CONTENT.datenschutz in js/screens/settings.js).
 export const PRIVACY_URL = 'https://app.angstdoc.de/datenschutz';
+
+// Löwenherz im Apple App Store (iOS 1.0 live seit September 2026).
+// Ohne ?l=… — sonst erzwingt Apple die Sprache der Store-Seite.
+export const APP_STORE_URL = 'https://apps.apple.com/de/app/id6806331837';
