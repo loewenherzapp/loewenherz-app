@@ -2,7 +2,7 @@
 // Löwenherz PWA — Service Worker (Cache-First)
 // ============================================================
 
-const CACHE_NAME = 'loewenherz-v115';
+const CACHE_NAME = 'loewenherz-v116';
 
 const URLS_TO_CACHE = [
   './',
@@ -91,6 +91,10 @@ self.addEventListener('fetch', (event) => {
 
   // confirmed.html ist eigenständig (Brevo-DOI-Redirect) — immer Netzwerk, nie cachen
   if (event.request.url.includes('confirmed.html')) return;
+
+  // Datenschutzerklärung (/datenschutz und /datenschutz.html) — Rechtstext,
+  // muss jede Änderung sofort zeigen, nie aus dem Cache
+  if (event.request.url.includes('datenschutz')) return;
 
   event.respondWith(
     caches.match(event.request).then((cached) => {
