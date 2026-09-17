@@ -334,8 +334,26 @@ function hideNativeSplash() {
     .catch(() => {});
 }
 
-async function switchTab(tab) {
+// Tab-Wechsel laufen nacheinander, nie parallel: Jeder Aufruf bekommt eine
+// Generationsnummer; überholte Aufrufe rendern gar nicht erst. Vorher
+// konnte ein langsames Dashboard-Render die schon fertige Reflexion
+// überschreiben – Screen und Tab-Leiste passten dann nicht zusammen.
+let renderGen = 0;
+let switchChain = Promise.resolve();
+
+function switchTab(tab) {
+  const gen = ++renderGen;
   currentTab = tab;
+  document.querySelectorAll('.nav-tab').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === tab);
+  });
+  switchChain = switchChain
+    .then(() => (gen === renderGen ? renderTab(tab) : undefined))
+    .catch((e) => console.warn('[App] Tab-Render fehlgeschlagen:', e));
+  return switchChain;
+}
+
+async function renderTab(tab) {
   // Merker für den Datums-Rollover (siehe Block am Dateiende): Nach diesem
   // Render ist der Bildschirm für den aktuellen Tag + die aktuelle
   // Tagesphase frisch.
@@ -379,19 +397,23 @@ async function switchTab(tab) {
     await new Promise(r => setTimeout(r, 150));
   }
 
-  if (tab === 'today') {
-    await renderDashboard(contentEl, profile);
-    maybeShowEmailSoftPrompt();
-  } else if (tab === 'reflection') {
-    await renderReflection(contentEl, profile);
-  } else if (tab === 'history') {
-    await renderHistory(contentEl, profile);
-    markMilestonesSeen().then(() => updateBadgeDot()).catch(() => {});
-  }
-
-  if (!skipAnim && hasContent) {
-    void contentEl.offsetHeight;
-    contentEl.classList.remove('tab-fade-out');
+  try {
+    if (tab === 'today') {
+      await renderDashboard(contentEl, profile);
+      maybeShowEmailSoftPrompt();
+    } else if (tab === 'reflection') {
+      await renderReflection(contentEl, profile);
+    } else if (tab === 'history') {
+      await renderHistory(contentEl, profile);
+      markMilestonesSeen().then(() => updateBadgeDot()).catch(() => {});
+    }
+  } finally {
+    // Auch nach einem Render-Fehler wieder einblenden – sonst bliebe der
+    // Inhalt unsichtbar (opacity 0) und die App sähe leer aus.
+    if (!skipAnim && hasContent) {
+      void contentEl.offsetHeight;
+      contentEl.classList.remove('tab-fade-out');
+    }
   }
 }
 

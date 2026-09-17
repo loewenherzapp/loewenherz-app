@@ -475,6 +475,56 @@ export function syncOneSignalTags() {
   syncTagsToOneSignal();
 }
 
+/**
+ * Push endgültig zurückbauen: Zeitplan-Tag löschen UND Abo abmelden
+ * (optOut). Wartet auf die Schreibvorgänge, weil der Aufrufer danach
+ * localStorage leert oder neu lädt – ein fire-and-forget wie beim normalen
+ * Sync ginge dabei verloren, der Tag bliebe bei OneSignal stehen und der
+ * Server würde weiter senden („Alle Daten löschen“ stoppte so nie die
+ * Erinnerungen). Höchstens 6 s warten, dann geht es ohne weiter.
+ */
+export async function revokePush() {
+  localStorage.setItem('loewenherz_push_enabled', 'false');
+  // Nie zugestimmt → bei OneSignal gibt es nichts zu räumen, und das SDK
+  // darf dafür auch nicht geladen werden.
+  if (localStorage.getItem('loewenherz_push_asked') !== 'true') return;
+
+  const arbeit = (async () => {
+    const sdk = await ensureOneSignalLoaded();
+    if (!sdk) return;
+    if (isNative()) {
+      await sdk.User.removeTags(['sched']);
+      await sdk.User.pushSubscription.optOut();
+      return;
+    }
+    try { await sdk.User.removeTag('sched'); } catch (e) { console.warn('[Push] removeTag:', e); }
+    try { await sdk.User.PushSubscription.optOut(); } catch (e) { console.warn('[Push] optOut:', e); }
+    // Server-Fallback synchron (Legacy Players API), wie beim normalen Sync
+    const id = sdk.User.PushSubscription.id;
+    if (id) {
+      await fetch(API_BASE + '/api/set-tags', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ player_id: id, tags: { sched: '' } })
+      }).catch(() => {});
+    }
+  })().catch((e) => console.warn('[Push] Widerruf unvollständig:', e));
+
+  await Promise.race([arbeit, new Promise((r) => setTimeout(r, 6000))]);
+}
+
+/** Gegenstück zu revokePush(): nach erneutem Einschalten das Abo wieder aktivieren. */
+export async function optInPush() {
+  try {
+    const sdk = await ensureOneSignalLoaded();
+    if (!sdk) return;
+    if (isNative()) await sdk.User.pushSubscription.optIn();
+    else await sdk.User.PushSubscription.optIn();
+  } catch (e) {
+    console.warn('[Push] optIn:', e);
+  }
+}
+
 // --- Permission-Prompt (Facade für Soft-Ask und Settings) ---
 
 /**

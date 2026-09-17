@@ -63,6 +63,13 @@ export function initDB() {
 
       request.onsuccess = (e) => {
         dbInstance = e.target.result;
+        // Zweite Instanz (Safari-Tab + PWA) will löschen oder upgraden:
+        // Verbindung freigeben, sonst hängt dort alles – und nach einem
+        // Reload wartet auch diese Instanz hinter dem blockierten Delete.
+        dbInstance.onversionchange = () => {
+          try { dbInstance.close(); } catch (err) { /* schon zu */ }
+          dbInstance = null;
+        };
         resolve(dbInstance);
       };
 
