@@ -841,9 +841,15 @@
       }
     })();
   </script>
-  <script type="module">
-    import { inject } from 'https://cdn.jsdelivr.net/npm/@vercel/analytics@1/dist/index.mjs';
-    inject({ mode: 'production' });
+  <script>
+    // Vercel Analytics same-origin laden — kein Dritt-CDN, keine IP an jsdelivr
+    // (wie in index.html; die Datenschutzerklärung verspricht genau das).
+    (function() {
+      var insights = document.createElement('script');
+      insights.defer = true;
+      insights.src = '/_vercel/insights/script.js';
+      document.head.appendChild(insights);
+    })();
   </script>
 </body>
 </html>

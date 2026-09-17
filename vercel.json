@@ -2,39 +2,99 @@
   "installCommand": "",
   "headers": [
     {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+        },
+        {
+          "key": "Content-Security-Policy-Report-Only",
+          "value": "default-src 'self'; script-src 'self' 'sha256-rYtOgJOyQ3bt8CTK885PaoD2AiX/LzkfYhWvXB8fA1Y=' 'sha256-OdKxZ1ovev6eA+f0zQvAY3CwJhR0TNA0K2u/kemBVsY=' 'sha256-4Q+G3ukBpITjZ41z6dOewFUMfWI/KY0mK6+pNUW0Kkw=' 'sha256-VBMiqS7cygfjejQN0RmofNfTALHUclPZdQ73nRn3OL4=' https://cdn.onesignal.com; connect-src 'self' https://onesignal.com https://*.onesignal.com; img-src 'self' data: https://*.onesignal.com; style-src 'self' 'unsafe-inline'; font-src 'self'; worker-src 'self'; frame-src https://*.onesignal.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+        }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    },
+    {
       "source": "/.well-known/assetlinks.json",
       "headers": [
-        { "key": "Content-Type", "value": "application/json" }
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        }
       ]
     },
     {
       "source": "/OneSignalSDKWorker.js",
       "headers": [
-        { "key": "Service-Worker-Allowed", "value": "/" }
+        {
+          "key": "Service-Worker-Allowed",
+          "value": "/"
+        }
       ]
     },
     {
       "source": "/install.html",
       "headers": [
-        { "key": "Service-Worker-Allowed", "value": "none" },
-        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+        {
+          "key": "Service-Worker-Allowed",
+          "value": "none"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
       ]
     },
     {
       "source": "/confirmed.html",
       "headers": [
-        { "key": "Service-Worker-Allowed", "value": "none" },
-        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+        {
+          "key": "Service-Worker-Allowed",
+          "value": "none"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
       ]
     }
   ],
   "rewrites": [
-    { "source": "/datenschutz", "destination": "/datenschutz.html" }
+    {
+      "source": "/datenschutz",
+      "destination": "/datenschutz.html"
+    }
   ],
   "redirects": [
     {
       "source": "/install.html",
-      "has": [{ "type": "host", "value": "loewenherz-app.vercel.app" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "loewenherz-app.vercel.app"
+        }
+      ],
       "destination": "https://app.angstdoc.de/install.html",
       "permanent": false
     }
