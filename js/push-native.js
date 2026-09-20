@@ -81,14 +81,18 @@ export function initNative() {
     const { default: OneSignal } = await import(SDK_PATH);
     await OneSignal.initialize(ONESIGNAL_APP_ID);
 
-    // Standort hart aus. Die App braucht ihn nirgends, und OneSignal
-    // bringt mit OneSignalLocation.framework ein Modul mit, dessen
-    // Privacy Manifest Coarse UND Precise Location deklariert. Ohne
-    // NSLocation*-Schlüssel in der Info.plist könnte iOS die Freigabe
-    // ohnehin nie erteilen — diese Zeile hält es auch dann aus, wenn
-    // später jemand so einen Schlüssel einträgt. Grundlage dafür, im
-    // App-Store-Fragebogen „kein Standort" angeben zu können.
-    OneSignal.Location.setShared(false);
+    // Standort hart aus. Die App braucht ihn nirgends. Seit Version 1.0.1
+    // wird OneSignalLocation.framework gar nicht mehr mitgebaut
+    // (ONESIGNAL_DISABLE_LOCATION=true, siehe docs/app-store-connect.md,
+    // ITMS-90683) — der Aufruf bleibt als zweite Sicherung für Builds, die
+    // das Modul doch enthalten. Er steht bewusst im try/catch und ohne
+    // await: Fehlt das Modul und die Brücke wirft, darf das NIE die
+    // Push-Initialisierung abbrechen (sonst gäbe es gar keine Erinnerungen).
+    try {
+      OneSignal.Location.setShared(false);
+    } catch (e) {
+      console.log('[Push] Location-Modul nicht vorhanden — nichts abzuschalten');
+    }
 
     // Foreground unterdrücken: Es sind Reminder („öffne die App").
     // Wer die App gerade offen hat, braucht den Reminder nicht — ein

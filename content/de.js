@@ -460,7 +460,7 @@ export const TEXTS = {
       importError: "Backup konnte nicht eingespielt werden:",
       crisisLink: "Soforthilfe & Krisennummern",
       aboutTitle: "Über Löwenherz",
-      version: "Version 1.0",
+      version: "Version 1.0.1",
       madeBy: "Ein Werkzeug von Der AngstDoc",
       bookLink: "Zum Buch",
       bookUrl: "https://buch.angstdoc.de/",

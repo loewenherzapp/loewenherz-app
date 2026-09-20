@@ -320,14 +320,25 @@ Ursache: `OneSignalLocation.framework` liegt im Bundle und referenziert Standort
 **Nicht** den `NSLocation*`-Schlüssel eintragen — das würde behaupten, die App wolle
 Standortdaten, und der veröffentlichten Datenschutzangabe „kein Standort" widersprechen.
 
-**Richtige Reparatur, zwei Teile, gehören zusammen:**
+**Richtige Reparatur, zwei Teile, gehören zusammen — umgesetzt am 20.09.2026 für 1.0.1 (3):**
 1. Mit `ONESIGNAL_DISABLE_LOCATION=true` bauen. Das Plugin wertet die Variable in seiner
-   `Package.swift` aus und lässt `OneSignalLocation` dann weg.
-2. Die Zeile `OneSignal.Location.setShared(false)` in `js/push-native.js` entfernen —
-   sie steht **ungeschützt** in der Init-Kette; ohne das Framework könnte sie werfen und
-   die gesamte Push-Initialisierung abbrechen.
-
-Offen für den nächsten Build.
+   `Package.swift` aus und lässt `OneSignalLocation` dann weg. **Die Variable muss in dem
+   Prozess gesetzt sein, der die Swift-Packages auflöst** — also bei `xcodebuild` bzw. beim
+   Start von Xcode, nicht bei `cap sync`:
+   ```bash
+   # Kommandozeile
+   ONESIGNAL_DISABLE_LOCATION=true xcodebuild -project ios/App/App.xcodeproj -scheme App …
+   # Xcode-Oberfläche (Product → Archive): vor dem Start von Xcode setzen, danach Xcode
+   # komplett beenden und neu öffnen; File → Packages → Reset Package Caches
+   launchctl setenv ONESIGNAL_DISABLE_LOCATION true
+   ```
+   Gegenprobe am fertigen Bundle/Archiv — darf nichts finden:
+   ```bash
+   find <App.app> -iname "*Location*"
+   ```
+2. `OneSignal.Location.setShared(false)` in `js/push-native.js` steht jetzt in einem
+   try/catch ohne await. Der Aufruf bleibt als zweite Sicherung für Builds MIT dem Modul;
+   fehlt es, kann er die Push-Initialisierung nicht mehr abbrechen.
 
 ### Falle: Inhaltsrechte fallen zurück
 
@@ -447,10 +458,24 @@ wurde. Sie blockieren das **Einreichen**, nicht das Vorbereiten:
 
 - [x] Untertitel entschieden: `Von Verstehen zu Veränderung`
 - [ ] Keywords (100 Zeichen) festlegen
-- [ ] **Eigenes Privacy Manifest der App ist leer** (`ios/App/App/PrivacyInfo.xcprivacy`,
-      `NSPrivacyCollectedDataTypes: []`) — die E-Mail-Adresse aus dem Newsletter-Opt-in
-      gehört dort deklariert. Muss zu den Antworten im ASC-Fragebogen passen, deshalb
-      erst zusammen mit dem Fragebogen ausfüllen.
+- [x] **20.09.2026 — Eigenes Privacy Manifest deklariert die E-Mail-Adresse**
+      (`ios/App/App/PrivacyInfo.xcprivacy`): verknüpft, kein Tracking, Zweck
+      Developer's Advertising/Marketing — deckungsgleich mit dem Fragebogen oben.
+      Benutzer-ID und Produktinteraktion kommen aus den OneSignal-Manifesten.
+- [ ] **Xcode 27 fertig einrichten** (Stand 20.09.2026): `xcodebuild` meldet „CoreSimulator is
+      out of date" und lädt das CoreDevice-Plugin nicht — Simulator und Geräte sind bis dahin
+      abgeschaltet, `xcrun simctl` hängt. Einmalig mit Admin-Passwort:
+      `sudo xcodebuild -runFirstLaunch` (oder Xcode öffnen → „Install").
+- [ ] **Version 1.0.1 (Build 3) archivieren und hochladen.** 1.0 ist im Store, deshalb
+      neue Versionsnummer statt nur Build 3. Enthält: ITMS-90683-Reparatur, Privacy
+      Manifest, leisere Töne (drei Commits vom 1.–5.9.), alle Web-Korrekturen aus dem
+      Audit (Krisennummern, Escaping, Doppel-Tap, Push-Widerruf …). Vor dem Upload im
+      Archiv prüfen: `codesign -d --entitlements :- App.app | grep -A1 aps-environment`
+      muss `production` zeigen.
+      Vorschlag „Neuheiten in dieser Version" (zur Auswahl, Patrick entscheidet):
+      „Krisenhilfe zeigt jetzt Notruf 112, 116 117 sowie Nummern für Österreich und die
+      Schweiz. Kalenderwochen im Verlauf stimmen. Doppel-Tipper zählen nur noch einmal.
+      Leisere Erinnerungstöne. Dazu viele kleine Verbesserungen unter der Haube."
 - [ ] Screenshots aus dem Simulator erzeugen
 - [ ] Archiv bauen und hochladen
 - [ ] Disclaimer-Text juristisch prüfen (steht schon als offener Punkt in den

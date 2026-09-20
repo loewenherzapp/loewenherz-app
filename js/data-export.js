@@ -23,7 +23,7 @@ import { isNative } from './platform.js';
 import { nativePlugin } from './native-plugins.js';
 
 const SCHEMA_VERSION = 1;
-const APP_VERSION = '1.0';
+const APP_VERSION = '1.0.1';
 
 // LocalStorage-Keys, die zum Backup gehören.
 // Exact matches:
