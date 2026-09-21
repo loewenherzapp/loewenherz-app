@@ -497,7 +497,16 @@ wurde. Sie blockieren das **Einreichen**, nicht das Vorbereiten:
       **Am selben Tag neu gebaut** (Build 3 war noch nicht hochgeladen, Nummer bleibt): enthält
       zusätzlich den einmaligen Hinweis am Zahnrad „Hier bestimmst du, wie oft ich mich melde
       und mit welchem Ton." (Commit `8b212ef`). Alle Gegenproben erneut bestanden.
-- [ ] **1.0.1 (3) zu App Store Connect hochladen, Version 1.0.1 anlegen, einreichen.** 1.0 ist im Store, deshalb
+- [x] **21.09.2026, 08:03 — 1.0.1 (3) zu App Store Connect hochgeladen** („Upload succeeded",
+      „Uploaded package is processing"). Ebenfalls per Kommandozeile: derselbe
+      `-exportArchive`-Aufruf, in der ExportOptions.plist `destination` = `upload` statt
+      `export`. Nutzt die in Xcode angemeldete Apple ID, keine Zugangsdaten nötig. Damit
+      entfällt der Umweg über Product → Archive und den Organizer komplett.
+- [ ] **Version 1.0.1 in App Store Connect anlegen, Build 3 auswählen, „Neuheiten" eintragen,
+      zur Prüfung einreichen.** Auf eine Mail zu ITMS-90683 achten — sie sollte diesmal
+      ausbleiben.
+- [ ] **Gerätetest:** Ton „iOS-Standardton" (Server sendet jetzt `ios_sound: default`) und
+      der Zahnrad-Hinweis nach „Ja, erinner mich". 1.0 ist im Store, deshalb
       neue Versionsnummer statt nur Build 3. Enthält: ITMS-90683-Reparatur, Privacy
       Manifest, leisere Töne (drei Commits vom 1.–5.9.), alle Web-Korrekturen aus dem
       Audit (Krisennummern, Escaping, Doppel-Tap, Push-Widerruf …). Vor dem Upload im
