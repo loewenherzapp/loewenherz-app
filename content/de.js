@@ -440,6 +440,11 @@ export const TEXTS = {
     },
     settings: {
       title: "Einstellungen",
+      // Einmaliger Hinweis am Zahnrad, sobald Erinnerungen wirklich laufen
+      // (js/app.js, showSettingsHint). Die Ton-Auswahl gibt es nur in der
+      // iOS-App – im Web darf der Text sie nicht versprechen.
+      hintNative: "Hier bestimmst du, wie oft ich mich melde und mit welchem Ton.",
+      hintWeb: "Hier bestimmst du, wie oft ich mich melde.",
       back: "← Zurück",
       nameLabel: "Name",
       remindersLabel: "Erinnerungen",

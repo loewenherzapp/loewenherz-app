@@ -116,7 +116,7 @@ export function ensureOneSignalLoaded() {
  * Bewusst nur an dieser einen Stelle definiert: Eine zweite Kopie wäre
  * die Stelle, an der die Zusage irgendwann auseinanderläuft.
  */
-function pushIsActive() {
+export function pushIsActive() {
   const asked = localStorage.getItem('loewenherz_push_asked') === 'true';
   const enabled = localStorage.getItem('loewenherz_push_enabled') !== 'false';
   if (!asked || !enabled) return false;
@@ -692,6 +692,8 @@ export function showPushSoftAsk() {
     requestPushPermission().then((state) => {
       if (state !== 'granted') return;
       localStorage.setItem('loewenherz_push_enabled', 'true');
+      // app.js zeigt daraufhin einmalig den Hinweis am Zahnrad (Anzahl/Ton).
+      window.dispatchEvent(new CustomEvent('loewenherz:push-granted'));
       if (isNative()) syncTagsToOneSignal();
       else attemptTagSync(0);
     });

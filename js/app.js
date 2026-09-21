@@ -20,7 +20,7 @@ import { isNative } from './platform.js';
 import { nativePlugin } from './native-plugins.js';
 import { initExternalLinks } from './external-links.js';
 import { hapticMilestone } from './haptics.js';
-import './push.js'; // OneSignal init (side-effect import)
+import { pushIsActive, getPermissionState } from './push.js'; // Import startet auch den OneSignal-Init (Seiteneffekt)
 
 let currentTab = 'today';
 let profile = null;
@@ -228,6 +228,11 @@ function showApp() {
     setTimeout(() => showCoachMark(), 800);
   }
 
+  // Bestandsnutzer mit laufenden Erinnerungen: einmaliger Hinweis am Zahnrad.
+  // Verzögert, weil das native SDK seinen Permission-Status erst nach dem
+  // Init kennt.
+  setTimeout(() => maybeShowSettingsHint(), 3000);
+
   // Badge-Dot initialisieren
   updateBadgeDot();
 
@@ -401,6 +406,8 @@ async function renderTab(tab) {
     if (tab === 'today') {
       await renderDashboard(contentEl, profile);
       maybeShowEmailSoftPrompt();
+      // nach der Einblend-Animation, und nur wenn dann nichts anderes offen ist
+      setTimeout(() => maybeShowSettingsHint(), 1200);
     } else if (tab === 'reflection') {
       await renderReflection(contentEl, profile);
     } else if (tab === 'history') {
@@ -424,6 +431,12 @@ async function showSettings() {
   const geladen = await profilFuerAnsicht();
   if (!geladen) return;
   profile = geladen;
+
+  // Wer die Einstellungen öffnet, hat Anzahl und Ton vor Augen — der
+  // Hinweis am Zahnrad ist damit erledigt.
+  localStorage.setItem(SETTINGS_HINT_KEY, 'true');
+  const offenerHinweis = document.getElementById('settings-hint');
+  if (offenerHinweis) offenerHinweis.remove();
 
   hideAll();
   const container = document.getElementById('settings-container');
@@ -451,6 +464,97 @@ function dismissCoachMark() {
   }
   localStorage.setItem('hasSeenInfo', 'true');
 }
+
+// ============================================================
+// Hinweis am Zahnrad: Anzahl und Ton der Erinnerungen
+// ============================================================
+// Einmalig — und erst, wenn Erinnerungen wirklich laufen: Beim Erststart
+// steht schon die Blase am ⓘ, und ohne Push wäre der Hinweis abstrakt.
+// Neue Nutzer sehen ihn direkt nach ihrem „Ja, erinner mich", Bestands-
+// nutzer beim nächsten Start. Hintergrund: Der Löwe brüllt nicht für jeden
+// Geschmack — die Leute sollen wissen, dass sie Ton und Häufigkeit wählen
+// können. Wer die Einstellungen von selbst öffnet, braucht ihn nicht mehr.
+const SETTINGS_HINT_KEY = 'hasSeenSettingsHint';
+
+function settingsHintDue() {
+  if (localStorage.getItem(SETTINGS_HINT_KEY)) return false;
+  if (!localStorage.getItem('hasSeenInfo')) return false;   // erst die ⓘ-Blase
+  if (currentTab !== 'today') return false;
+  if (document.getElementById('coach-mark') || document.getElementById('settings-hint')) return false;
+  const shell = document.getElementById('app-shell');
+  if (!shell || shell.classList.contains('hidden')) return false;
+  if (uiInputFlowOpen()) return false;
+  return pushIsActive() && getPermissionState() === 'granted';
+}
+
+function maybeShowSettingsHint() {
+  try {
+    if (settingsHintDue()) showSettingsHint();
+  } catch (e) {
+    // Ein Hinweis darf nie den Hauptflow stören
+  }
+}
+
+function dismissSettingsHint() {
+  const mark = document.getElementById('settings-hint');
+  if (mark) {
+    mark.classList.remove('active');
+    setTimeout(() => mark.remove(), 300);
+  }
+  localStorage.setItem(SETTINGS_HINT_KEY, 'true');
+}
+
+function showSettingsHint() {
+  const settingsBtn = document.getElementById('settings-btn');
+  if (!settingsBtn) return;
+
+  const mark = document.createElement('div');
+  mark.id = 'settings-hint';
+  mark.className = 'coach-mark coach-mark-right';
+  const bubble = document.createElement('div');
+  bubble.className = 'coach-mark-bubble';
+  bubble.innerHTML = '<div class="coach-mark-arrow"></div><span class="coach-mark-icon">⚙</span>';
+  bubble.appendChild(document.createTextNode(
+    isNative() ? TEXTS.ui.settings.hintNative : TEXTS.ui.settings.hintWeb
+  ));
+  mark.appendChild(bubble);
+
+  // Position unter dem Zahnrad (rechts ausgerichtet). Rect VOR dem Einfügen.
+  const rect = settingsBtn.getBoundingClientRect();
+  mark.style.position = 'fixed';
+  mark.style.top = (rect.bottom + 8) + 'px';
+  mark.style.right = Math.max(12, window.innerWidth - rect.right - 8) + 'px';
+  mark.style.zIndex = '500';
+
+  document.body.appendChild(mark);
+
+  // Synchroner Reflow statt rAF — siehe Kommentar beim Coach-Mark.
+  void mark.offsetHeight;
+  mark.classList.add('active');
+
+  // Tipp auf die Blase → direkt in die Einstellungen
+  bubble.addEventListener('click', (e) => {
+    e.stopPropagation();
+    dismissSettingsHint();
+    document.removeEventListener('click', dismiss, true);
+    showSettings();
+  });
+
+  // Tipp irgendwo sonst schließt (das Zahnrad selbst öffnet ohnehin die Einstellungen)
+  const dismiss = (e) => {
+    if (mark.contains(e.target)) return;
+    dismissSettingsHint();
+    document.removeEventListener('click', dismiss, true);
+  };
+  setTimeout(() => {
+    document.addEventListener('click', dismiss, true);
+  }, 100);
+}
+
+// Direkt nach der Zustimmung im Soft-Ask (Ereignis aus push.js)
+window.addEventListener('loewenherz:push-granted', () => {
+  setTimeout(() => maybeShowSettingsHint(), 900);
+});
 
 function showCoachMark() {
   const infoBtn = document.getElementById('header-info-btn');

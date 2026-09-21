@@ -2743,6 +2743,8 @@ button.settings-link, .settings-link-btn {
   margin-bottom: 4px;
   color: var(--gold-warm);
 }
+/* Variante fürs Zahnrad: Blase rechtsbündig, Pfeil unter der Mitte des 44-px-Buttons */
+.coach-mark-right .coach-mark-arrow { left: auto; right: 24px; }
 .coach-mark-arrow {
   position: absolute;
   top: -6px;

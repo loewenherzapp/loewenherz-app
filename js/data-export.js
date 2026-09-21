@@ -37,7 +37,8 @@ const LS_EXACT_KEYS = [
   // der Key nie → Web-Exporte bleiben byte-identisch zu vorher.
   'loewenherz_haptics_enabled',
   'smallPointsTotal',
-  'hasSeenInfo'
+  'hasSeenInfo',
+  'hasSeenSettingsHint'
 ];
 // SMALL-Reminder: Zeitfenster und Anzahl.
 //
