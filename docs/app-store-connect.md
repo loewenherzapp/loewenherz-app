@@ -502,9 +502,19 @@ wurde. Sie blockieren das **Einreichen**, nicht das Vorbereiten:
       `-exportArchive`-Aufruf, in der ExportOptions.plist `destination` = `upload` statt
       `export`. Nutzt die in Xcode angemeldete Apple ID, keine Zugangsdaten nötig. Damit
       entfällt der Umweg über Product → Archive und den Organizer komplett.
-- [ ] **Version 1.0.1 in App Store Connect anlegen, Build 3 auswählen, „Neuheiten" eintragen,
-      zur Prüfung einreichen.** Auf eine Mail zu ITMS-90683 achten — sie sollte diesmal
-      ausbleiben.
+- [x] **21.09.2026, 08:09 — Version 1.0.1 angelegt, Build 3 gewählt, „Neues in dieser Version"
+      eingetragen, ZUR PRÜFUNG EINGEREICHT.** Status: *1.0.1 Warten auf Prüfung*. Apple nennt
+      bis zu 48 Stunden, Rückmeldung per E-Mail. Keine Zusatzfragen beim Einreichen.
+      Einstellungen: automatische Veröffentlichung nach Freigabe, sofort für alle Nutzer,
+      bestehende Bewertung bleibt. In der Build-Liste tragen 1.0 (1) und 1.0 (2) ein
+      Warnsymbol, 1.0.1 (3) nicht — die ITMS-90683-Warnung ist weg.
+      Eingetragener Text: „Krisenhilfe zeigt jetzt Notruf 112, 116 117 sowie Nummern für
+      Österreich und die Schweiz. Kalenderwochen im Verlauf stimmen. Doppel-Tipper zählen nur
+      noch einmal. Leisere Erinnerungstöne, und ein kurzer Hinweis zeigt dir, wo du Ton und
+      Häufigkeit einstellst. Dazu viele kleine Verbesserungen unter der Haube."
+      Weg in App Store Connect: Vertrieb → Plus neben „iOS-App" → Version eingeben → Text →
+      Sichern → Build hinzufügen → Sichern → „Zur Prüfung hinzufügen" → im
+      Übermittlungsentwurf „Zur Prüfung übermitteln".
 - [ ] **Gerätetest:** Ton „iOS-Standardton" (Server sendet jetzt `ios_sound: default`) und
       der Zahnrad-Hinweis nach „Ja, erinner mich". 1.0 ist im Store, deshalb
       neue Versionsnummer statt nur Build 3. Enthält: ITMS-90683-Reparatur, Privacy
