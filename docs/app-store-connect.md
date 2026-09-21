@@ -494,6 +494,9 @@ wurde. Sie blockieren das **Einreichen**, nicht das Vorbereiten:
       `find … -iname "*Location*"` trifft im Archiv die dSYM-Ordner „Relocations" — die sind
       harmlos; maßgeblich ist `ls App.app/Frameworks`.
       IPA: `~/Library/Developer/Xcode/Archives/2026-09-21/Loewenherz-1.0.1-3-export/App.ipa`
+      **Am selben Tag neu gebaut** (Build 3 war noch nicht hochgeladen, Nummer bleibt): enthält
+      zusätzlich den einmaligen Hinweis am Zahnrad „Hier bestimmst du, wie oft ich mich melde
+      und mit welchem Ton." (Commit `8b212ef`). Alle Gegenproben erneut bestanden.
 - [ ] **1.0.1 (3) zu App Store Connect hochladen, Version 1.0.1 anlegen, einreichen.** 1.0 ist im Store, deshalb
       neue Versionsnummer statt nur Build 3. Enthält: ITMS-90683-Reparatur, Privacy
       Manifest, leisere Töne (drei Commits vom 1.–5.9.), alle Web-Korrekturen aus dem
@@ -503,7 +506,8 @@ wurde. Sie blockieren das **Einreichen**, nicht das Vorbereiten:
       Vorschlag „Neuheiten in dieser Version" (zur Auswahl, Patrick entscheidet):
       „Krisenhilfe zeigt jetzt Notruf 112, 116 117 sowie Nummern für Österreich und die
       Schweiz. Kalenderwochen im Verlauf stimmen. Doppel-Tipper zählen nur noch einmal.
-      Leisere Erinnerungstöne. Dazu viele kleine Verbesserungen unter der Haube."
+      Leisere Erinnerungstöne, und ein kurzer Hinweis zeigt dir, wo du Ton und Häufigkeit
+      einstellst. Dazu viele kleine Verbesserungen unter der Haube."
 - [ ] Screenshots aus dem Simulator erzeugen
 - [ ] Archiv bauen und hochladen
 - [ ] Disclaimer-Text juristisch prüfen (steht schon als offener Punkt in den
