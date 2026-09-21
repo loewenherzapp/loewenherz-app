@@ -462,10 +462,18 @@ wurde. Sie blockieren das **Einreichen**, nicht das Vorbereiten:
       (`ios/App/App/PrivacyInfo.xcprivacy`): verknüpft, kein Tracking, Zweck
       Developer's Advertising/Marketing — deckungsgleich mit dem Fragebogen oben.
       Benutzer-ID und Produktinteraktion kommen aus den OneSignal-Manifesten.
-- [ ] **Xcode 27 fertig einrichten** (Stand 20.09.2026): `xcodebuild` meldet „CoreSimulator is
-      out of date" und lädt das CoreDevice-Plugin nicht — Simulator und Geräte sind bis dahin
-      abgeschaltet, `xcrun simctl` hängt. Einmalig mit Admin-Passwort:
-      `sudo xcodebuild -runFirstLaunch` (oder Xcode öffnen → „Install").
+- [x] **21.09.2026 — Xcode 27 fertig eingerichtet** (`sudo xcodebuild -runFirstLaunch`, „Install
+      Succeeded"). Vorher meldete `xcodebuild` „CoreSimulator is out of date", Simulator und
+      Geräte waren abgeschaltet, `xcrun simctl` hing. Merker für das nächste Xcode-Update.
+- [x] **21.09.2026 — Simulator-Test 1.0.1 (3) ohne Location-Modul bestanden** (iPhone 17,
+      iOS 26.5, Push-Zustand im Scratch-Build vorbelegt). Konsole: `initialize` →
+      `setLocationShared` → `addListener` → `permissionNative` →
+      „[Push] Natives SDK initialisiert, Permission: default". Keine Abstürze.
+      **Erwartete Logzeile, kein Fehler:** `ERROR: OneSignalLocation not found. In order to
+      use OneSignal's location features the OneSignalLocation module must be added.` — sie
+      stammt vom abgesicherten `setShared(false)` und erscheint bei jedem Start. Der Aufruf
+      bleibt trotzdem: Vergisst jemand die Umgebungsvariable beim Bauen, ist er das Einzige,
+      was „kein Standort" noch garantiert.
 - [ ] **Version 1.0.1 (Build 3) archivieren und hochladen.** 1.0 ist im Store, deshalb
       neue Versionsnummer statt nur Build 3. Enthält: ITMS-90683-Reparatur, Privacy
       Manifest, leisere Töne (drei Commits vom 1.–5.9.), alle Web-Korrekturen aus dem
