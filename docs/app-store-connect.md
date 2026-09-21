@@ -474,7 +474,27 @@ wurde. Sie blockieren das **Einreichen**, nicht das Vorbereiten:
       stammt vom abgesicherten `setShared(false)` und erscheint bei jedem Start. Der Aufruf
       bleibt trotzdem: Vergisst jemand die Umgebungsvariable beim Bauen, ist er das Einzige,
       was „kein Standort" noch garantiert.
-- [ ] **Version 1.0.1 (Build 3) archivieren und hochladen.** 1.0 ist im Store, deshalb
+- [x] **21.09.2026 — 1.0.1 (3) archiviert und exportiert, komplett über die Kommandozeile**
+      (keine Xcode-Oberfläche, keine Schlüsselbund-Abfrage):
+      ```bash
+      ONESIGNAL_DISABLE_LOCATION=true xcodebuild -project ios/App/App.xcodeproj -scheme App \
+        -configuration Release -destination 'generic/platform=iOS' \
+        -archivePath ~/Library/Developer/Xcode/Archives/2026-09-21/Loewenherz-1.0.1-3.xcarchive \
+        -allowProvisioningUpdates archive
+      xcodebuild -exportArchive -archivePath <…>.xcarchive -exportPath <…>-export \
+        -exportOptionsPlist ExportOptions.plist -allowProvisioningUpdates
+      # ExportOptions: method app-store-connect, destination export (oder upload),
+      # signingStyle automatic, teamID 794H5P8UPY, manageAppVersionAndBuildNumber false
+      ```
+      Das Archiv selbst ist mit *Apple Development* signiert (`aps-environment development`) —
+      das ist normal. Erst der Export signiert neu. Geprüft an der IPA: *Apple Distribution:
+      Patrick Eberle (794H5P8UPY)*, `aps-environment production`, `get-task-allow false`,
+      Version 1.0.1 (3), 11 Frameworks ohne OneSignalLocation, `codesign --verify --deep
+      --strict` ok, Privacy Manifest mit E-Mail, sechs Töne. Achtung bei der Gegenprobe:
+      `find … -iname "*Location*"` trifft im Archiv die dSYM-Ordner „Relocations" — die sind
+      harmlos; maßgeblich ist `ls App.app/Frameworks`.
+      IPA: `~/Library/Developer/Xcode/Archives/2026-09-21/Loewenherz-1.0.1-3-export/App.ipa`
+- [ ] **1.0.1 (3) zu App Store Connect hochladen, Version 1.0.1 anlegen, einreichen.** 1.0 ist im Store, deshalb
       neue Versionsnummer statt nur Build 3. Enthält: ITMS-90683-Reparatur, Privacy
       Manifest, leisere Töne (drei Commits vom 1.–5.9.), alle Web-Korrekturen aus dem
       Audit (Krisennummern, Escaping, Doppel-Tap, Push-Widerruf …). Vor dem Upload im
