@@ -223,8 +223,9 @@ function showApp() {
     switchTab('today');
   }
 
-  // Coach-Mark Tooltip beim Erststart
-  if (!localStorage.getItem('hasSeenInfo')) {
+  // Coach-Mark Tooltip am ⓘ — bis die Orientierung geöffnet wurde,
+  // höchstens an drei Starts (Regel in infoHintDue()).
+  if (infoHintDue()) {
     setTimeout(() => showCoachMark(), 800);
   }
 
@@ -456,13 +457,35 @@ async function showSettings() {
   );
 }
 
+// ============================================================
+// ⓘ-Blase: „Tippe hier für eine kurze Orientierung"
+// ============================================================
+// Früher verschwand sie beim ersten Tipp irgendwohin und galt damit als
+// gesehen — die meisten haben sie so weggewischt, ohne die Orientierung je
+// zu öffnen. Jetzt: Ein Tipp daneben blendet sie nur für diesen Start aus.
+// Erledigt ist sie erst, wenn die Orientierung einmal geöffnet wurde —
+// oder nach drei Starts, damit niemand dauerhaft genervt wird. Das alte
+// Merkmal hasSeenInfo wird bewusst ignoriert: Bestandsnutzer bekommen die
+// Blase damit noch einmal (Entscheidung Patrick, 22.09.2026).
+const INFO_OPENED_KEY = 'infoSheetOpened';
+const INFO_HINT_SHOWS_KEY = 'infoHintShows';
+const INFO_HINT_MAX_SHOWS = 3;
+
+function infoHintDone() {
+  if (localStorage.getItem(INFO_OPENED_KEY)) return true;
+  return Number(localStorage.getItem(INFO_HINT_SHOWS_KEY) || 0) >= INFO_HINT_MAX_SHOWS;
+}
+
+function infoHintDue() {
+  return !infoHintDone() && !document.getElementById('coach-mark');
+}
+
 function dismissCoachMark() {
   const mark = document.getElementById('coach-mark');
   if (mark) {
     mark.classList.remove('active');
     setTimeout(() => mark.remove(), 300);
   }
-  localStorage.setItem('hasSeenInfo', 'true');
 }
 
 // ============================================================
@@ -478,7 +501,7 @@ const SETTINGS_HINT_KEY = 'hasSeenSettingsHint';
 
 function settingsHintDue() {
   if (localStorage.getItem(SETTINGS_HINT_KEY)) return false;
-  if (!localStorage.getItem('hasSeenInfo')) return false;   // erst die ⓘ-Blase
+  if (!infoHintDone()) return false;   // erst die ⓘ-Blase, nie zwei Blasen
   if (currentTab !== 'today') return false;
   if (document.getElementById('coach-mark') || document.getElementById('settings-hint')) return false;
   const shell = document.getElementById('app-shell');
@@ -579,13 +602,14 @@ function showCoachMark() {
   mark.style.zIndex = '500';
 
   document.body.appendChild(mark);
+  localStorage.setItem(INFO_HINT_SHOWS_KEY, String(Number(localStorage.getItem(INFO_HINT_SHOWS_KEY) || 0) + 1));
 
   // Synchroner Reflow statt rAF — rAF feuert nicht bei verstecktem
   // Dokument und liesse .active sonst dauerhaft ungesetzt.
   void mark.offsetHeight;
   mark.classList.add('active');
 
-  // Tap on bubble → open Info-Sheet directly
+  // Tipp auf die Blase → Orientierung öffnen (das erledigt die Blase)
   mark.querySelector('.coach-mark-bubble').addEventListener('click', (e) => {
     e.stopPropagation();
     dismissCoachMark();
@@ -593,14 +617,10 @@ function showCoachMark() {
     showAppInfo();
   });
 
-  // Tap anywhere else dismisses (without opening info)
+  // Tipp irgendwo sonst: nur ausblenden. Der ⓘ-Button selbst öffnet die
+  // Orientierung über seinen eigenen Handler (showAppInfo setzt „geöffnet").
   const dismiss = (e) => {
     if (mark.contains(e.target)) return; // bubble handles itself
-    if (infoBtn.contains(e.target)) {
-      dismissCoachMark();
-      document.removeEventListener('click', dismiss, true);
-      return;
-    }
     dismissCoachMark();
     document.removeEventListener('click', dismiss, true);
   };
@@ -610,6 +630,8 @@ function showCoachMark() {
 }
 
 function showAppInfo() {
+  localStorage.setItem(INFO_OPENED_KEY, 'true');
+  localStorage.setItem('hasSeenInfo', 'true');
   const existing = document.getElementById('app-info-overlay');
   if (existing) existing.remove();
 

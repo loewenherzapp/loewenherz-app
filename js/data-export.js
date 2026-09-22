@@ -38,7 +38,9 @@ const LS_EXACT_KEYS = [
   'loewenherz_haptics_enabled',
   'smallPointsTotal',
   'hasSeenInfo',
-  'hasSeenSettingsHint'
+  'hasSeenSettingsHint',
+  'infoSheetOpened',
+  'infoHintShows'
 ];
 // SMALL-Reminder: Zeitfenster und Anzahl.
 //
