@@ -515,8 +515,13 @@ wurde. Sie blockieren das **Einreichen**, nicht das Vorbereiten:
       Weg in App Store Connect: Vertrieb → Plus neben „iOS-App" → Version eingeben → Text →
       Sichern → Build hinzufügen → Sichern → „Zur Prüfung hinzufügen" → im
       Übermittlungsentwurf „Zur Prüfung übermitteln".
-- [ ] **Gerätetest:** Ton „iOS-Standardton" (Server sendet jetzt `ios_sound: default`) und
-      der Zahnrad-Hinweis nach „Ja, erinner mich". 1.0 ist im Store, deshalb
+- [x] **21.09.2026, 22:27 MESZ — 1.0.1 FREIGEGEBEN UND LIVE.** Prüfung in unter 14 Stunden,
+      keine Rückfragen (Submission-ID `3e39e7a8-6a91-4f68-93d7-5d2910cf8983`). Automatische
+      Veröffentlichung hat gegriffen; die Lookup-API zeigt Version 1.0.1 mit dem eingetragenen
+      Text. Merker: Mit Prüfhistorie läuft die Prüfung deutlich schneller als beim Erstantrag.
+- [ ] **Gerätetest mit der Store-Version 1.0.1:** Ton „iOS-Standardton" (Server sendet jetzt
+      `ios_sound: default`) und der Zahnrad-Hinweis nach „Ja, erinner mich". Bestandsnutzer
+      mit laufenden Erinnerungen sehen den Hinweis einmalig beim ersten Start nach dem Update. 1.0 ist im Store, deshalb
       neue Versionsnummer statt nur Build 3. Enthält: ITMS-90683-Reparatur, Privacy
       Manifest, leisere Töne (drei Commits vom 1.–5.9.), alle Web-Korrekturen aus dem
       Audit (Krisennummern, Escaping, Doppel-Tap, Push-Widerruf …). Vor dem Upload im
