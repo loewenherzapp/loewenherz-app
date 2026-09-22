@@ -526,7 +526,10 @@ wurde. Sie blockieren das **Einreichen**, nicht das Vorbereiten:
       zuverlässig, bis du sie einmal geöffnet hast. Kleine Verbesserungen unter der Haube."
       Merker: Build-Verarbeitung dauerte ~6 Minuten; solange fehlt der Build im Dialog
       „Build hinzufügen" — Version und Text kann man vorher schon anlegen und sichern.
-- [ ] **Gerätetest mit der Store-Version 1.0.2:** ⓘ-Blase beim ersten Start nach dem Update, Ton „iOS-Standardton" (Server sendet jetzt
+- [x] **23.09.2026 — Gerätetest 1.0.2 durch Patrick bestanden:** ⓘ-Blase erscheint nach dem
+      Update wieder und verhält sich wie gewünscht. (Store-Lookup zeigte am 23.09. morgens
+      noch 1.0.1 — Test lief über TestFlight oder der Store hinkte nach.)
+- [ ] **Noch offen aus dem Gerätetest:** Ton „iOS-Standardton“ (Server sendet `ios_sound: default`), Ton „iOS-Standardton" (Server sendet jetzt
       `ios_sound: default`) und der Zahnrad-Hinweis nach „Ja, erinner mich". Bestandsnutzer
       mit laufenden Erinnerungen sehen den Hinweis einmalig beim ersten Start nach dem Update. 1.0 ist im Store, deshalb
       neue Versionsnummer statt nur Build 3. Enthält: ITMS-90683-Reparatur, Privacy
