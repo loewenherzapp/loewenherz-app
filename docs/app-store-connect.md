@@ -519,7 +519,14 @@ wurde. Sie blockieren das **Einreichen**, nicht das Vorbereiten:
       keine Rückfragen (Submission-ID `3e39e7a8-6a91-4f68-93d7-5d2910cf8983`). Automatische
       Veröffentlichung hat gegriffen; die Lookup-API zeigt Version 1.0.1 mit dem eingetragenen
       Text. Merker: Mit Prüfhistorie läuft die Prüfung deutlich schneller als beim Erstantrag.
-- [ ] **Gerätetest mit der Store-Version 1.0.1:** Ton „iOS-Standardton" (Server sendet jetzt
+- [x] **22.09.2026 — 1.0.2 (4) gebaut, hochgeladen (08:48), Version angelegt, eingereicht (08:54).**
+      Inhalt: ⓘ-Blase bleibt, bis die Orientierung geöffnet wurde (bis zu drei Starts, auch
+      für Bestandsnutzer); Zahnrad-Blase wartet darauf. Status *1.0.2 Warten auf Prüfung*,
+      automatische Veröffentlichung. Neuheiten-Text: „Die kurze Orientierung meldet sich jetzt
+      zuverlässig, bis du sie einmal geöffnet hast. Kleine Verbesserungen unter der Haube."
+      Merker: Build-Verarbeitung dauerte ~6 Minuten; solange fehlt der Build im Dialog
+      „Build hinzufügen" — Version und Text kann man vorher schon anlegen und sichern.
+- [ ] **Gerätetest mit der Store-Version 1.0.2:** ⓘ-Blase beim ersten Start nach dem Update, Ton „iOS-Standardton" (Server sendet jetzt
       `ios_sound: default`) und der Zahnrad-Hinweis nach „Ja, erinner mich". Bestandsnutzer
       mit laufenden Erinnerungen sehen den Hinweis einmalig beim ersten Start nach dem Update. 1.0 ist im Store, deshalb
       neue Versionsnummer statt nur Build 3. Enthält: ITMS-90683-Reparatur, Privacy
