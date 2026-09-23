@@ -164,12 +164,42 @@ Passwörter über `BUBBLEWRAP_KEYSTORE_PASSWORD` / `BUBBLEWRAP_KEY_PASSWORD`.
 - `POST_NOTIFICATIONS` und `DelegationService` vorhanden — Web-Push wird weiter an die
   App delegiert.
 
-### Offene Designentscheidung: Splash
+### Designentscheidung Splash: Android Petrol, iOS Creme (entschieden 23.09.2026)
 
-`backgroundColor` steht auf `#f7ead8` (Creme, aus dem Web-Manifest). Weil das neue Icon
-einen Petrol-Hintergrund mitbringt, zeigt der Startbildschirm jetzt ein petrolfarbenes
-Quadrat auf Creme. Nahtlos wäre er mit `"backgroundColor": "#39828b"` in der
-`twa-manifest.json`. Bewusst offen gelassen.
+In v2 steht `backgroundColor` auf `#f7ead8` (Creme). Weil das Icon einen vollflächigen
+Petrol-Hintergrund mitbringt, zeigt der Startbildschirm ein hartkantiges Petrol-Quadrat
+auf Creme. Das wirkt wie ein eingeklebtes Bild und passt nicht zum runden
+Systemsplash ab Android 12, der direkt davor erscheint.
+
+**Entscheidung:** Auf Android wird der Splash-Hintergrund Petrol `#39828b`. Das Quadrat
+verschmilzt dann mit dem Hintergrund, und es bleibt nur der goldene Löwe auf Petrol. Der
+Systemsplash (Löwe im Petrol-Kreis) und der TWA-Splash gehen nahtlos ineinander über.
+Der Wechsel zur cremefarbenen App läuft über die bestehende Überblendung (300 ms).
+
+**iOS bleibt Creme ohne Logo.** Dort nutzt der Splash kein Icon, sondern entspricht nach
+Apples Vorgabe dem ersten Bildschirm. Es gibt also kein Quadratproblem und keinen Grund,
+das zu ändern.
+
+Umsetzung:
+- Web-Manifest `background_color` → `#39828b` (SW v123). Das wirkt sofort auf den
+  Splash der über Chrome installierten Web-App und dient als Quelle für künftige Bauten.
+- `twa-manifest.json` → `"backgroundColor": "#39828b"` **beim nächsten Android-Bau (v3)**.
+  Bewusst kein Einzel-Bau nur dafür: v3 bündelt das mit dem neuen Monochrom-Icon (s. u.),
+  damit es nur eine Google-Prüfung braucht. `themeColor`/`navigationColor` bleiben Creme,
+  weil sie zur laufenden App passen müssen.
+
+### Benachrichtigungs-Icon in v2 ist das Farb-Icon (zu reparieren in v3)
+
+Geprüft am 23.09.2026 per `aapt2 dump resources`: `drawable/ic_notification_icon`
+(24–96 px) ist das vollfarbige Petrol-Icon **ohne Transparenz**. Android färbt das
+kleine Benachrichtigungssymbol selbst ein und wertet dabei nur den Alphakanal aus. In der
+Statusleiste erscheint deshalb ein **gefülltes Quadrat statt eines Löwen**. Das große
+Bild rechts in der Benachrichtigung (`chrome_web_icon`, 192er-PNG) zeigt den Löwen
+dagegen korrekt.
+
+Fix für v3: Die einfarbige Löwen-Silhouette der Designerin (PNG mit transparentem Grund)
+als `"monochromeIconUrl"` in die `twa-manifest.json` eintragen. Bubblewrap erzeugt daraus
+das Benachrichtigungs-Icon und das Themed Icon ab Android 13.
 
 ---
 
