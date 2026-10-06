@@ -3,7 +3,7 @@
 // ============================================================
 
 import { TEXTS } from '../content/de.js';
-import { initDB, getProfile, getAllPoints, getAllReflections } from './db.js';
+import { initDB, getProfile, getAllPoints, getAllReflections, nurArbeitsspeicher } from './db.js';
 import { initMilestones, markMilestonesSeen, getUnseenMilestoneCount } from './milestones.js';
 import { milestoneDisplayNames, milestoneIcons, milestoneTexts } from './weekly-cards.js';
 import { initBottomSheet } from './components/bottom-sheet.js';
@@ -20,7 +20,8 @@ import { isNative } from './platform.js';
 import { nativePlugin } from './native-plugins.js';
 import { initExternalLinks } from './external-links.js';
 import { hapticMilestone } from './haptics.js';
-import { pushIsActive, getPermissionState } from './push.js'; // Import startet auch den OneSignal-Init (Seiteneffekt)
+import { pushIsActive, getPermissionState } from './push.js';
+import { initZurueckTaste } from './back-nav.js'; // Import startet auch den OneSignal-Init (Seiteneffekt)
 
 let currentTab = 'today';
 let profile = null;
@@ -109,6 +110,27 @@ function isStandalone() {
 async function init() {
   await initDB();
 
+  // Installierte App ohne funktionierende Datenbank: NICHT still neu
+  // anfangen. Ein Onboarding im Arbeitsspeicher wäre beim nächsten Start
+  // wieder weg — und hätte die echten Daten scheinbar „gelöscht", obwohl
+  // sie nach einem Neustart oft wieder da sind. Im normalen Browser-Tab
+  // bleibt der Arbeitsspeicher-Modus (z. B. alte Privat-Modi ohne IndexedDB).
+  if (nurArbeitsspeicher() && isStandalone()) {
+    zeigeProfilVerlust();
+    return;
+  }
+
+  // Dauerhaften Speicher auch in der installierten Web-App erbitten
+  // (Android-App = TWA, Homescreen-PWA). Chrome entscheidet still, ohne
+  // Dialog; ohne diese Bitte darf Android die Daten bei Speicherdruck
+  // räumen. Firefox würde fragen — dort bewusst nicht. Nativ: siehe unten.
+  if (!isNative() && isStandalone() && !/Firefox\//.test(navigator.userAgent)
+      && navigator.storage && navigator.storage.persist) {
+    navigator.storage.persist()
+      .then((ok) => console.log('[App] Dauerhafter Speicher:', ok ? 'gewährt' : 'nicht gewährt'))
+      .catch(() => {});
+  }
+
   // Init milestones (retroactive scan on first load)
   initMilestones().catch(e => console.warn('[App] Milestone init failed:', e));
 
@@ -118,6 +140,11 @@ async function init() {
   initEmailSoftPrompt();
   initExternalLinks();
   if (isNative()) initNativeShell();
+  initZurueckTaste({
+    aktuellerTab: () => currentTab,
+    zuHeute: () => switchTab('today'),
+    reflexionsUebersicht: () => switchTab('reflection')
+  });
 
   // Set tab labels from TEXTS
   const tabTexts = TEXTS.ui.tabs;

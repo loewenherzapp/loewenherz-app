@@ -28,65 +28,100 @@ const getIDB = () => {
 };
 
 export function initDB() {
-  return new Promise((resolve, reject) => {
-    if (dbInstance) { resolve(dbInstance); return; }
+  if (dbInstance) return Promise.resolve(dbInstance);
 
-    const idb = getIDB();
-    if (!idb) {
-      console.warn('IndexedDB not available, using memory storage');
-      useMemory = true;
-      resolve(null);
+  const idb = getIDB();
+  if (!idb) {
+    console.warn('IndexedDB not available, using memory storage');
+    useMemory = true;
+    return Promise.resolve(null);
+  }
+  return oeffnenMitWiederholung(idb, 1);
+}
+
+/**
+ * Läuft die App nur im Arbeitsspeicher? Dann ist nichts gespeichert, und
+ * nach dem nächsten Start wäre alles weg — app.js zeigt in installierten
+ * Apps deshalb die Neustart-Meldung statt eines frischen Onboardings.
+ */
+export function nurArbeitsspeicher() {
+  return useMemory;
+}
+
+// Ein einzelner Fehlschlag beim Öffnen ist auf Android real (Speicher
+// knapp, Browser-Prozess gerade beschäftigt). Früher fiel die App dann
+// sofort in den Arbeitsspeicher und begann still von vorn — mit
+// Onboarding, als wäre nie etwas gespeichert worden (Tester-Rückmeldung
+// 06.10.2026: „muss wieder mit Namen anfangen, Punkte sind alle weg").
+const OEFFNEN_VERSUCHE = 3;
+
+function oeffnenMitWiederholung(idb, versuch) {
+  return oeffnenEinmal(idb).catch((fehler) => {
+    if (versuch < OEFFNEN_VERSUCHE) {
+      console.warn(`[DB] Öffnen fehlgeschlagen (Versuch ${versuch}), neuer Versuch:`, fehler);
+      return new Promise((r) => setTimeout(r, 400 * versuch))
+        .then(() => oeffnenMitWiederholung(idb, versuch + 1));
+    }
+    console.warn('[DB] IndexedDB nicht verfügbar — Arbeitsspeicher-Modus:', fehler);
+    useMemory = true;
+    return null;
+  });
+}
+
+function oeffnenEinmal(idb) {
+  return new Promise((resolve, reject) => {
+    let request;
+    try {
+      request = idb.open(DB_NAME, DB_VERSION);
+    } catch (e) {
+      reject(e);
       return;
     }
+    let blockiertTimer = null;
 
-    try {
-      const request = idb.open(DB_NAME, DB_VERSION);
+    request.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('userProfile')) {
+        db.createObjectStore('userProfile', { keyPath: 'id' });
+      }
+      if (!db.objectStoreNames.contains('smallPoints')) {
+        const store = db.createObjectStore('smallPoints', { keyPath: 'id', autoIncrement: true });
+        store.createIndex('date', 'date', { unique: false });
+      }
+      if (!db.objectStoreNames.contains('reflections')) {
+        const store = db.createObjectStore('reflections', { keyPath: 'id', autoIncrement: true });
+        store.createIndex('date', 'date', { unique: true });
+      }
+      // v2: Milestones store
+      if (!db.objectStoreNames.contains('milestones')) {
+        db.createObjectStore('milestones', { keyPath: 'id' });
+      }
+    };
 
-      request.onupgradeneeded = (e) => {
-        const db = e.target.result;
-        if (!db.objectStoreNames.contains('userProfile')) {
-          db.createObjectStore('userProfile', { keyPath: 'id' });
-        }
-        if (!db.objectStoreNames.contains('smallPoints')) {
-          const store = db.createObjectStore('smallPoints', { keyPath: 'id', autoIncrement: true });
-          store.createIndex('date', 'date', { unique: false });
-        }
-        if (!db.objectStoreNames.contains('reflections')) {
-          const store = db.createObjectStore('reflections', { keyPath: 'id', autoIncrement: true });
-          store.createIndex('date', 'date', { unique: true });
-        }
-        // v2: Milestones store
-        if (!db.objectStoreNames.contains('milestones')) {
-          db.createObjectStore('milestones', { keyPath: 'id' });
-        }
+    request.onsuccess = (e) => {
+      clearTimeout(blockiertTimer);
+      dbInstance = e.target.result;
+      // Zweite Instanz (Safari-Tab + PWA) will löschen oder upgraden:
+      // Verbindung freigeben, sonst hängt dort alles – und nach einem
+      // Reload wartet auch diese Instanz hinter dem blockierten Delete.
+      dbInstance.onversionchange = () => {
+        try { dbInstance.close(); } catch (err) { /* schon zu */ }
+        dbInstance = null;
       };
+      resolve(dbInstance);
+    };
 
-      request.onsuccess = (e) => {
-        dbInstance = e.target.result;
-        // Zweite Instanz (Safari-Tab + PWA) will löschen oder upgraden:
-        // Verbindung freigeben, sonst hängt dort alles – und nach einem
-        // Reload wartet auch diese Instanz hinter dem blockierten Delete.
-        dbInstance.onversionchange = () => {
-          try { dbInstance.close(); } catch (err) { /* schon zu */ }
-          dbInstance = null;
-        };
-        resolve(dbInstance);
-      };
+    request.onerror = () => {
+      clearTimeout(blockiertTimer);
+      reject(request.error || new Error('IndexedDB open failed'));
+    };
 
-      request.onerror = (e) => {
-        console.warn('IndexedDB open failed, using memory storage');
-        useMemory = true;
-        resolve(null);
-      };
-
-      request.onblocked = () => {
-        console.warn('IndexedDB upgrade blocked — another tab has the DB open. Please reload.');
-      };
-    } catch (e) {
-      console.warn('IndexedDB exception, using memory storage');
-      useMemory = true;
-      resolve(null);
-    }
+    // Blockiert (andere Instanz hält eine alte Version offen): nicht ewig
+    // auf einem weißen Bildschirm warten, sondern nach 4 s aufgeben.
+    request.onblocked = () => {
+      console.warn('IndexedDB upgrade blocked — another tab has the DB open.');
+      blockiertTimer = setTimeout(() => reject(new Error('IndexedDB blocked')), 4000);
+    };
   });
 }
 
