@@ -35,8 +35,10 @@ function mock(players) {
   globalThis.fetch = async (url, opts = {}) => {
     if (url.includes('/players?')) {
       const offset = Number(new URL(url).searchParams.get('offset'));
-      // Wie die echte API: jedes Gerät trägt notification_types (1 = abonniert).
-      const seite = players.map((p) => ({ notification_types: 1, ...p }));
+      // Wie die echte API: notification_types fehlt bei den App-Geräten
+      // (am 16.10.2026 bei allen 56 Abos leer). Die alte Attrappe setzte hier
+      // überall 1 und hat so den Totalausfall seit 17.09. verdeckt.
+      const seite = players.map((p) => ({ ...p }));
       return { ok: true, json: async () => ({ players: offset === 0 ? seite : [] }) };
     }
     if (url.includes('/notifications')) {
@@ -285,6 +287,7 @@ check(MOD.parseSched('v1;m=0500;o=x').origin === 'a', 'parseSched: unbekannte He
 {
   const players = [
     { id: 'OK',   tags: { sched: `v1;m=${SLOT};e=${ABENDS};s=` } },
+    { id: 'OK1',  tags: { sched: `v1;m=${SLOT};e=${ABENDS};s=` }, notification_types: 1 },
     { id: 'DEAD', tags: { sched: `v1;m=${SLOT};e=${ABENDS};s=` }, invalid_identifier: true },
     { id: 'OFF',  tags: { sched: `v1;m=${SLOT};e=${ABENDS};s=` }, notification_types: -2 },
     { id: 'NOPERM', tags: { sched: `v1;m=${SLOT};e=${ABENDS};s=` }, notification_types: 0 },
@@ -292,7 +295,9 @@ check(MOD.parseSched('v1;m=0500;o=x').origin === 'a', 'parseSched: unbekannte He
   ];
   const { sends } = await run(players);
   const alle = sends.flatMap(s => s.include_subscription_ids);
-  check(alle.join('') === 'OK', `nur abonnierte Geräte (notification_types 1) werden adressiert (waren: ${alle.join(',')})`);
+  // Ein FEHLENDES notification_types ist der Normalfall der echten API und
+  // darf nie aussortieren — sonst bekommt niemand eine Erinnerung.
+  check(alle.sort().join(',') === 'OK,OK1', `fehlendes oder 1 = adressiert, ausdrücklich abgemeldet = raus (waren: ${alle.join(',')})`);
 }
 
 console.log(fails === 0 ? 'Alle Tests bestanden.' : `\n${fails} FEHLER`);

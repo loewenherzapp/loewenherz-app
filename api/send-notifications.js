@@ -299,9 +299,12 @@ async function fetchSubscriptions(apiKey) {
     // Payload — sie können keine Zustellung mehr annehmen.
     for (const p of players) {
       if (p.invalid_identifier === true) continue;
-      // 1 = abonniert. Alles andere (-2 abgemeldet, 0 keine Berechtigung,
-      // -31 usw.) kann keine Zustellung annehmen.
-      if (p.notification_types !== 1) continue;
+      // Nur ausdrücklich abgemeldete Geräte aussortieren (-2 abgemeldet,
+      // 0 keine Berechtigung, -31 usw.). Bei den App-Geräten liefert die
+      // API das Feld gar nicht mit — ein fehlender Wert heißt NICHT
+      // „abgemeldet". Die frühere Prüfung `!== 1` hat deshalb ab dem
+      // 17.09.2026 jedes Gerät verworfen, und niemand bekam mehr etwas.
+      if (typeof p.notification_types === 'number' && p.notification_types !== 1) continue;
       alle.push(p);
     }
     if (players.length < PAGE_SIZE) return alle;

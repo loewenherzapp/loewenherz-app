@@ -280,4 +280,19 @@ Android-Entwickler* im Menü des Entwicklerkontos (nicht auf App-Ebene).
 - [ ] Disclaimer-Text juristisch prüfen lassen (aktuell Entwurf)
 - [x] Datenschutz-URL `https://app.angstdoc.de/datenschutz` (Konstante `PRIVACY_URL`
       in `js/config.js`) in der Play Console hinterlegen — erledigt 08.09.2026, siehe oben
-- [ ] Testerliste für den geschlossenen Test eintragen (mindestens 12 Anmeldungen nötig)
+- [x] Testerliste für den geschlossenen Test eintragen — 12 Anmeldungen am 04.10.2026 erreicht
+
+## To-do nach dem geschlossenen Test
+
+- [ ] **Android von TWA auf Capacitor umstellen (wie iOS).** Entschieden 10.10.2026, umsetzen
+      erst nach Erhalt des Produktionszugriffs, nicht während der 14-Tage-Frist.
+      Anlass: Die TWA speichert alles im Browser-Speicher (Chrome bzw. Samsung Internet).
+      „Browserdaten löschen" mit „Cookies und Websitedaten" löscht damit auch Profil, Punkte
+      und Reflexionen. Am 10.10.2026 bestätigt bei einer Testerin (Samsung A25): Browserdaten
+      gelöscht → App fragte wieder nach Name und E-Mail. Kein Code-Fehler.
+      Mit Capacitor liegen die Daten im eigenen App-Speicher und sind vom Browser getrennt.
+      Zu klären/erledigen: OneSignal-Push nativ für Android (FCM) anbinden, gleiche
+      Paket-ID `de.angstdoc.loewenherz` und denselben Upload-Key behalten, damit es ein Update
+      bleibt; Bestandsdaten der TWA-Nutzer liegen im Browser und wandern nicht automatisch mit
+      (Weg über Sicherung exportieren/importieren anbieten); `assetlinks.json` wird dann nicht
+      mehr gebraucht.
