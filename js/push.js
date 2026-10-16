@@ -546,6 +546,15 @@ export function requestPushPermission() {
         .then(() => nativePush.getNativePermissionState())
         .catch(() => 'unknown');
     }
+    // Erlaubnis schon erteilt (z. B. über die Android-Einstellungen): Es gibt
+    // nichts mehr zu fragen, nur das Abo anzulegen. Der Slidedown würde hier
+    // nichts tun, und der Aufrufer bekäme 'unknown' statt 'granted'.
+    if (typeof Notification !== 'undefined' && Notification.permission === 'granted'
+        && window.OneSignal && OneSignal.User) {
+      return OneSignal.User.PushSubscription.optIn()
+        .then(() => 'granted')
+        .catch((e) => { console.warn('[Push] optIn bei erteilter Erlaubnis:', e); return 'unknown'; });
+    }
     if (window.OneSignal && OneSignal.Slidedown) {
       OneSignal.Slidedown.promptPush();
       return 'unknown';
@@ -636,7 +645,7 @@ function snoozeActive() {
 })();
 
 export function showPushSoftAsk() {
-  if (getPermissionState() !== 'default') return;
+  if (!softAskMoeglich()) return;
   if (localStorage.getItem('loewenherz_push_asked')) return;
   if (snoozeActive()) return;
   // Der push_asked-Riegel greift erst NACH einer Nutzerentscheidung. Zwei
@@ -756,11 +765,29 @@ export function showPushSoftAsk() {
 // Tag gar nicht gefragt.
 export function checkPushSoftAsk() {
   setTimeout(() => {
-    if (
-      getPermissionState() === 'default' &&
-      !localStorage.getItem('loewenherz_push_asked')
-    ) {
+    if (softAskMoeglich() && !localStorage.getItem('loewenherz_push_asked')) {
       showPushSoftAsk();
     }
   }, 1500);
+}
+
+/**
+ * Darf der Soft-Ask überhaupt erscheinen? Normalfall: Der Browser hat noch
+ * nie gefragt ('default').
+ *
+ * Zweiter Fall, nur Web: Die Erlaubnis ist schon erteilt, aber die App hat
+ * nie zugestimmt bekommen — OneSignal wurde also nie geladen, es gibt kein
+ * Abo. Passiert in der Android-App, wenn die Mitteilungen über die
+ * Android-Einstellungen erlaubt wurden. Früher galt dieser Nutzer als
+ * „erledigt" und wurde nie gefragt; er bekam nie eine Erinnerung, obwohl
+ * alles erlaubt war. Wer die Erinnerungen in den Einstellungen bewusst
+ * ausgeschaltet hat (push_enabled === 'false'), wird nicht gefragt.
+ */
+function softAskMoeglich() {
+  const state = getPermissionState();
+  if (state === 'default') return true;
+  return !isNative()
+    && state === 'granted'
+    && localStorage.getItem('loewenherz_push_enabled') !== 'false'
+    && !pushIsActive();
 }
