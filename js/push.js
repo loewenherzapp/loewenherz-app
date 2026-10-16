@@ -605,6 +605,36 @@ function snoozeActive() {
   }
 })();
 
+// --- Hängengebliebenes „Ja" zurückholen (nur Web) ---
+//
+// Bis Oktober 2026 stand in OneSignal noch loewenherz-app.vercel.app als
+// Website. Auf app.angstdoc.de — und damit in der Android-App — brach
+// OneSignal.init() deshalb ab („Can only be used on: …vercel.app"): Nach
+// „Ja, erinner mich" kam kein Systemdialog. Gespeichert wurden trotzdem
+// push_asked und push_enabled. Diese Nutzer sehen in den Einstellungen
+// „an", bekommen aber nichts, und werden nie wieder gefragt — pushIsActive()
+// ist false, den Soft-Ask sperrt push_asked.
+// Fingerprint: Zusage gespeichert, der Browser hat aber nie gefragt.
+// Bewusst nur EINMAL pro Gerät, damit ein späteres „Später" in OneSignals
+// eigener Abfrage nicht bei jedem Start einen neuen Soft-Ask auslöst.
+(function reopenStuckYes() {
+  try {
+    if (isNative() || typeof Notification === 'undefined') return;
+    if (localStorage.getItem('loewenherz_push_reopened_v1')) return;
+    if (
+      localStorage.getItem('loewenherz_push_asked') === 'true' &&
+      localStorage.getItem('loewenherz_push_enabled') === 'true' &&
+      Notification.permission === 'default'
+    ) {
+      localStorage.removeItem('loewenherz_push_asked');
+      localStorage.setItem('loewenherz_push_reopened_v1', '1');
+      console.log('[Push] Hängengebliebenes Ja zurückgesetzt — Soft-Ask kommt erneut');
+    }
+  } catch (e) {
+    // Silent — schlimmstenfalls bleibt der Nutzer wie bisher ohne Erinnerungen
+  }
+})();
+
 export function showPushSoftAsk() {
   if (getPermissionState() !== 'default') return;
   if (localStorage.getItem('loewenherz_push_asked')) return;
