@@ -531,9 +531,8 @@ export async function optInPush() {
  * Lädt bei Bedarf das SDK und zeigt den Permission-Prompt.
  * Resolved mit 'granted' | 'denied' | 'default' | 'unknown'.
  *
- * 'unknown' ist der Web-Slidedown-Pfad und Absicht: OneSignals Slidedown
- * meldet kein Ergebnis zurück. Aufrufer dürfen daraufhin NICHTS am
- * UI-Zustand ändern — exakt das Verhalten, das der Web-Pfad heute hat.
+ * 'unknown' heißt: Ergebnis nicht bestimmbar (SDK fehlt oder Fehler).
+ * Aufrufer dürfen daraufhin NICHTS am UI-Zustand ändern.
  */
 export function requestPushPermission() {
   return ensureOneSignalLoaded().then(() => {
@@ -546,18 +545,16 @@ export function requestPushPermission() {
         .then(() => nativePush.getNativePermissionState())
         .catch(() => 'unknown');
     }
-    // Erlaubnis schon erteilt (z. B. über die Android-Einstellungen): Es gibt
-    // nichts mehr zu fragen, nur das Abo anzulegen. Der Slidedown würde hier
-    // nichts tun, und der Aufrufer bekäme 'unknown' statt 'granted'.
-    if (typeof Notification !== 'undefined' && Notification.permission === 'granted'
-        && window.OneSignal && OneSignal.User) {
+    // Direkt optIn() statt OneSignals Slidedown: optIn() zeigt bei offener
+    // Erlaubnis den Systemdialog (Android: „Zulassen?") und legt sonst nur
+    // das Abo an. Der Slidedown blieb stumm, sobald das Gerät einmal per
+    // Schalter abgemeldet war (optOut) — auch mit force. Folge: „Ja" ohne
+    // Dialog, kein Abo (Xiaomi-Gerät, 17.10.2026). Unser Soft-Ask ist die
+    // Vorab-Frage; eine zweite davor braucht es nicht.
+    if (window.OneSignal && OneSignal.User) {
       return OneSignal.User.PushSubscription.optIn()
-        .then(() => 'granted')
-        .catch((e) => { console.warn('[Push] optIn bei erteilter Erlaubnis:', e); return 'unknown'; });
-    }
-    if (window.OneSignal && OneSignal.Slidedown) {
-      OneSignal.Slidedown.promptPush();
-      return 'unknown';
+        .then(() => Notification.permission)
+        .catch((e) => { console.warn('[Push] optIn:', e); return 'unknown'; });
     }
     if (typeof Notification !== 'undefined') {
       return Notification.requestPermission();
@@ -626,17 +623,19 @@ function snoozeActive() {
 // Fingerprint: Zusage gespeichert, der Browser hat aber nie gefragt.
 // Bewusst nur EINMAL pro Gerät, damit ein späteres „Später" in OneSignals
 // eigener Abfrage nicht bei jedem Start einen neuen Soft-Ask auslöst.
+// v2 (17.10.2026): Wer nach v1 am stummen Slidedown hängen blieb (siehe
+// requestPushPermission), steckt im selben Zustand — eine zweite Runde.
 (function reopenStuckYes() {
   try {
     if (isNative() || typeof Notification === 'undefined') return;
-    if (localStorage.getItem('loewenherz_push_reopened_v1')) return;
+    if (localStorage.getItem('loewenherz_push_reopened_v2')) return;
     if (
       localStorage.getItem('loewenherz_push_asked') === 'true' &&
       localStorage.getItem('loewenherz_push_enabled') === 'true' &&
       Notification.permission === 'default'
     ) {
       localStorage.removeItem('loewenherz_push_asked');
-      localStorage.setItem('loewenherz_push_reopened_v1', '1');
+      localStorage.setItem('loewenherz_push_reopened_v2', '1');
       console.log('[Push] Hängengebliebenes Ja zurückgesetzt — Soft-Ask kommt erneut');
     }
   } catch (e) {
@@ -726,7 +725,7 @@ export function showPushSoftAsk() {
     // nutzer, der den Soft-Ask vor dem ersten Öffnen der Einstellungen
     // sieht, verlöre damit seine gewohnten Zeiten.
 
-    // Erst jetzt der echte Permission-Prompt — im Web der Slidedown,
+    // Erst jetzt der echte Permission-Prompt — im Web der Browser-Dialog,
     // nativ der Apple-System-Dialog.
     requestPushPermission().then((state) => {
       if (state !== 'granted') return;

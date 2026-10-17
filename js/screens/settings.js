@@ -353,8 +353,7 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
 
       if (getPermissionState() === 'default') {
         // SDK lazy nachladen und Permission anfragen (erster Push-Opt-in).
-        // 'unknown' = OneSignals Slidedown meldet kein Ergebnis zurück →
-        // bewusst nichts am Toggle ändern.
+        // 'unknown' = Ergebnis nicht bestimmbar → bewusst nichts am Toggle ändern.
         requestPushPermission().then(state => {
           if (state === 'granted') {
             localStorage.setItem('loewenherz_push_enabled', 'true');
