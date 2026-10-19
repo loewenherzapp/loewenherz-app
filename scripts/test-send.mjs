@@ -138,7 +138,12 @@ check(MOD.parseSched('v1;m=0500;o=x').origin === 'a', 'parseSched: unbekannte He
   const alle = sends.flatMap(s => s.include_subscription_ids);
   check(!alle.includes('D') && !alle.includes('E') && !alle.includes('F'),
     'D/E/F bekommen NICHTS — genau hier lag der alte Bug');
-  check(sends.every(s => s.ttl === 900 && s.web_url && !s.url), 'ttl + web_url unverändert');
+  check(sends.every(s => s.web_url && !s.url), 'web_url statt url (iOS öffnet sonst die Website)');
+  // Android-Doze: ohne priority 10 hält FCM die Nachricht zurück und verwirft
+  // sie nach der ttl; 15 Minuten reichten dafür nie (belegt 18.10.2026).
+  check(sends.every(s => s.priority === 10 && s.ttl === 3600), 'priority 10 + ttl 1 h gegen Doze-Verfall');
+  check(new Set(sends.map(s => s.web_push_topic)).size === 3 && sends.every(s => /^loewenherz-(morning|evening|small)$/.test(s.web_push_topic)),
+    'web_push_topic je Typ — beim Aufwachen höchstens eine Nachricht pro Typ');
   check(sends.every(s => s.web_url.startsWith('https://app.angstdoc.de/')),
     'ohne Herkunfts-Marker zeigt der Tap auf app.angstdoc.de');
   check(sends.every(s => s.chrome_web_icon.startsWith('https://app.angstdoc.de/')), 'Icon von app.angstdoc.de');

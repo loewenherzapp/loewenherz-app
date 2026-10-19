@@ -160,6 +160,7 @@ export default async function handler(req, res) {
           const r = await sendNotification({
             apiKey,
             subscriptionIds: teil,
+            typ,
             title: cfg.title,
             body,
             url: `${WEB_ORIGINS[origin] || WEB_ORIGINS[DEFAULT_ORIGIN]}/?tab=${cfg.tab}`,
@@ -313,7 +314,7 @@ async function fetchSubscriptions(apiKey) {
   return alle;
 }
 
-async function sendNotification({ apiKey, subscriptionIds, title, body, url, iosSound, idempotencyKey }) {
+async function sendNotification({ apiKey, subscriptionIds, typ, title, body, url, iosSound, idempotencyKey }) {
   const resp = await fetch(`${ONESIGNAL_BASE}/notifications`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Basic ${apiKey}` },
@@ -329,9 +330,23 @@ async function sendNotification({ apiKey, subscriptionIds, title, body, url, ios
       // die Launch-URL — der Tap würde die Website öffnen statt der App.
       web_url: url,
       chrome_web_icon: 'https://app.angstdoc.de/assets/icons/icon-192.png',
+      // Hohe Dringlichkeit auch für Web-Push (Android-TWA). Ohne das Feld
+      // geht die Nachricht mit normaler Priorität an FCM: Ein ruhendes
+      // Android (Doze) hält sie bis zum nächsten Wartungsfenster zurück und
+      // FCM verwirft sie, sobald die ttl vorher abläuft — OneSignal meldet
+      // trotzdem „successful". Im Emulator belegt (18.10.2026): ohne
+      // priority verfallen, mit 10 im Tiefschlaf zugestellt. APNs nutzt 10
+      // ohnehin als Standard, iOS ändert sich nicht.
+      priority: 10,
+      // Pro Typ nur die jüngste Nachricht in der FCM-Warteschlange halten:
+      // Wacht ein Gerät nach Stunden auf, bekommt es nicht fünf alte Impulse
+      // auf einmal. Nur Web-Push.
+      web_push_topic: `loewenherz-${typ}`,
       // Web-Push ignoriert das Feld; 'default' = Apple-Systemton.
       ...(iosSound ? { ios_sound: iosSound } : {}),
-      ttl: 900 // 15 Minuten — danach nicht mehr zustellen
+      // 1 Stunde statt 15 Minuten: Eine verspätete Erinnerung ist besser
+      // als eine verworfene; länger wäre sie nicht mehr „jetzt".
+      ttl: 3600
     })
   });
 
