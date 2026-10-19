@@ -396,6 +396,12 @@ function buildTags() {
     teile.push('o=v');
   }
 
+  // Offset des Schreibtags (Minuten östlich UTC). Nach einer Zeitumstellung
+  // erkennt der Server daran, dass die UTC-Zeiten noch zum alten Offset
+  // gehören, und verschiebt den Vergleich, bis das Gerät neu schreibt
+  // (slotFuerPlan() in api/send-notifications.js).
+  teile.push(`z=${currentUtcOffset()}`);
+
   return { sched: teile.join(';') };
 }
 

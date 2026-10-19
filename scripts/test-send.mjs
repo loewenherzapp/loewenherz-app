@@ -118,6 +118,38 @@ check(MOD.parseSched('v1;t=quatsch').sound === 'ton-4', 'parseSched: unbekannter
 check(MOD.parseSched('v1;m=0500').origin === 'a', 'parseSched: ohne Herkunft → app.angstdoc.de');
 check(MOD.parseSched('v1;m=0500;o=v').origin === 'v', 'parseSched: o=v → vercel.app');
 check(MOD.parseSched('v1;m=0500;o=x').origin === 'a', 'parseSched: unbekannte Herkunft → app.angstdoc.de');
+check(MOD.parseSched('v1;m=0500;z=120').offset === 120 && MOD.parseSched('v1;m=0500;z=-600').offset === -600, 'parseSched: Zeitzonen-Offset');
+check(MOD.parseSched('v1;m=0500').offset === null && MOD.parseSched('v1;m=0500;z=abc').offset === null
+  && MOD.parseSched('v1;m=0500;z=900').offset === null, 'parseSched: fehlender/kaputter Offset → null, nicht raten');
+
+// --- 1b) Zeitumstellung: Der Tag trägt UTC-Zeiten vom Schreibtag. Ohne
+// Verschiebung käme am Umstellungs-Sonntag alles eine Stunde zu früh. ---
+check(MOD.slotFuerPlan('0600', 120, 60) === '0500', 'Sommer-Tag im Winter: 07:00 MEZ = 06:00 UTC trifft m=0500');
+check(MOD.slotFuerPlan('0500', 60, 120) === '0600', 'Winter-Tag im Sommer: 07:00 MESZ = 05:00 UTC trifft m=0600');
+check(MOD.slotFuerPlan('0030', 120, 60) === '2330', 'Verschiebung über Mitternacht');
+check(MOD.slotFuerPlan('0600', null, 60) === '0600', 'ohne z keine Verschiebung (alte Clients, iOS vor dem nächsten Build)');
+check(MOD.slotFuerPlan('0600', 60, 60) === '0600', 'passender Offset: keine Verschiebung');
+check(MOD.slotFuerPlan('0600', 180, 60) === '0600', 'fremde Zeitzone: keine Verschiebung');
+check(MOD.utcOffsetMinutes('Europe/Berlin', new Date('2026-07-01T12:00:00Z')) === 120
+  && MOD.utcOffsetMinutes('Europe/Berlin', new Date('2026-12-01T12:00:45Z')) === 60, 'Berlin: Sommer 120, Winter 60 (Sekunden stören nicht)');
+check(MOD.utcOffsetMinutes('Europe/Berlin', new Date('2026-10-25T00:59:00Z')) === 120
+  && MOD.utcOffsetMinutes('Europe/Berlin', new Date('2026-10-25T01:00:00Z')) === 60, 'Umstellung 25.10.2026 um 01:00 UTC');
+{
+  // Verdrahtung im Handler: nur in den 14 Tagen nach einer Umstellung wird
+  // verschoben — der Test rechnet wie der Server mit dem echten Datum.
+  const berlinNow = MOD.utcOffsetMinutes('Europe/Berlin', now);
+  const kuerzlich = MOD.utcOffsetMinutes('Europe/Berlin', new Date(now.getTime() - 14 * 86400000)) !== berlinNow;
+  const alt = berlinNow === 120 ? 60 : 120;
+  const { sends } = await run([
+    { id: 'PASST', tags: { sched: `v1;m=${SLOT};e=${ABENDS};s=;z=${berlinNow}` } },
+    { id: 'ALTOFFSET', tags: { sched: `v1;m=${SLOT};e=${ABENDS};s=;z=${alt}` } },
+    { id: 'ALTVERSCHOBEN', tags: { sched: `v1;m=${MOD.slotFuerPlan(SLOT, alt, berlinNow)};e=${ABENDS};s=;z=${alt}` } }
+  ]);
+  const ids = sends.flatMap(s => s.include_subscription_ids);
+  check(ids.includes('PASST'), 'aktueller Offset: Sendung wie bisher');
+  check(ids.includes('ALTOFFSET') === !kuerzlich, `alter Offset, unverschobene Zeit: ${kuerzlich ? 'keine' : ''} Sendung (Umstellung kürzlich: ${kuerzlich})`);
+  check(ids.includes('ALTVERSCHOBEN') === kuerzlich, `alter Offset, verschobene Zeit: ${kuerzlich ? '' : 'keine'} Sendung`);
+}
 
 // --- 2) Zielt der Versand exakt? ---
 {

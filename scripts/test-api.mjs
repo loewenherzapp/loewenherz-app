@@ -56,6 +56,8 @@ const ID = '0f7b8f3e-2d5a-4c1b-9a6e-3d2f1e0c9b8a';
   check(r4.status === 400, 'unbekannter Schlüssel → 400');
   const r5 = await call(setTags, { body: { player_id: ID, tags: { sched: 'v1;m=0500', extra: '1' } } });
   check(r5.status === 400, 'unvollständiger Plan → 400');
+  const r6 = await call(setTags, { body: { player_id: ID, tags: { sched: 'v1;m=0500;e=1830;s=;z=1200' } } });
+  check(r6.status === 400, 'Offset mit vier Stellen → 400');
   check(puts.length === 0, 'bis hierher kein einziger Upstream-Call');
 }
 {
@@ -68,7 +70,9 @@ const ID = '0f7b8f3e-2d5a-4c1b-9a6e-3d2f1e0c9b8a';
     'v1;m=0500;e=1830;s=0530;t=ton-2',                     // Ton (nativ)
     'v1;m=0500;e=1830;s=0530;t=system',                    // Systemton
     'v1;m=0500;e=1830;s=0530;o=v',                         // alte Domain (Web)
-    'v1;m=0500;e=1830;s=;t=ton-6;o=a'
+    'v1;m=0500;e=1830;s=;t=ton-6;o=a',
+    'v1;m=0500;e=1830;s=0530;o=v;z=120',                   // Zeitzonen-Offset (Web)
+    'v1;m=0500;e=1830;s=0530,0930,1000,1100,1200,1300,1400,1500,1600,1700;o=v;z=-600' // längster Web-Wert
   ];
   for (const sched of gueltig) {
     const r = await call(setTags, { body: { player_id: ID.toUpperCase(), tags: { sched, morning_utc: '05:00' } } });

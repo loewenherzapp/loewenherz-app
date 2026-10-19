@@ -18,9 +18,11 @@
 const APP_ID = '1aeeca68-13c9-400a-a243-dd749527c49f';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-// Leer (= Push aus) oder v1 mit Morgen, Abend, SMALL-Liste, optional Ton und Herkunft.
-const SCHED_RE = /^$|^v1;m=\d{4};e=\d{4};s=(\d{4}(,\d{4}){0,9})?(;t=(ton-[1-6]|system))?(;o=[av])?$/;
-const MAX_SCHED_LEN = 80;
+// Leer (= Push aus) oder v1 mit Morgen, Abend, SMALL-Liste, optional Ton,
+// Herkunft und Zeitzonen-Offset des Schreibtags (Minuten, z. B. z=120).
+const SCHED_RE = /^$|^v1;m=\d{4};e=\d{4};s=(\d{4}(,\d{4}){0,9})?(;t=(ton-[1-6]|system))?(;o=[av])?(;z=-?\d{1,3})?$/;
+// Längster Web-Wert: 10 SMALL-Zeiten + o=v + z=-600 = 79 Zeichen.
+const MAX_SCHED_LEN = 90;
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');

@@ -102,6 +102,10 @@ export default async function handler(req, res) {
   const utcM = Math.floor(now.getUTCMinutes() / 15) * 15;
   const currentSlot = `${String(utcH).padStart(2, '0')}${String(utcM).padStart(2, '0')}`;
   const dayOfYear = getDayOfYear(now);
+  // Zeitumstellung (siehe slotFuerPlan): aktueller deutscher Offset, und ob
+  // er sich in den letzten 14 Tagen geändert hat.
+  const berlinNow = utcOffsetMinutes('Europe/Berlin', now);
+  const umstellungKuerzlich = utcOffsetMinutes('Europe/Berlin', new Date(now.getTime() - 14 * 86400000)) !== berlinNow;
 
   // --- 1) Subscriptions holen ---
   let subs;
@@ -132,9 +136,10 @@ export default async function handler(req, res) {
     const ton = SOUND_FILES[plan.sound] !== undefined ? plan.sound : DEFAULT_SOUND;
     // Gruppenschlüssel = Ton + Herkunft: beides steckt im Payload.
     const gruppe = `${ton}|${plan.origin || DEFAULT_ORIGIN}`;
-    if (plan.morning === currentSlot) push(empfaenger.morning, gruppe, sub.id);
-    if (plan.evening === currentSlot) push(empfaenger.evening, gruppe, sub.id);
-    if (plan.smalls.includes(currentSlot)) push(empfaenger.small, gruppe, sub.id);
+    const slot = umstellungKuerzlich ? slotFuerPlan(currentSlot, plan.offset, berlinNow) : currentSlot;
+    if (plan.morning === slot) push(empfaenger.morning, gruppe, sub.id);
+    if (plan.evening === slot) push(empfaenger.evening, gruppe, sub.id);
+    if (plan.smalls.includes(slot)) push(empfaenger.small, gruppe, sub.id);
   }
 
   // --- 3) Senden ---
@@ -206,9 +211,10 @@ export default async function handler(req, res) {
 // ============================================================
 
 /**
- * Parst den `sched`-Tag:  v1;m=0500;e=1830;s=0530,0930;t=ton-2;o=v
+ * Parst den `sched`-Tag:  v1;m=0500;e=1830;s=0530,0930;t=ton-2;o=v;z=120
  * (`o` = Herkunfts-Domain des Web-Geräts, siehe WEB_ORIGINS; fehlt es,
- * gilt app.angstdoc.de.)
+ * gilt app.angstdoc.de. `z` = UTC-Offset des Geräts beim Schreiben in
+ * Minuten, siehe slotFuerPlan(); fehlt es, wird nichts verschoben.)
  *
  * Unbekannte Formatversion → null. Das ist Absicht: Läge hier eine
  * Fehlinterpretation vor, würden Erinnerungen zu falschen Zeiten
@@ -219,7 +225,7 @@ export function parseSched(wert) {
   const teile = wert.split(';');
   if (teile[0] !== 'v1') return null;
 
-  const plan = { morning: null, evening: null, smalls: [], sound: DEFAULT_SOUND, origin: DEFAULT_ORIGIN };
+  const plan = { morning: null, evening: null, smalls: [], sound: DEFAULT_SOUND, origin: DEFAULT_ORIGIN, offset: null };
   for (const teil of teile.slice(1)) {
     const [schluessel, roh = ''] = teil.split('=');
     if (schluessel === 'm') plan.morning = gueltigerSlot(roh);
@@ -230,9 +236,42 @@ export function parseSched(wert) {
       plan.sound = roh;
     } else if (schluessel === 'o' && WEB_ORIGINS[roh]) {
       plan.origin = roh;
+    } else if (schluessel === 'z' && /^-?\d{1,3}$/.test(roh) && Math.abs(Number(roh)) <= 840) {
+      plan.offset = Number(roh);
     }
   }
   return plan;
+}
+
+/**
+ * Zeitumstellung: Der Tag trägt UTC-Zeiten, die das Gerät mit dem Offset
+ * des Schreibtags (`z`) berechnet hat. Springt Deutschland auf Winter- oder
+ * Sommerzeit, läge jede Erinnerung eine Stunde daneben, bis das Gerät die
+ * App öffnet und neu schreibt — am Umstellungs-Sonntag also schon die
+ * Morgenerinnerung. Für Geräte, deren Offset ein deutscher war (60/120)
+ * und nicht mehr zum aktuellen passt, wird der Vergleichs-Slot um die
+ * Differenz verschoben. Tags ohne `z` (ältere Clients, iOS vor dem nächsten
+ * Build) und andere Zeitzonen bleiben unverändert. Der Aufrufer begrenzt
+ * das auf 14 Tage nach der Umstellung: Danach sind es keine veralteten
+ * Tags mehr, sondern Geräte, die wirklich in einer anderen Zone stehen.
+ */
+export function slotFuerPlan(currentSlot, z, berlinNow) {
+  if (typeof z !== 'number' || z === berlinNow || (z !== 60 && z !== 120)) return currentSlot;
+  const min = (Number(currentSlot.slice(0, 2)) * 60 + Number(currentSlot.slice(2)) - (z - berlinNow) + 1440) % 1440;
+  return `${String(Math.floor(min / 60)).padStart(2, '0')}${String(min % 60).padStart(2, '0')}`;
+}
+
+/** UTC-Offset einer Zeitzone zu einem Zeitpunkt, in Minuten (Osten positiv). */
+export function utcOffsetMinutes(zone, date) {
+  const d = new Date(date);
+  d.setUTCSeconds(0, 0);
+  const teile = new Intl.DateTimeFormat('en-US', {
+    timeZone: zone, hourCycle: 'h23',
+    year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
+  }).formatToParts(d);
+  const t = (typ) => Number(teile.find((p) => p.type === typ).value);
+  const lokalAlsUtc = Date.UTC(t('year'), t('month') - 1, t('day'), t('hour'), t('minute'));
+  return Math.round((lokalAlsUtc - d.getTime()) / 60000);
 }
 
 /** "HHMM" auf dem 15-Minuten-Raster, sonst null. Ein krummer Wert würde
