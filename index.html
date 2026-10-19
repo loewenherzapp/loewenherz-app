@@ -81,7 +81,12 @@ if ((location.pathname === '/install.html' || location.pathname === '/install')
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() {
           navigator.serviceWorker.getRegistration().then(function(reg) {
-            if (!reg || (reg.active && reg.active.scriptURL.indexOf('OneSignalSDKWorker') === -1)) {
+            // Auch installing/waiting prüfen: Während OneSignals Worker noch
+            // installiert (CDN-Import, Cache füllen), ist nur sw.js aktiv.
+            // sw.js jetzt erneut zu registrieren würde den OneSignal-Worker
+            // verdrängen — das Push-Abo hinge dann an sw.js ohne push-Handler.
+            var w = reg && (reg.installing || reg.waiting || reg.active);
+            if (!reg || (w && w.scriptURL.indexOf('OneSignalSDKWorker') === -1)) {
               navigator.serviceWorker.register('sw.js', { scope: '/' }).catch(function() {});
             }
           });

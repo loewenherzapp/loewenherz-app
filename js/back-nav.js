@@ -19,6 +19,8 @@
 // Liste wie uiInputFlowOpen() in app.js. Neue Overlays hier eintragen.
 // ============================================================
 
+import { closeSoftAskUndecided } from './push.js';
+
 let schutzAktiv = false;
 let ignorieren = 0;
 let planTimer = null;
@@ -55,7 +57,8 @@ function obersteEbene() {
   if (detail) return () => klick('#detail-close') || detail.remove();
   const infoSheet = document.querySelector('.info-sheet-overlay.active');
   if (infoSheet) return () => klick('.info-sheet-close', infoSheet);
-  if (document.querySelector('.push-soft-ask-overlay.active')) return () => klick('#push-later');
+  // Nicht #push-later klicken: In Runde 2 wäre das „Nein, danke" — endgültig.
+  if (document.querySelector('.push-soft-ask-overlay.active')) return closeSoftAskUndecided;
   if (document.querySelector('.soft-prompt-overlay.active')) return escape;
   if (sichtbar('crisis-modal')) return () => klick('#crisis-close-btn');
   if (document.querySelector('.sheet-container.open')) return () => klick('#sheet-overlay');

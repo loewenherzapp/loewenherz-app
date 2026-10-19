@@ -643,6 +643,22 @@ function snoozeActive() {
   }
 })();
 
+/**
+ * Zurück-Taste des Handys: Soft-Ask schließen, ohne dass das als
+ * Entscheidung zählt — wirkt wie „Später" (Schlummerfrist). Ein Klick auf
+ * #push-later wäre in Runde 2 das endgültige „Nein, danke"; ein reflexhaftes
+ * Zurück auf dem bildschirmfüllenden Overlay darf niemanden für immer von
+ * den Erinnerungen abschneiden.
+ */
+export function closeSoftAskUndecided() {
+  const overlay = document.querySelector('.push-soft-ask-overlay');
+  if (!overlay) return false;
+  localStorage.setItem(SNOOZE_KEY, String(Date.now() + SNOOZE_MS));
+  overlay.classList.remove('active');
+  setTimeout(() => overlay.remove(), 300);
+  return true;
+}
+
 export function showPushSoftAsk() {
   if (!softAskMoeglich()) return;
   if (localStorage.getItem('loewenherz_push_asked')) return;
