@@ -171,9 +171,9 @@ check(MOD.utcOffsetMinutes('Europe/Berlin', new Date('2026-10-25T00:59:00Z')) ==
   check(!alle.includes('D') && !alle.includes('E') && !alle.includes('F'),
     'D/E/F bekommen NICHTS — genau hier lag der alte Bug');
   check(sends.every(s => s.web_url && !s.url), 'web_url statt url (iOS öffnet sonst die Website)');
-  // Android-Doze: ohne priority 10 hält FCM die Nachricht zurück und verwirft
-  // sie nach der ttl; 15 Minuten reichten dafür nie (belegt 18.10.2026).
-  check(sends.every(s => s.priority === 10 && s.ttl === 3600), 'priority 10 + ttl 1 h gegen Doze-Verfall');
+  // Android-Doze: FCM hält Web-Push bis zum Wartungsfenster zurück und
+  // verwirft ihn nach der ttl; 15 Minuten reichten dafür nie (belegt 18.10.2026).
+  check(sends.every(s => s.priority === 10 && s.ttl === 10800), 'priority 10 + ttl 3 h gegen Doze-Verfall');
   check(new Set(sends.map(s => s.web_push_topic)).size === 3 && sends.every(s => /^loewenherz-(morning|evening|small)$/.test(s.web_push_topic)),
     'web_push_topic je Typ — beim Aufwachen höchstens eine Nachricht pro Typ');
   check(sends.every(s => s.web_url.startsWith('https://app.angstdoc.de/')),

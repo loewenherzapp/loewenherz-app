@@ -369,13 +369,10 @@ async function sendNotification({ apiKey, subscriptionIds, typ, title, body, url
       // die Launch-URL — der Tap würde die Website öffnen statt der App.
       web_url: url,
       chrome_web_icon: 'https://app.angstdoc.de/assets/icons/icon-192.png',
-      // Hohe Dringlichkeit auch für Web-Push (Android-TWA). Ohne das Feld
-      // geht die Nachricht mit normaler Priorität an FCM: Ein ruhendes
-      // Android (Doze) hält sie bis zum nächsten Wartungsfenster zurück und
-      // FCM verwirft sie, sobald die ttl vorher abläuft — OneSignal meldet
-      // trotzdem „successful". Im Emulator belegt (18.10.2026): ohne
-      // priority verfallen, mit 10 im Tiefschlaf zugestellt. APNs nutzt 10
-      // ohnehin als Standard, iOS ändert sich nicht.
+      // Hohe Dringlichkeit (OneSignal-Empfehlung; APNs nutzt 10 ohnehin als
+      // Standard, iOS ändert sich nicht). Für Web-Push/Android reicht das
+      // allein nicht: Im Emulator (18./19.10.2026, erzwungener Doze) kam die
+      // Nachricht auch mit 10 erst im nächsten Wartungsfenster an.
       priority: 10,
       // Pro Typ nur die jüngste Nachricht in der FCM-Warteschlange halten:
       // Wacht ein Gerät nach Stunden auf, bekommt es nicht fünf alte Impulse
@@ -383,9 +380,14 @@ async function sendNotification({ apiKey, subscriptionIds, typ, title, body, url
       web_push_topic: `loewenherz-${typ}`,
       // Web-Push ignoriert das Feld; 'default' = Apple-Systemton.
       ...(iosSound ? { ios_sound: iosSound } : {}),
-      // 1 Stunde statt 15 Minuten: Eine verspätete Erinnerung ist besser
-      // als eine verworfene; länger wäre sie nicht mehr „jetzt".
-      ttl: 3600
+      // 3 Stunden statt 15 Minuten. Ein ruhendes Android (Doze) hält
+      // Web-Push bis zum nächsten Wartungsfenster zurück (Abstände 1–6 h)
+      // oder bis es in die Hand genommen wird; läuft die ttl vorher ab,
+      // verwirft FCM die Nachricht — OneSignal meldet trotzdem „successful".
+      // Mit 900 s verfiel auf still liegenden Geräten jede Erinnerung
+      // (Emulator-Beleg 18.10.2026). Dank web_push_topic kommt beim
+      // Aufwachen höchstens eine je Typ, APNs hält ohnehin nur die letzte.
+      ttl: 10800
     })
   });
 
