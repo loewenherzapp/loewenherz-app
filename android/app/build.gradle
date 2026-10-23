@@ -7,9 +7,10 @@ android {
         applicationId "de.angstdoc.loewenherz"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        // Play-Historie: 1–4 waren die TWA-Bauten (Bubblewrap), 5 ist der erste
-        // Capacitor-Bau. versionName folgt der iOS-Zählung (dort 1.0.2 (4)).
-        versionCode 5
+        // Play-Historie: 1–4 waren die TWA-Bauten (Bubblewrap), 5 der erste
+        // Capacitor-Bau (hochgeladen, nie eingereicht), 6 = 5 + neuer
+        // Newsletter-Einwilligungstext. versionName folgt der iOS-Zählung.
+        versionCode 6
         versionName "1.1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {

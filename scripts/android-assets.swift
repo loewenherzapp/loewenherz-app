@@ -167,8 +167,10 @@ for (name, d) in dichten {
 // 3) Großes Bild in der Benachrichtigung (wie chrome_web_icon in der TWA).
 save(skaliert(icon, 256, 256), "drawable-xxxhdpi/ic_onesignal_large_icon_default.png")
 
-// 4) Splash: 9:20-Leinwand je Dichte (Hochformat 360×800dp, Querformat
-//    gespiegelt) plus ein quadratischer Fallback. Löwe 120dp breit, mittig —
+// 4) Splash: 9:20-Leinwand je Dichte (Hochformat 360×800dp) plus ein
+//    quadratischer Fallback. Kein Querformat: Die App ist auf Hochformat
+//    festgelegt (screenOrientation), Querformat-Bilder wären nur Ballast
+//    (gut 2 MB im Paket). Löwe 120dp breit, mittig —
 //    so groß wie das Symbol des Android-12-Systemsplashs, der direkt davor
 //    erscheint. CENTER_CROP in capacitor.config.json lässt den Rand abschneiden
 //    statt zu verzerren; abgeschnitten wird nur Petrol.
@@ -176,7 +178,6 @@ let loewenBreiteDp = 120.0
 for (name, d) in dichten {
     let iconBreite = loewenBreiteDp / loewenAnteil * d
     save(petrolMitLoewe(w: Int(360 * d), h: Int(800 * d), iconBreite: iconBreite, icon: icon), "drawable-port-\(name)/splash.png")
-    save(petrolMitLoewe(w: Int(800 * d), h: Int(360 * d), iconBreite: iconBreite, icon: icon), "drawable-land-\(name)/splash.png")
 }
 save(petrolMitLoewe(w: 1200, h: 1200, iconBreite: loewenBreiteDp / loewenAnteil * 3, icon: icon), "drawable/splash.png")
 print("[android-assets] OK")

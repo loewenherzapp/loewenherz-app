@@ -447,6 +447,25 @@ Handy deinstalliert werden (Play signiert mit einem anderen Schlüssel).
   *Update* (statt Deinstallation) ebenfalls ungültig werden, ist offen: falls nicht, kann eine
   Erinnerung zeitweise doppelt kommen (Chrome + App), wie beim iOS-Umstieg.
 
+### Release 6 statt 5 und neuer Newsletter-Einwilligungstext (23.10.2026)
+
+- Patrick verschickt über die App-Liste bei Brevo künftig seinen allgemeinen Newsletter
+  (Impulse, Neues aus seiner Arbeit, gelegentlich Angebote). Die alte Einwilligung lautete
+  nur „Impulse rund um das Buch und die App“ und deckte Angebote nicht ab.
+- Neu formuliert (SW v131): Einwilligungssatz unter allen drei E-Mail-Formularen
+  (`emailGate.infoPre` in `content/de.js`: Gate, Soft-Prompt, Einstellungen), die Einleitung von
+  Gate und Soft-Prompt, der Einstellungen-Link, die Bestätigungsseite `confirmed.html` und
+  Abschnitt 4 der Datenschutzerklärung (beide Fassungen, jetzt „Newsletter über Brevo“, mit dem
+  Satz „Deine Einwilligung umfasst ausdrücklich auch diese werblichen Inhalte.“).
+- Weil der Text im App-Paket steckt, wurde das hochgeladene, nie eingereichte Bundle 5 durch
+  **versionCode 6** (weiter versionName 1.1.0) ersetzt. Dabei sind die Querformat-Startbilder
+  weggefallen (App ist auf Hochformat festgelegt), das Bundle ist dadurch gut 2 MB kleiner.
+- **Offen:** Wer sich vor dem 23.10.2026 eingetragen hat, hat nur der alten Beschreibung
+  zugestimmt. Vor der ersten Mail mit Angeboten an diese Adressen eine neue Zustimmung
+  einholen (z. B. kurze Mail mit Bestätigungsknopf). Die Brevo-Bestätigungsmail (Vorlage 2)
+  konnte per API nicht gelesen werden — ihren Text gegen die neue Beschreibung prüfen.
+  Die iOS-App (1.0.2) zeigt den alten Einwilligungstext bis zum nächsten iOS-Build.
+
 ### Offen / zu prüfen
 
 - [x] **Datensicherheit in der Play Console neu ausgefüllt (23.10.2026, Freigabe Patrick).**
@@ -454,7 +473,9 @@ Handy deinstalliert werden (Play signiert mit einem anderen Schlüssel).
   erhoben, Übertragung verschlüsselt, keine Konten. Erhoben (nicht geteilt, nicht nur
   sitzungsspezifisch, für Nutzer freiwillig): E-Mail-Adresse (Mitteilungen des Entwicklers,
   Brevo), App-Interaktionen (Analyse, OneSignal-Sitzungsdaten), Geräte- oder andere IDs
-  (Funktionen der App, Push-Token/OneSignal-ID). Die optionale Frage „Können Nutzer das
+  (Funktionen der App, Push-Token/OneSignal-ID). Nachtrag 23.10.: Für die E-Mail-Adresse
+  zusätzlich „Werbung oder Marketing“, weil Patrick über die Liste seinen Newsletter
+  verschickt, der gelegentlich Angebote enthalten kann. Die optionale Frage „Können Nutzer das
   Löschen ihrer Daten anfordern?“ bleibt bewusst unbeantwortet: Ein „Ja“ verlangt eine eigene
   Lösch-Anleitungsseite mit Datenarten und Aufbewahrungsfristen, die es noch nicht gibt. Die
   Betroffenenrechte stehen in der Datenschutzerklärung (Abschnitt 10). Falls gewünscht: eigene

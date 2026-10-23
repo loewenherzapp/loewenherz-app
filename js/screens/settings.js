@@ -707,7 +707,7 @@ const LEGAL_CONTENT = {
 
     <h3>2. Das Wichtigste zuerst</h3>
     <p>Diese App ist bewusst so gebaut, dass deine Inhalte bei dir bleiben: Reflexionen, SMALL-Punkte und dein Profil werden ausschließlich lokal auf deinem Gerät gespeichert und nie an unsere Server übertragen. Wir haben keinen Zugriff auf deine Eingaben.</p>
-    <p>Es gibt genau eine Ausnahme: Wenn du dich freiwillig für E-Mail-Impulse anmeldest, verarbeiten wir deine E-Mail-Adresse (siehe Abschnitt 4).</p>
+    <p>Es gibt genau eine Ausnahme: Wenn du dich freiwillig für unseren Newsletter anmeldest, verarbeiten wir deine E-Mail-Adresse (siehe Abschnitt 4).</p>
 
     <h3>3. Lokale Datenspeicherung in der App</h3>
     <p>Folgende Daten liegen nur auf deinem Gerät (IndexedDB und LocalStorage):</p>
@@ -723,8 +723,8 @@ const LEGAL_CONTENT = {
     <p><strong>Geräte-Sicherung durch dein Betriebssystem:</strong> In den Apps für iOS und Android können deine App-Daten in die Sicherung deines Geräts einfließen (iCloud-Backup bei Apple, Google-Backup bei Android), sofern du diese Funktion auf deinem Gerät eingeschaltet hast. Diese Sicherung richtet dein Betriebssystem ein, nicht wir: Sie läuft über dein Apple- bzw. Google-Konto nach deren Datenschutzbestimmungen, und du steuerst sie in den Einstellungen deines Geräts.</p>
     <p>Rechtsgrundlage: Vertragserfüllung (Art. 6 Abs. 1 lit. b DSGVO). Das Speichern und Auslesen auf deinem Gerät ist für die Bereitstellung der App zwingend erforderlich (§ 25 Abs. 2 Nr. 2 TDDDG).</p>
 
-    <h3>4. E-Mail-Impulse (Newsletter) über Brevo</h3>
-    <p>Wenn du dich in der App mit deiner E-Mail-Adresse anmeldest, schicken wir dir gelegentlich Impulse rund um das Buch und die App. Die Anmeldung ist freiwillig und für die Nutzung der App nicht erforderlich — du kannst sie jederzeit überspringen.</p>
+    <h3>4. Newsletter über Brevo</h3>
+    <p>Wenn du dich in der App mit deiner E-Mail-Adresse anmeldest, schicken wir dir unseren Newsletter: Impulse rund um Angst und Gelassenheit, Neuigkeiten zu Löwenherz, zum Buch und zur Arbeit von Der AngstDoc sowie gelegentlich Informationen zu unseren Angeboten, etwa Begleitprogrammen, Kursen oder Veranstaltungen. Deine Einwilligung umfasst ausdrücklich auch diese werblichen Inhalte. Die Anmeldung ist freiwillig und für die Nutzung der App nicht erforderlich — du kannst sie jederzeit überspringen.</p>
     <p>Die Anmeldung läuft im <strong>Double-Opt-in-Verfahren:</strong> Du bekommst zunächst eine Bestätigungsmail — erst nach deinem Klick auf den Bestätigungslink bist du angemeldet. So stellen wir sicher, dass niemand fremde Adressen einträgt.</p>
     <p>Dafür nutzen wir <strong>Brevo</strong> (Sendinblue GmbH, Köpenicker Str. 126, 10179 Berlin, Teil der Brevo-Gruppe mit Sitz in Paris) als Auftragsverarbeiter (Art. 28 DSGVO). Die Daten werden auf Servern in der EU verarbeitet. Verarbeitet werden: deine E-Mail-Adresse sowie Zeitpunkt und IP-Adresse von Anmeldung und Bestätigung — Letzteres zum gesetzlichen Nachweis deiner Einwilligung (Art. 7 Abs. 1 DSGVO).</p>
     <p><strong>Erfolgsmessung:</strong> Unsere E-Mails enthalten einen Zählpixel und messbare Links. So sehen wir, ob eine E-Mail geöffnet und welche Links angeklickt wurden — das hilft uns, unsere Inhalte zu verbessern. Daraus entstehen keine Persönlichkeitsprofile. Wenn du keine Messung möchtest, kannst du das Nachladen externer Bilder in deinem Mail-Programm deaktivieren oder dich jederzeit abmelden.</p>
@@ -733,7 +733,7 @@ const LEGAL_CONTENT = {
 
     <h3>5. Hosting</h3>
     <p>Die App wird über Vercel Inc. (440 N Barranca Ave #4133, Covina, CA 91723, USA) gehostet. Beim Aufruf der App werden automatisch technische Daten (u.a. IP-Adresse, Zeitpunkt des Zugriffs, Browsertyp) an Vercel-Server übermittelt. Diese Verarbeitung erfolgt auf Grundlage unseres berechtigten Interesses an der technischen Bereitstellung der App (Art. 6 Abs. 1 lit. f DSGVO).</p>
-    <p>Wenn du dich für E-Mail-Impulse anmeldest, nimmt eine Server-Funktion bei Vercel deine Adresse entgegen und leitet sie direkt an Brevo weiter — sie wird dort nicht dauerhaft gespeichert; in technischen Protokollen erscheint sie nur maskiert, und diese werden automatisch nach kurzer Zeit gelöscht.</p>
+    <p>Wenn du dich für den Newsletter anmeldest, nimmt eine Server-Funktion bei Vercel deine Adresse entgegen und leitet sie direkt an Brevo weiter — sie wird dort nicht dauerhaft gespeichert; in technischen Protokollen erscheint sie nur maskiert, und diese werden automatisch nach kurzer Zeit gelöscht.</p>
     <p>Vercel verarbeitet Daten teilweise in den USA. Die Übermittlung erfolgt auf Basis von EU-Standardvertragsklauseln.</p>
     <p>Mehr Informationen: <a href="https://vercel.com/legal/privacy-policy" target="_blank" rel="noopener noreferrer">vercel.com/legal/privacy-policy</a></p>
 
@@ -755,7 +755,7 @@ const LEGAL_CONTENT = {
     <p><strong>Apple als Zwischenstation (nur iOS-App):</strong> Die Zustellung läuft technisch über den Apple Push Notification service (APNs) der Apple Inc. Dein Gerät erhält dafür von Apple einen Push-Token, den wir an OneSignal weitergeben. Apple erhält damit auch den Zeitpunkt und den Text der Benachrichtigung — das sind allgemeine Erinnerungstexte ohne jeden Bezug zu deinen Reflexionen.</p>
     <p><strong>Google als Zwischenstation (nur Android-App):</strong> Die Zustellung läuft technisch über Firebase Cloud Messaging (FCM) der Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Irland (Mutterkonzern Google LLC, USA). Dein Gerät erhält dafür von Google einen Push-Token, den wir an OneSignal weitergeben. Google erhält damit auch den Zeitpunkt und den Text der Benachrichtigung — dieselben allgemeinen Erinnerungstexte ohne Bezug zu deinen Reflexionen. Soweit Google Daten in den USA verarbeitet, stützt sich die Übermittlung auf das EU-US Data Privacy Framework und EU-Standardvertragsklauseln.</p>
     <p>OneSignal verarbeitet Daten in den USA. Die Übermittlung erfolgt auf Basis von EU-Standardvertragsklauseln.</p>
-    <p><strong>Deine E-Mail-Adresse wird nicht an OneSignal übertragen.</strong> Sie liegt ausschließlich bei Brevo (siehe Abschnitt 4). Push und E-Mail-Impulse sind zwei getrennte Dienste, die nicht miteinander verknüpft werden.</p>
+    <p><strong>Deine E-Mail-Adresse wird nicht an OneSignal übertragen.</strong> Sie liegt ausschließlich bei Brevo (siehe Abschnitt 4). Push und Newsletter sind zwei getrennte Dienste, die nicht miteinander verknüpft werden.</p>
     <p>Rechtsgrundlage: Einwilligung (Art. 6 Abs. 1 lit. a DSGVO). Du kannst die Einwilligung jederzeit widerrufen — entweder über den Push-Schalter in den Einstellungen oder über die Benachrichtigungs-Einstellungen deines Geräts bzw. Browsers. Beim Widerruf werden alle Tags bei OneSignal gelöscht.</p>
     <p>Mehr Informationen: <a href="https://onesignal.com/privacy_policy" target="_blank" rel="noopener noreferrer">onesignal.com/privacy_policy</a></p>
 
@@ -763,10 +763,10 @@ const LEGAL_CONTENT = {
     <p>Diese App verwendet keine Cookies. Zur Speicherung deiner Daten nutzen wir IndexedDB und LocalStorage — beides lokale Speicher im Browser bzw. in der App, die ausschließlich auf deinem Gerät verbleiben. Es findet keine Übertragung dieser Daten an unsere Server oder Dritte statt.</p>
 
     <h3>9. Keine Weitergabe an Dritte</h3>
-    <p>Deine Inhalte (Reflexionen, SMALL-Punkte, Profildaten) werden nicht an Dritte weitergegeben, verkauft oder für Werbezwecke genutzt. Die einzigen Drittanbieter, die Daten verarbeiten, sind Vercel (Hosting/Analytics) sowie — jeweils nach deiner Einwilligung — OneSignal (Push), Apple (technische Push-Zustellung in der iOS-App), Google (technische Push-Zustellung in der Android-App) und Brevo (E-Mail-Impulse). Eine Sicherung deines Geräts über iCloud oder Google-Backup richtest du selbst ein (siehe Abschnitt 3).</p>
+    <p>Deine Inhalte (Reflexionen, SMALL-Punkte, Profildaten) werden nicht an Dritte weitergegeben, verkauft oder für Werbezwecke genutzt. Die einzigen Drittanbieter, die Daten verarbeiten, sind Vercel (Hosting/Analytics) sowie — jeweils nach deiner Einwilligung — OneSignal (Push), Apple (technische Push-Zustellung in der iOS-App), Google (technische Push-Zustellung in der Android-App) und Brevo (Newsletter). Eine Sicherung deines Geräts über iCloud oder Google-Backup richtest du selbst ein (siehe Abschnitt 3).</p>
 
     <h3>10. Deine Rechte</h3>
-    <p>Du hast das Recht auf Auskunft, Berichtigung, Löschung und Einschränkung der Verarbeitung deiner Daten sowie das Recht auf Datenübertragbarkeit und Widerspruch. Erteilte Einwilligungen kannst du jederzeit mit Wirkung für die Zukunft widerrufen (Art. 7 Abs. 3 DSGVO) — für E-Mail-Impulse über den Abmeldelink in jeder Mail oder per Nachricht an uns.</p>
+    <p>Du hast das Recht auf Auskunft, Berichtigung, Löschung und Einschränkung der Verarbeitung deiner Daten sowie das Recht auf Datenübertragbarkeit und Widerspruch. Erteilte Einwilligungen kannst du jederzeit mit Wirkung für die Zukunft widerrufen (Art. 7 Abs. 3 DSGVO) — für den Newsletter über den Abmeldelink in jeder Mail oder per Nachricht an uns.</p>
     <p>Da deine Inhalte lokal auf deinem Gerät gespeichert werden, hast du jederzeit volle Kontrolle — du kannst sie exportieren, importieren oder über den "Alle Daten löschen"-Button in den Einstellungen entfernen.</p>
     <p>Bei Fragen zum Datenschutz: <a href="mailto:pe@angstdoc.de">pe@angstdoc.de</a></p>
 

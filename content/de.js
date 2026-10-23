@@ -503,9 +503,13 @@ export const TEXTS = {
     },
     emailGate: {
       headline: "Willkommen bei Löwenherz.",
-      copy: "Schön, dass du hier bist. Trag dich ein und ich schicke dir ab und zu einen Impuls — kein Spam, versprochen.",
+      copy: "Schön, dass du hier bist. Trag dich für meinen Newsletter ein: Impulse für mehr Gelassenheit, Neues aus meiner Arbeit und ab und zu ein Angebot von mir — kein Spam, versprochen.",
       placeholder: "Deine E-Mail-Adresse",
-      infoPre: "Erst dein Klick in der Bestätigungsmail macht dich offiziell zum Löwenherz-Insider. Jederzeit abmeldbar.",
+      // Einwilligungstext: steht unter JEDEM E-Mail-Formular (Gate, Soft-Prompt,
+      // Einstellungen) und muss zum Abschnitt 4 der Datenschutzerklärung passen
+      // (datenschutz.html + LEGAL_CONTENT in settings.js). Werbliche Inhalte
+      // („Angebote“) sind nur abgedeckt, solange sie hier genannt sind.
+      infoPre: "Mit der Anmeldung bekommst du meinen Newsletter: Impulse, Neuigkeiten zu Löwenherz, zum Buch und zu meiner Arbeit sowie gelegentlich Hinweise auf meine Angebote. Erst dein Klick in der Bestätigungsmail macht dich offiziell zum Löwenherz-Insider. Jederzeit abmeldbar.",
       infoLink: "Datenschutzerklärung",
       submit: "Los geht's",
       sending: "Wird gesendet…",
@@ -517,12 +521,12 @@ export const TEXTS = {
       skip: "Erstmal ohne →",
       errEmpty: "Bitte E-Mail-Adresse eingeben",
       errInvalid: "Das sieht nicht wie eine E-Mail-Adresse aus",
-      settingsAdd: "E-Mail für Updates eintragen →",
+      settingsAdd: "E-Mail für den Newsletter eintragen →",
       settingsSubmit: "Eintragen"
     },
     softPrompt: {
       headline: "Du bist schon dabei. 🌱",
-      copy: "Willst du ab und zu einen Impuls von mir bekommen?",
+      copy: "Willst du meinen Newsletter? Ab und zu ein Impuls, Neues aus meiner Arbeit und gelegentlich ein Angebot von mir.",
       submit: "Ja, gerne",
       decline: "Nein danke",
       successClose: "Alles klar →"
