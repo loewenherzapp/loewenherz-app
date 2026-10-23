@@ -413,7 +413,52 @@ Umstellung gegenüber Web-Push (dort erst im Wartungsfenster, 18./19.10.2026) is
 Zustellung immer am Gerät prüfen (`dumpsys notification --noredact`), OneSignals „successful"
 heißt nur „an FCM übergeben".
 
+### Gerätetest Xiaomi 13T (HyperOS 2 / Android 15, 23.10.2026)
+
+Signiertes Release-APK über die Dateien-App installiert (HyperOS blockt `adb install` ohne
+„Über USB installieren" und `adb shell input`; `adb push` nach Downloads + Installation am Gerät
+funktioniert). Onboarding → SMALL-Punkt → Soft-Ask → Android-Dialog → Abo `ab970612-…` mit
+Token, Kanal `lh-ton-4` mit Sound, Tag `sched` korrekt. **Doze:** `dumpsys battery unplug` +
+`deviceidle force-idle` (deep IDLE) → Push → Mitteilung nach **3 s** auf dem echten Gerät, mit
+Löwen-Silhouette und großem Bild. Pushes bei geöffneter App erscheinen bewusst nicht
+(`foregroundWillDisplay` → `preventDefault`, wie iOS) — beim Test zweimal „nicht angekommen",
+weil die App im Vordergrund war. Vor dem Play-Update muss diese lokal signierte Testversion vom
+Handy deinstalliert werden (Play signiert mit einem anderen Schlüssel).
+
+### Play-Release 5 (1.1.0) im geschlossenen Test (23.10.2026)
+
+- Release „5 (1.1.0)“ im Track „Geschlossener Test - Alpha“ angelegt und gespeichert, Bundle
+  `Löwenherz-v5.aab` (versionCode 5, API 24+, Ziel-SDK 36), v4 nicht eingeschlossen (wird
+  ersetzt). Versionshinweise de-DE: Umstieg auf eigenständige App, Daten im App-Speicher,
+  pünktliche Erinnerungen, Backup-Hinweis (vorher exportieren, danach importieren).
+- Keine Fehler, drei Warnungen: 26 Geräte fallen raus (6 Tablets, 3 TV, 17 Auto — Hochformat
+  erzwungen; Telefone unverändert 12.413), Download ~9 MB statt ~1,4 MB, keine
+  Offenlegungsdatei (kein R8 im Einsatz).
+- „Verwaltete Veröffentlichung“ ist AUS: Nach Googles Freigabe geht der Release sofort an die
+  Tester. Eingereicht wird über „Veröffentlichungen – Übersicht“ → „1 Änderung zur Überprüfung
+  einreichen“ (einzige offene Änderung).
+- Produktionszugriff: Der Antrag vom 20.10.2026 wurde am 21.10.2026 abgelehnt („Wir haben
+  deinen Antrag geprüft und festgestellt, dass deine App noch weiter getestet werden muss“).
+  Der geschlossene Test läuft also weiter; neuer Antrag nach weiterer Testphase.
+- Patricks Xiaomi trägt die lokal signierte Testversion (Upload-Key). Vor dem Play-Update
+  deinstallieren, sonst lehnt Android das Update wegen abweichender Signatur ab. Sein altes
+  Web-Push-Abo (29b80f89, device_type 5) hat OneSignal nach der Deinstallation der TWA als
+  ungültig markiert — keine doppelten Erinnerungen. Ob die Web-Abos der Tester nach dem
+  *Update* (statt Deinstallation) ebenfalls ungültig werden, ist offen: falls nicht, kann eine
+  Erinnerung zeitweise doppelt kommen (Chrome + App), wie beim iOS-Umstieg.
+
 ### Offen / zu prüfen
+
+- **Datensicherheit in der Play Console (geprüft 23.10.2026): „Werden Nutzerdaten erhoben oder
+  geteilt?" steht auf „Nein".** Für die native App nicht mehr zutreffend: Das OneSignal-SDK und
+  Firebase Messaging übertragen nach der Push-Zustimmung Geräte-IDs (Push-Token, OneSignal-ID)
+  sowie Geräte- und Nutzungsdaten (siehe Datenschutzerklärung Abschnitt 7); die freiwillige
+  E-Mail-Anmeldung geht an Brevo (das galt schon für die TWA). Vorschlag: „Ja" — Geräte- oder
+  andere IDs (optional, App-Funktionalität), App-Interaktionen (optional, Analyse durch
+  OneSignal), E-Mail-Adresse (optional, Entwicklerkommunikation); nichts „geteilt" (OneSignal,
+  Brevo, Google = Dienstleister); Übertragung verschlüsselt; Löschung auf Anfrage. Entscheidung
+  Patrick; spätestens vor dem Produktions-Release anpassen, am besten zusammen mit dem
+  Release 5 einreichen (eine Prüfung).
 
 - Neue Berechtigung `POST_NOTIFICATIONS` kommt aus dem OneSignal-SDK (hatte v4 schon).
   Datensicherheits-Formular: Android-App erhebt dieselben OneSignal-Gerätedaten wie iOS —
