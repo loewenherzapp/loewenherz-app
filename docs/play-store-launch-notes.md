@@ -458,7 +458,11 @@ Handy deinstalliert werden (Play signiert mit einem anderen Schlüssel).
   Abschnitt 4 der Datenschutzerklärung (beide Fassungen, jetzt „Newsletter über Brevo“, mit dem
   Satz „Deine Einwilligung umfasst ausdrücklich auch diese werblichen Inhalte.“).
 - Weil der Text im App-Paket steckt, wurde das hochgeladene, nie eingereichte Bundle 5 durch
-  **versionCode 6** (weiter versionName 1.1.0) ersetzt. Dabei sind die Querformat-Startbilder
+  **versionCode 6** (weiter versionName 1.1.0) ersetzt: neuer Release-Entwurf im Alpha-Track
+  mit `Löwenherz-v6.aab` (von Claude selbst hochgeladen, 9,4 MB) und denselben
+  Versionshinweisen; der gespeicherte Release 5 ist damit hinfällig. In
+  „Veröffentlichungen – Übersicht“ stehen genau zwei Änderungen: „6 (1.1.0) Vollständigen
+  Roll-out starten“ und „Datensicherheit“. Einreichen klickt Patrick. Dabei sind die Querformat-Startbilder
   weggefallen (App ist auf Hochformat festgelegt), das Bundle ist dadurch gut 2 MB kleiner.
 - **Offen:** Wer sich vor dem 23.10.2026 eingetragen hat, hat nur der alten Beschreibung
   zugestimmt. Vor der ersten Mail mit Angeboten an diese Adressen eine neue Zustimmung
