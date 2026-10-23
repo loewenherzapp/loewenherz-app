@@ -449,16 +449,16 @@ Handy deinstalliert werden (Play signiert mit einem anderen Schlüssel).
 
 ### Offen / zu prüfen
 
-- **Datensicherheit in der Play Console (geprüft 23.10.2026): „Werden Nutzerdaten erhoben oder
-  geteilt?" steht auf „Nein".** Für die native App nicht mehr zutreffend: Das OneSignal-SDK und
-  Firebase Messaging übertragen nach der Push-Zustimmung Geräte-IDs (Push-Token, OneSignal-ID)
-  sowie Geräte- und Nutzungsdaten (siehe Datenschutzerklärung Abschnitt 7); die freiwillige
-  E-Mail-Anmeldung geht an Brevo (das galt schon für die TWA). Vorschlag: „Ja" — Geräte- oder
-  andere IDs (optional, App-Funktionalität), App-Interaktionen (optional, Analyse durch
-  OneSignal), E-Mail-Adresse (optional, Entwicklerkommunikation); nichts „geteilt" (OneSignal,
-  Brevo, Google = Dienstleister); Übertragung verschlüsselt; Löschung auf Anfrage. Entscheidung
-  Patrick; spätestens vor dem Produktions-Release anpassen, am besten zusammen mit dem
-  Release 5 einreichen (eine Prüfung).
+- [x] **Datensicherheit in der Play Console neu ausgefüllt (23.10.2026, Freigabe Patrick).**
+  Vorher stand „keine Nutzerdaten erhoben“, für die native App unzutreffend. Jetzt: Daten werden
+  erhoben, Übertragung verschlüsselt, keine Konten. Erhoben (nicht geteilt, nicht nur
+  sitzungsspezifisch, für Nutzer freiwillig): E-Mail-Adresse (Mitteilungen des Entwicklers,
+  Brevo), App-Interaktionen (Analyse, OneSignal-Sitzungsdaten), Geräte- oder andere IDs
+  (Funktionen der App, Push-Token/OneSignal-ID). Die optionale Frage „Können Nutzer das
+  Löschen ihrer Daten anfordern?“ bleibt bewusst unbeantwortet: Ein „Ja“ verlangt eine eigene
+  Lösch-Anleitungsseite mit Datenarten und Aufbewahrungsfristen, die es noch nicht gibt. Die
+  Betroffenenrechte stehen in der Datenschutzerklärung (Abschnitt 10). Falls gewünscht: eigene
+  Lösch-Seite anlegen und hier nachtragen. Eingereicht zusammen mit Release 5 (eine Prüfung).
 
 - Neue Berechtigung `POST_NOTIFICATIONS` kommt aus dem OneSignal-SDK (hatte v4 schon).
   Datensicherheits-Formular: Android-App erhebt dieselben OneSignal-Gerätedaten wie iOS —
