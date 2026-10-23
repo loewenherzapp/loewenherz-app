@@ -47,6 +47,8 @@ const DEFAULT_ORIGIN = 'a';
 // Zuordnung Ton-Kennung → Datei im iOS-Bundle. Muss zu SOUND_OPTIONS in
 // js/notification-sound.js passen. Fehlt `t` im Zeitplan, gilt der
 // Standardton; 'system' heißt bewusst: kein ios_sound-Feld → Apple-Ton.
+// Android-App: Der Ton hängt am Benachrichtigungskanal, dessen ID die
+// Kennung trägt — `lh-ton-2`, `lh-system` (siehe androidKanal()).
 const SOUND_FILES = {
   'ton-1': 'lh-ton-1.caf',
   'ton-2': 'lh-ton-2.caf',
@@ -170,6 +172,7 @@ export default async function handler(req, res) {
             body,
             url: `${WEB_ORIGINS[origin] || WEB_ORIGINS[DEFAULT_ORIGIN]}/?tab=${cfg.tab}`,
             iosSound: SOUND_FILES[ton],
+            androidChannel: androidKanal(ton),
             // Gleicher Slot, gleiche Gruppe → gleicher Schlüssel: Ein zweiter
             // Lauf im selben Slot (Retry, Doppelaufruf) sendet nicht erneut.
             idempotencyKey: idempotenzSchluessel(`${utcDatum}|${currentSlot}|${typ}|${ton}|${origin}|${i}`)
@@ -353,7 +356,18 @@ async function fetchSubscriptions(apiKey) {
   return alle;
 }
 
-async function sendNotification({ apiKey, subscriptionIds, typ, title, body, url, iosSound, idempotencyKey }) {
+/**
+ * Kanal-ID der Android-App für eine Ton-Kennung. Konvention mit
+ * ensureAndroidChannel() in js/push-native.js: 'lh-' + Kennung. Die App legt
+ * auf dem Gerät genau den Kanal zum gewählten Ton an; fehlt er (alte
+ * App-Version, Kanal noch nicht angelegt), fällt das OneSignal-SDK auf
+ * seinen Standardkanal zurück — Systemton statt gar nichts.
+ */
+export function androidKanal(ton) {
+  return `lh-${ton}`;
+}
+
+async function sendNotification({ apiKey, subscriptionIds, typ, title, body, url, iosSound, androidChannel, idempotencyKey }) {
   const resp = await fetch(`${ONESIGNAL_BASE}/notifications`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Basic ${apiKey}` },
@@ -380,6 +394,9 @@ async function sendNotification({ apiKey, subscriptionIds, typ, title, body, url
       web_push_topic: `loewenherz-${typ}`,
       // Web-Push ignoriert das Feld; 'default' = Apple-Systemton.
       ...(iosSound ? { ios_sound: iosSound } : {}),
+      // Nur Android-App: Kanal mit dem gewählten Ton (Web-Push und iOS
+      // ignorieren das Feld; die alte Android-TWA ist Web-Push).
+      ...(androidChannel ? { existing_android_channel_id: androidChannel } : {}),
       // 3 Stunden statt 15 Minuten. Ein ruhendes Android (Doze) hält
       // Web-Push bis zum nächsten Wartungsfenster zurück (Abstände 1–6 h)
       // oder bis es in die Hand genommen wird; läuft die ttl vorher ab,

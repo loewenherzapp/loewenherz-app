@@ -1,8 +1,8 @@
 // ============================================================
 // Zurück-Taste des Handys
 // ============================================================
-// In der Android-App (TWA) und in installierten Web-Apps löst die
-// Zurück-Taste des Handys ein history.back() aus. Löwenherz ist eine
+// In der Android-App (früher TWA, jetzt Capacitor) und in installierten
+// Web-Apps löst die Zurück-Taste des Handys ein history.back() aus. Löwenherz ist eine
 // einzige Seite ohne Verlaufseinträge — die Taste beendete deshalb sofort
 // die App, egal ob gerade die Einstellungen, eine Auswahlliste oder der
 // Verlauf offen waren (Tester-Rückmeldung 06.10.2026: „kann ich nur übers
@@ -17,9 +17,18 @@
 //
 // Welche Ebene „oben" liegt, liest obersteEbene() aus dem DOM — dieselbe
 // Liste wie uiInputFlowOpen() in app.js. Neue Overlays hier eintragen.
+//
+// Native Android-App: Capacitor reicht die Taste über das App-Plugin
+// durch. Ohne eigenen Listener ginge es zwar in der WebView-Historie
+// zurück, aber im Startzustand passierte NICHTS — die App ließe sich mit
+// der Taste nicht mehr verlassen. Deshalb unten: Verlaufseintrag da →
+// history.back() (landet im popstate-Handler), sonst App in den
+// Hintergrund (wie Android es seit Version 12 selbst macht).
 // ============================================================
 
 import { closeSoftAskUndecided } from './push.js';
+import { isAndroid } from './platform.js';
+import { nativePlugin } from './native-plugins.js';
 
 let schutzAktiv = false;
 let ignorieren = 0;
@@ -105,6 +114,16 @@ function planen() {
 export function initZurueckTaste(h) {
   if (hooks) return;
   hooks = h;
+
+  if (isAndroid()) {
+    nativePlugin('App').then((app) => {
+      if (!app) return;
+      app.addListener('backButton', ({ canGoBack }) => {
+        if (canGoBack) history.back();
+        else app.minimizeApp().catch(() => {});
+      });
+    }).catch((e) => console.warn('[Zurück] Android-Taste nicht angebunden:', e));
+  }
 
   window.addEventListener('popstate', () => {
     if (ignorieren > 0) {

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android Auto Backup bis Android 11 (API 30). Gesichert wird alles
+     (inkl. app_webview = Profil, Punkte, Reflexionen), AUSSER der
+     OneSignal-Geräteidentität: Würde sie auf ein neues Gerät zurückgespielt,
+     teilten sich altes und neues Gerät eine Subscription, und das zuletzt
+     schreibende Gerät würde das andere stumm schalten. Ohne die Dateien legt
+     das SDK auf dem neuen Gerät sauber ein eigenes Abo an. -->
+<full-backup-content>
+    <exclude domain="sharedpref" path="OneSignal.xml" />
+    <exclude domain="sharedpref" path="GTPlayerPurchases.xml" />
+</full-backup-content>

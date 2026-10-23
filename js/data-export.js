@@ -166,7 +166,7 @@ export async function downloadBackup() {
   return true;
 }
 
-// Share-Sheet-Export (iOS). Abbruch ist KEIN Fehler: Schließt der User das
+// Share-Sheet-Export (iOS/Android). Abbruch ist KEIN Fehler: Schließt der User das
 // Sheet, gibt das Plugin „Share canceled" zurück — dann false liefern statt
 // werfen, sonst zeigt settings.js einen Fehler-Alert für eine bewusste
 // Nutzerentscheidung. Echte Fehler fliegen weiter.

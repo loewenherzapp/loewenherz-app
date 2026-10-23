@@ -11,7 +11,8 @@
       "resize": "native"
     },
     "SplashScreen": {
-      "launchAutoHide": false
+      "launchAutoHide": false,
+      "androidScaleType": "CENTER_CROP"
     }
   }
 }

@@ -1,5 +1,5 @@
 // ============================================================
-// Löwenherz — Haptik (nur native iOS-App)
+// Löwenherz — Haptik (nur native App: iOS und Android)
 // ============================================================
 //
 // Genau drei semantische Stellen rufen diese Utility — nicht mehr:
@@ -9,8 +9,10 @@
 // Keine Haptik bei Navigation, Tab-Wechsel, Scrollen oder Modal-Öffnen.
 //
 // Der Settings-Toggle wird HIER geprüft — die Aufrufstellen kennen ihn
-// nicht. Im Web ist alles ein No-op und wirft nie; die bestehenden
-// navigator.vibrate()-Aufrufe (Android/Web) bleiben unberührt.
+// nicht. Im Web ist alles ein No-op und wirft nie; dort vibrieren weiter
+// die navigator.vibrate()-Aufrufe (Dashboard, Sheets, Picker). In der
+// nativen App sind die hinter !isNative() abgeschaltet — sonst spürte
+// Android jeden Tap doppelt (Vibrate-API UND Haptics-Plugin).
 // ============================================================
 
 import { isNative } from './platform.js';

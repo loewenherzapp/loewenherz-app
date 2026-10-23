@@ -271,6 +271,12 @@ Android-Entwickler* im Menü des Entwicklerkontos (nicht auf App-Ebene).
 
 ## Offene Punkte vor Launch
 
+- [ ] **Dankes-Mail an die Tester** (Patrick, 20.10.2026): Test abgeschlossen; Dank — das Feedback
+      war sehr wertvoll, dadurch konnten schon einige Bugs behoben werden; Frage nach weiterem
+      Feedback; Hinweis, dass vor dem Android-Update ein Backup exportiert und danach wieder
+      eingelesen werden kann (Einstellungen → Backup). Wenige Tester, etwa die Hälfte Freunde und
+      Familie — persönlicher Ton.
+
 - [x] SHA-256-Fingerprint in `assetlinks.json` nachtragen — erledigt (`bad710d`); beide
       Fingerprints live, `curl` liefert HTTP 200
 - [x] Merged Manifest auf `AD_ID` prüfen (siehe b) — v2 enthält die Berechtigung nicht
@@ -284,8 +290,9 @@ Android-Entwickler* im Menü des Entwicklerkontos (nicht auf App-Ebene).
 
 ## To-do nach dem geschlossenen Test
 
-- [ ] **Android von TWA auf Capacitor umstellen (wie iOS).** Entschieden 10.10.2026, umsetzen
-      erst nach Erhalt des Produktionszugriffs, nicht während der 14-Tage-Frist.
+- [x] **Android von TWA auf Capacitor umstellen (wie iOS).** Entschieden 10.10.2026, umgesetzt
+      am 20.10.2026 als Version 1.1.0 (versionCode 5) — Bau-Protokoll und Architektur im
+      Abschnitt [Capacitor-Bau v5](#capacitor-bau-v5-110-20102026) unten.
       Anlass: Die TWA speichert alles im Browser-Speicher (Chrome bzw. Samsung Internet).
       „Browserdaten löschen" mit „Cookies und Websitedaten" löscht damit auch Profil, Punkte
       und Reflexionen. Am 10.10.2026 bestätigt bei einer Testerin (Samsung A25): Browserdaten
@@ -296,3 +303,124 @@ Android-Entwickler* im Menü des Entwicklerkontos (nicht auf App-Ebene).
       bleibt; Bestandsdaten der TWA-Nutzer liegen im Browser und wandern nicht automatisch mit
       (Weg über Sicherung exportieren/importieren anbieten); `assetlinks.json` wird dann nicht
       mehr gebraucht.
+
+---
+
+## Capacitor-Bau v5 (1.1.0, 20.10.2026)
+
+Ab versionCode 5 ist die Android-App **keine TWA mehr**, sondern — wie iOS seit 1.0 — eine
+Capacitor-8-Hülle mit gebündelten Web-Assets im Ordner `android/` des Repos. Paketname
+`de.angstdoc.loewenherz` und Upload-Key sind dieselben wie bei v1–v4, damit Play das Paket
+als Update annimmt. Architektur und Web/Native-Weiche: [ios-capacitor-notes.md](ios-capacitor-notes.md)
+gilt 1:1; dieser Abschnitt hält nur fest, was Android anders macht.
+
+### Warum (Kurzfassung)
+
+- TWA-Daten liegen im Chrome-Speicher: „Browserdaten löschen" löschte Profil und Punkte
+  (zweimal bei Testerinnen). Capacitor speichert in der WebView der App, getrennt von Chrome.
+- Web-Push im Android-Doze kommt erst im Wartungsfenster (Emulator-Beleg 18./19.10.2026).
+  Die native App bekommt FCM-Push mit `priority: 10` — der weckt das Gerät.
+
+### Toolchain (einmalig)
+
+```bash
+brew install openjdk@21        # Capacitor 8 verlangt Java 21 (keg-only, nicht im PATH)
+npm install                    # @capacitor/android steht in package.json
+```
+
+Android-SDK wie bisher unter `/opt/homebrew/share/android-commandlinetools` (platforms;android-36,
+build-tools;36.1.0). Gradle 8.14.3 lädt der Wrapper beim ersten Bau selbst. Android Studio ist
+nicht nötig.
+
+### Bauen
+
+```bash
+npm run build:android          # Web-Bundle (scripts/build-www.mjs) + cap sync android
+npm run release:android        # signiertes .aab + .apk, Signatur- und Manifest-Prüfung, Ablage
+```
+
+`scripts/release-android.mjs` setzt JAVA_HOME (openjdk@21), ANDROID_HOME,
+`ONESIGNAL_DISABLE_LOCATION=true` (kein Standort-Modul im SDK, wie iOS seit 1.0.1) und die
+Signatur-Variablen `LH_KEYSTORE_*` aus `signing-key-info.txt` (CRLF-Falle wird dort entschärft).
+Ablage: `/Users/Katana/Buch/Löwenherz - Google Play package v5 (versionCode 5)/` mit
+`Löwenherz-v5.aab`, `Löwenherz-v5.apk` und `build-info.txt`. Der Keystore bleibt in
+`…/Löwenherz - Google Play package/` (nicht im Repo).
+
+Das Skript bricht laut ab, wenn der Fingerabdruck nicht der Upload-Key ist oder das Merged
+Manifest `AD_ID` bzw. eine Standort-Berechtigung enthält (Play-Deklarationen „keine Werbe-ID",
+kein Standort).
+
+Nach jeder Web-Änderung, die nativ landen soll: `npm run build:android` genügt für den Emulator
+(`./gradlew assembleDebug` in `android/`), fürs Play-Paket immer `npm run release:android`.
+
+### Was Android anders macht als iOS
+
+| Thema | Umsetzung |
+|---|---|
+| Plattform-Weiche | `isAndroid()` in `js/platform.js` — nur für Zurück-Taste, Benachrichtigungskanal, Sprung in die Android-Einstellungen. Alles andere läuft über `isNative()`. |
+| Push | Dasselbe `@onesignal/capacitor-plugin`, dieselbe App-ID, derselbe **eine** `sched`-Tag (inkl. `z=`). Subscription-Typ im Dashboard: Android (device_type 1). Voraussetzung im OneSignal-Dashboard: Firebase-Service-Account-JSON unter Push & In-App → Platforms → Google Android (FCM) — **eingerichtet 23.10.2026**: Firebase-Projekt `loewenherz-1bc36` („Loewenherz", Organisation angstdoc.de, Spark-Tarif, ohne Analytics/Gemini), Dienstkonto `firebase-adminsdk-fbsvc@loewenherz-1bc36.iam.gserviceaccount.com`, Sender-ID 912728478406. Die Organisationsrichtlinie „Dienstkonto-Schlüssel dürfen nicht erstellt werden" (Google-Standard für Workspace-Organisationen) ist **nur für dieses Projekt** auf „nicht erzwungen" gesetzt (Cloud Console → Organisationsrichtlinien); dafür hat Patrick die Rolle „Organisationsrichtlinien-Administrator". Neuer Schlüssel bei Bedarf: Firebase → Projekteinstellungen → Dienstkonten → „Neuen privaten Schlüssel generieren" → bei OneSignal hochladen. |
+| Ton | Android 8+ hängt den Ton an den **Benachrichtigungskanal**; ein Kanal-Ton ist nach dem Anlegen fix. Deshalb trägt die Kanal-ID den Ton (`lh-ton-4`, `lh-system`): `ensureAndroidChannel()` in `js/push-native.js` legt vor SDK-Init und vor jedem Tag-Sync den Kanal zum gewählten Ton an, `ErinnerungskanalPlugin.java` löscht die anderen sowie den Kanal „General" (`general_channel_id`), den Chrome für die TWA-Push-Delegation in der App angelegt hatte und der das Update überlebt (in den Android-Einstellungen steht so genau ein Kanal „Erinnerungen"). Server: `existing_android_channel_id: 'lh-<Kennung>'` in `api/send-notifications.js` — fehlt der Kanal auf dem Gerät, nimmt das SDK seinen Standardkanal (Systemton). Ton-Dateien: `android/app/src/main/res/raw/lh_ton_N.mp3` (Kopien der Vorschau-MP3s aus `assets/sounds/`). |
+| Zurück-Taste | `js/back-nav.js` bleibt die Logik (Schutz-Eintrag im Verlauf). Neu: Listener auf `App.backButton` — Verlauf vorhanden → `history.back()`, sonst `minimizeApp()`. Ohne den Listener bliebe die App im Startzustand bei der Zurück-Taste einfach stehen. |
+| Blockierter Push | Button „Einstellungen öffnen" springt über `ErinnerungskanalPlugin.einstellungenOeffnen()` in die Benachrichtigungsseite der App (iOS: `app-settings:` via AppLauncher). |
+| Haptik | Haptics-Plugin + Schalter wie iOS; die `navigator.vibrate()`-Aufrufe (Dashboard, Sheets, Picker) sind in der nativen App abgeschaltet — sonst vibriert jeder Tap doppelt. |
+| Icon | Adaptive Icon: Vordergrund `mipmap-*/ic_launcher_foreground.png`, Hintergrund `@color/ic_launcher_background` = Petrol. Legacy/Round-Icons für Android 7. **Benachrichtigungs-Symbol `ic_stat_onesignal_default` = weiße Löwen-Silhouette MIT Alphakanal** (das v2–v4-Problem „gefülltes Quadrat"), Akzentfarbe Petrol (`onesignal_notification_accent_color`), großes Bild `ic_onesignal_large_icon_default`. Alle Bitmaps erzeugt `swift scripts/android-assets.swift` aus `scripts/android-assets/icon-1254.png` — nie von Hand nachmalen. |
+| Splash | Petrol (Entscheidung 23.09.2026): Systemsplash ab Android 12 (`windowSplashScreenBackground`) und Plugin-Splash (`drawable*/splash.png`, `androidScaleType: CENTER_CROP`) beide Petrol mit Löwe 120dp mittig — gehen nahtlos ineinander über. iOS bleibt Creme. |
+| Statusleiste | Capacitor 8 ist edge-to-edge. Mit WebView ≥ 140 reicht Capacitor die Safe-Area-Insets an `env(safe-area-inset-*)` durch (wie iOS, dunkle Reflexion bis unter die Statusleiste). Ältere WebViews bekommen ein Padding; der Streifen dahinter ist `windowBackground` = Creme (`styles.xml`). |
+| Theme | `Theme.AppCompat.Light` statt DayNight — die App hat feste Farben, der System-Dunkelmodus darf das Fenster nicht schwarz färben. Hochformat erzwungen (`screenOrientation`). |
+| Origin | Die WebView läuft unter `https://localhost` (Capacitor-Default `androidScheme`); in `api/subscribe.js` als CORS-Origin freigeschaltet (iOS: `capacitor://localhost`). |
+| Backup | Export über Share-Sheet (gleicher Code wie iOS, `Filesystem` + `Share`), Import über den Android-Dateidialog. Android Auto Backup bleibt an (`allowBackup`, wie iCloud auf iOS) — `res/xml/backup_rules.xml` und `data_extraction_rules.xml` schließen nur die OneSignal-Identität (`OneSignal.xml`, `GTPlayerPurchases.xml`) aus, sonst teilten sich altes und neues Gerät nach einer Wiederherstellung ein Abo. |
+| Berechtigungen | `INTERNET`, `POST_NOTIFICATIONS` (OneSignal), `VIBRATE` (Haptics), kein `AD_ID`, kein Standort — `build-info.txt` listet den Stand jedes Baus. |
+| assetlinks.json | Nicht mehr nötig (keine TWA-Verifikation), bleibt vorerst liegen: Solange Nutzer noch v4 haben, braucht die TWA sie. |
+
+### Bestandsnutzer der TWA — der Umzug
+
+Die TWA-Daten liegen im Chrome-Speicher und sind aus der WebView der nativen App nicht lesbar.
+Es gibt keinen automatischen Weg; der Weg ist das vorhandene Backup (Einstellungen → Backup
+exportieren / importieren). Eine Umzugskarte in der TWA und ein Import-Link im Onboarding waren
+gebaut und im Emulator geprüft, **Patrick hat beides am 20.10.2026 gestrichen**: Die Testerliste
+ist klein und persönlich, er sagt den Testern direkt, dass sie vorher ein Backup exportieren und es
+nach dem Update einlesen können (siehe To-do „Dankes-Mail an die Tester").
+
+Ablauf für eine Testerin: In der alten App Einstellungen → Backup exportieren (Chrome legt
+`loewenherz-backup-<Datum>.json` in Downloads ab). Nach dem Update die neue App mit beliebigem
+Namen durchs Onboarding bringen, dann Einstellungen → Backup importieren → Datei aus Downloads
+wählen → Neustart mit allen Daten. Auch ohne Backup vorher nichts verloren: Chrome behält die
+Daten der Domain — `app.angstdoc.de` in Chrome öffnen, dort exportieren.
+
+Push nach dem Import: Die Zusage (`loewenherz_push_asked` + `_enabled`) steckt im Backup, die
+Android-Erlaubnis für die neue App aber nicht. Deshalb startet die App das SDK wie für jeden
+Bestandsnutzer und holt den Android-Dialog („Löwenherz Benachrichtigungen senden?") einmal beim
+Start nach (`nachholenNativeErlaubnis()` in `js/push.js`). Dafür unterscheidet
+`js/push-native.js` auf Android per `canRequestPermission()` zwischen „nie gefragt" ('default')
+und „verweigert" ('denied') — ohne das stünde nach dem Import „blockiert" in den Einstellungen.
+Im Emulator (20.10.2026) geprüft: Import → Dialog → Allow → Tag `sched` (gleiches Format wie
+iOS/Web, inkl. `z=`) → Abo vom Typ Android (device_type 1) im Dashboard.
+
+Nicht mitgenommen: die E-Mail-Anzeige in den Einstellungen (`userEmail` ist nicht im Backup;
+die Brevo-Anmeldung selbst bleibt bestehen).
+
+### Push-Nachweis im Emulator (23.10.2026, nach der FCM-Einrichtung)
+
+Ablauf `scratchpad/push-test.sh` + `doze-test.sh` der Sitzung (Debug-Build, lh35, Android 15):
+Backup der TWA importiert → Android-Dialog beim Start → Allow → Abo `6d8a1732-…` mit
+FCM-Token, Server: device_type 1, `invalid_identifier: false`, Tag
+`sched: v1;m=0600;e=1930;s=0815,1345,1730;z=60`. Test-Push per REST
+(`include_subscription_ids`, `priority 10`, `ttl 10800`, `existing_android_channel_id: lh-ton-4`)
+→ Mitteilung nach 5 s auf Kanal `lh-ton-4`, kleines Symbol = Löwen-Silhouette (Petrol), großes
+Bild = Löwe. **Doze:** `dumpsys battery unplug` + `dumpsys deviceidle force-idle` (deep: IDLE) →
+Push → neue Mitteilung nach **3 s**, Gerät weiter im Doze. Der eigentliche Gewinn der
+Umstellung gegenüber Web-Push (dort erst im Wartungsfenster, 18./19.10.2026) ist damit belegt.
+Zustellung immer am Gerät prüfen (`dumpsys notification --noredact`), OneSignals „successful"
+heißt nur „an FCM übergeben".
+
+### Offen / zu prüfen
+
+- Neue Berechtigung `POST_NOTIFICATIONS` kommt aus dem OneSignal-SDK (hatte v4 schon).
+  Datensicherheits-Formular: Android-App erhebt dieselben OneSignal-Gerätedaten wie iOS —
+  Datenschutzerklärung (`settings.js` LEGAL_CONTENT + `datenschutz.html`) nennt bisher nur die
+  iOS-App beim nativen SDK und Apple als Zwischenstation; Google (FCM) ergänzen.
+- `android:allowBackup="true"` (Capacitor-Default, OneSignal-Dateien ausgenommen): Android Auto
+  Backup sichert den WebView-Speicher verschlüsselt in Google Drive, analog zum iCloud-Backup auf
+  iOS. Steht so nicht in der Datenschutzerklärung („kein Cloud-Backup").
+- Play Console nach dem Upload: App-Signatur-Seite muss weiterhin den Upload-Key zeigen;
+  Gerätekatalog-Verluste prüfen (minSdk bleibt 24).

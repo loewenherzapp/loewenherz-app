@@ -2,7 +2,7 @@
 
 Die iOS-App ist eine Capacitor-8-Hülle mit **gebündelten Web-Assets** — die native App lädt alles lokal aus dem App-Bundle, kein Remote-URL-Wrapper. Eine Quelle der Wahrheit: dasselbe Repo, derselbe Code wie app.angstdoc.de. Bundle-ID **`de.angstdoc.loewenherz`** (identisch zum Android-Paketnamen), Homescreen-Name **`Löwenherz`**. Stand: **C3** (Fundament + nativer Push + nativer Layer/Store-Vorbereitung, siehe [Abschnitt g](#g-nativer-layer--store-vorbereitung-c3)).
 
-Verwandte Dokumente: [play-store-launch-notes.md](play-store-launch-notes.md) (Android/TWA), [store-readiness.md](store-readiness.md), [../scripts/build-ios.mjs](../scripts/build-ios.mjs).
+Verwandte Dokumente: [play-store-launch-notes.md](play-store-launch-notes.md) (Android/TWA), [store-readiness.md](store-readiness.md), [../scripts/build-www.mjs](../scripts/build-www.mjs).
 
 ---
 
@@ -13,7 +13,7 @@ npm run build:ios    # kopiert Web-Assets nach www/ + npx cap sync ios
 npx cap open ios     # öffnet ios/App/App.xcodeproj in Xcode → Simulator-Build
 ```
 
-Erwartung: `[build-ios] OK — ~48 Dateien in www/`, danach `Sync finished`.
+Erwartung: `[build-www] OK — ~48 Dateien in www/`, danach `Sync finished`.
 
 - **Nach jeder Code-Änderung**, die auch nativ landen soll: `npm run build:ios` erneut ausführen (kein Watch-Mode — bewusst simpel).
 - Voraussetzung fürs Bauen: **Xcode 26+** mit akzeptierter Lizenz (`sudo xcodebuild -license accept`). `cap sync` selbst läuft auch ohne Xcode.
@@ -41,7 +41,7 @@ Fürs **Web gilt weiter** die Doppel-Regel aus CLAUDE.md: Cache-Version bei jede
 
 ## d) Bundle-Inhalt (Allowlist)
 
-`scripts/build-ios.mjs` kopiert **nur**: `index.html`, `manifest.json`, `css/`, `js/`, `content/`, `assets/`. Alles andere bleibt draußen (u.a. `api/`, `docs/`, `.well-known/`, `ios/`, `install.html`, `confirmed.html`, `datenschutz.html`, `preview-*.html`, beide SW-Dateien, Config-Dateien). Allowlist statt Ausschlussliste: neuer Root-Junk kann nie versehentlich ins Bundle rutschen; das Script bricht laut ab, wenn eine Quelle fehlt oder Verbotenes in `www/` auftaucht. `manifest.json` bleibt im Bundle (index.html verlinkt es — erspart einen 404; nativ sonst wirkungslos). `www/` ist gitignored.
+`scripts/build-www.mjs` kopiert **nur**: `index.html`, `manifest.json`, `css/`, `js/`, `content/`, `assets/`. Alles andere bleibt draußen (u.a. `api/`, `docs/`, `.well-known/`, `ios/`, `install.html`, `confirmed.html`, `datenschutz.html`, `preview-*.html`, beide SW-Dateien, Config-Dateien). Allowlist statt Ausschlussliste: neuer Root-Junk kann nie versehentlich ins Bundle rutschen; das Script bricht laut ab, wenn eine Quelle fehlt oder Verbotenes in `www/` auftaucht. `manifest.json` bleibt im Bundle (index.html verlinkt es — erspart einen 404; nativ sonst wirkungslos). `www/` ist gitignored.
 
 ## e) Vercel-Abschirmung
 
@@ -83,7 +83,7 @@ Push läuft über **eine** OneSignal-App-ID für alle Plattformen (`ONESIGNAL_AP
 
 **Notification-Click: nur App öffnen.** Kein Deep-Link, kein Routing nach Typ (V1), deshalb auch kein `click`-Listener. Dafür war **eine** Server-Zeile nötig: `url:` → `web_url:` in `api/send-notifications.js`. `url` gilt laut OneSignal-Doku für *alle* Plattformen und wäre auf iOS die Launch-URL — der Tap hätte die Website geöffnet statt der App. `web_url` zielt nur auf Web-Push; das Web-Verhalten ist unverändert.
 
-**Vendor-Bundling — die einzige Nicht-Repo-Datei im Bundle.** Die App hat keinen Bundler, ein Capacitor-Plugin braucht aber `registerPlugin` aus `@capacitor/core`. Der native Bridge-Inject (`native-bridge.js`) liefert nur `isNativePlatform`/`Plugins`, **nicht** `registerPlugin` — ohne `@capacitor/core` im Web-Layer ist kein Plugin ansprechbar. Deshalb erzeugt `scripts/build-ios.mjs` beim Build `www/js/vendor/`:
+**Vendor-Bundling — die einzige Nicht-Repo-Datei im Bundle.** Die App hat keinen Bundler, ein Capacitor-Plugin braucht aber `registerPlugin` aus `@capacitor/core`. Der native Bridge-Inject (`native-bridge.js`) liefert nur `isNativePlatform`/`Plugins`, **nicht** `registerPlugin` — ohne `@capacitor/core` im Web-Layer ist kein Plugin ansprechbar. Deshalb erzeugt `scripts/build-www.mjs` beim Build `www/js/vendor/`:
 
 | Datei | Quelle | Transform |
 |---|---|---|
@@ -108,7 +108,7 @@ Deshalb merkt sich `syncTagsToOneSignal()` den verwendeten Offset in `loewenherz
 
 Umgesetzt 05.08.2026. Neun offizielle Plugins dazu: `app`, `app-launcher`, `browser`, `filesystem`, `haptics`, `keyboard`, `share`, `splash-screen`, `status-bar` (alle 8.x, via SPM in `CapApp-SPM/Package.swift`, von `cap sync` verwaltet).
 
-**Plugin-Zugriff ohne Bundler — `js/native-plugins.js`.** Statt für jedes Plugin das JS-Dist zu vendorn (wie bei OneSignal nötig), holt `nativePlugin(name)` einen `registerPlugin`-Proxy aus dem bereits gevendorten `www/js/vendor/capacitor-core.js`. Die offiziellen Plugin-Pakete sind dünne registerPlugin-Wrapper — nativ funktionsgleich. Enum-Werte sind Strings (`'LIGHT'`, `'CACHE'`, `'utf8'`, `'DARK'`), verifiziert gegen die jeweilige `dist/esm/definitions.js`. Die npm-Pakete liefern die Swift-Seite. `build-ios.mjs` blieb unverändert.
+**Plugin-Zugriff ohne Bundler — `js/native-plugins.js`.** Statt für jedes Plugin das JS-Dist zu vendorn (wie bei OneSignal nötig), holt `nativePlugin(name)` einen `registerPlugin`-Proxy aus dem bereits gevendorten `www/js/vendor/capacitor-core.js`. Die offiziellen Plugin-Pakete sind dünne registerPlugin-Wrapper — nativ funktionsgleich. Enum-Werte sind Strings (`'LIGHT'`, `'CACHE'`, `'utf8'`, `'DARK'`), verifiziert gegen die jeweilige `dist/esm/definitions.js`. Die npm-Pakete liefern die Swift-Seite. `build-www.mjs` blieb unverändert.
 
 **Store-Pflicht (Block 1):**
 - `PrivacyInfo.xcprivacy` im App-Target (pbxproj-Resources-Phase). Inhalt minimal und belegt: kein Tracking, keine gesammelten Datentypen (Inhalte bleiben lokal; OneSignal-Gerätedaten deckt das Manifest **im OneSignal-XCFramework** ab, Capacitor-Core bringt ein eigenes leeres mit). Einzige Required-Reason-API: File-Timestamps `C617.1` — `@capacitor/filesystem` liest ctime/mtime (`IONFileStructures+Converters.swift`), genutzt nur für die Backup-Temp-Datei im eigenen Container. Kein `CA92.1`: weder App-Code noch Capacitor-8-Core noch die Plugins rufen UserDefaults (Grep-Probe 05.08.2026).

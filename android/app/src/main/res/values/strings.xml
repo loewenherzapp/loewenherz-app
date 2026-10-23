@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Löwenherz</string>
+    <string name="title_activity_main">Löwenherz</string>
+    <string name="package_name">de.angstdoc.loewenherz</string>
+    <string name="custom_url_scheme">de.angstdoc.loewenherz</string>
+    <!-- OneSignal: Einfärbung des Benachrichtigungs-Symbols (ARGB, ohne #) -->
+    <string name="onesignal_notification_accent_color">FF39828B</string>
+</resources>

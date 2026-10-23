@@ -2,6 +2,8 @@
 // Bottom Sheet Component
 // ============================================================
 
+import { isNative } from '../platform.js';
+
 let sheetOverlay = null;
 let sheetContainer = null;
 let onCloseCallback = null;
@@ -28,7 +30,7 @@ export function openSheet(title, options, onSelect) {
     btn.addEventListener('click', () => {
       if (auswahlGetroffen) return;
       auswahlGetroffen = true;
-      if (navigator.vibrate) navigator.vibrate(50);
+      if (!isNative() && navigator.vibrate) navigator.vibrate(50);   // nativ: Haptics-Plugin
       onSelect(opt);
       closeSheet();
     });

@@ -227,6 +227,15 @@ check(MOD.utcOffsetMinutes('Europe/Berlin', new Date('2026-10-25T00:59:00Z')) ==
   const sys = sends.find(s => s.ios_sound === 'default');
   check(sys && sys.include_subscription_ids[0] === 'D',
     'system → ios_sound "default" (Feld weglassen hieße laut Doku: stumm)');
+  // Android-App: Der Ton hängt am Kanal, dessen ID die Kennung trägt. Die
+  // Konvention 'lh-' + Kennung muss zu ensureAndroidChannel() in
+  // js/push-native.js passen — sonst landet jede Erinnerung im
+  // Standardkanal mit Systemton, ohne Fehlermeldung.
+  check(std && std.existing_android_channel_id === 'lh-ton-4', 'Standard → Android-Kanal lh-ton-4');
+  check(sends.find(s => s.ios_sound === 'lh-ton-2.caf').existing_android_channel_id === 'lh-ton-2',
+    'ton-2 → Android-Kanal lh-ton-2');
+  check(sys && sys.existing_android_channel_id === 'lh-system', 'system → Android-Kanal lh-system');
+  check(MOD.androidKanal('ton-6') === 'lh-ton-6', 'androidKanal() folgt der Konvention lh-<Kennung>');
   check(sends.every(s => /^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(s.idempotency_key)),
     'jede Sendung trägt einen idempotency_key als UUID v5');
   check(new Set(sends.map(s => s.idempotency_key)).size === sends.length,

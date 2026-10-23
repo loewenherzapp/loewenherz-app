@@ -1,5 +1,5 @@
 // ============================================================
-// Löwenherz — Push nativ (iOS, @onesignal/capacitor-plugin)
+// Löwenherz — Push nativ (iOS + Android, @onesignal/capacitor-plugin)
 // ============================================================
 //
 // Nativer Zwilling des Web-Pfads in js/push.js. Wird AUSSCHLIESSLICH
@@ -19,12 +19,24 @@
 // der User dort ab, fragen wir nie wieder — kein Nag-Screen. Der
 // Parameter `false` in requestPermission() unterdrückt bewusst auch
 // den automatischen Sprung in die iOS-Einstellungen (V1).
+//
+// Android-Besonderheit: Seit Android 8 bestimmt der Benachrichtigungs-
+// KANAL den Ton, nicht die Nachricht — und der Ton eines Kanals ist nach
+// dem Anlegen unveränderlich. Deshalb trägt die Kanal-ID den Ton
+// („lh-ton-4", „lh-system"), und ensureAndroidChannel() legt vor jedem
+// Tag-Sync den Kanal zum gewählten Ton an (das native Plugin räumt den
+// alten weg). Der Server schickt existing_android_channel_id mit
+// derselben Konvention (api/send-notifications.js). Fehlt der Kanal
+// auf dem Gerät, fällt das SDK auf seinen Standardkanal zurück.
 // ============================================================
 
 import { ONESIGNAL_APP_ID } from './config.js';
+import { isAndroid } from './platform.js';
+import { nativePlugin } from './native-plugins.js';
+import { getSound } from './notification-sound.js';
 
 // Das SDK selbst liegt nur im iOS-Bundle (www/js/vendor/, erzeugt von
-// scripts/build-ios.mjs). Im Web existiert der Pfad nicht — deshalb
+// scripts/build-www.mjs). Im Web existiert der Pfad nicht — deshalb
 // steht der Import in einer Funktion und nicht am Dateianfang.
 const SDK_PATH = './vendor/onesignal.js';
 
@@ -54,12 +66,47 @@ export function getNativePermissionState() {
   return permissionState;
 }
 
+/**
+ * Android: Kanal zum gewählten Ton anlegen (idempotent, Android-only;
+ * iOS/Web: No-op). Läuft vor dem SDK-Init und vor jedem Tag-Sync, damit
+ * der Kanal existiert, bevor der Server ihn adressiert. Wirft nie.
+ * Konvention Kanal-ID = 'lh-' + Ton-Kennung aus notification-sound.js;
+ * Ton-Datei = raw-Ressource 'lh_ton_N' (android/app/src/main/res/raw/).
+ */
+export async function ensureAndroidChannel() {
+  if (!isAndroid()) return;
+  try {
+    const kanal = await nativePlugin('Erinnerungskanal');
+    if (!kanal) return;
+    const ton = getSound();   // 'ton-4' … 'ton-6', 'ton-1' … 'ton-3' oder 'system'
+    await kanal.setzen({
+      id: 'lh-' + ton,
+      name: 'Erinnerungen',
+      beschreibung: 'Morgenkompass, Abendreflexion, SMALL-Reminder',
+      ton: ton === 'system' ? '' : 'lh_' + ton.replace('-', '_')
+    });
+  } catch (e) {
+    console.warn('[Push] Benachrichtigungskanal nicht gesetzt:', e);
+  }
+}
+
 async function refreshPermissionState(OneSignal) {
   try {
+    // iOS: 0–4 (s. o.). Android: das Plugin liefert nur 1 (keine Erlaubnis)
+    // oder 2 (erlaubt). „Keine Erlaubnis" heißt dort aber zweierlei: nie
+    // gefragt (Android 13+ vor dem Dialog — der Normalfall nach dem Umzug
+    // aus der TWA per Backup) oder wirklich verweigert. canRequestPermission()
+    // trennt das: Darf noch gefragt werden, ist es 'default', sonst 'denied'.
+    // Ohne diese Unterscheidung stünde nach dem Backup-Import „blockiert" in
+    // den Einstellungen, obwohl nie jemand Nein gesagt hat.
     const native = await OneSignal.Notifications.permissionNative();
     permissionState = PERMISSION_BY_NATIVE_VALUE[native] || 'default';
+    if (isAndroid() && permissionState === 'denied') {
+      const darfFragen = await OneSignal.Notifications.canRequestPermission();
+      if (darfFragen) permissionState = 'default';
+    }
   } catch (e) {
-    // permissionNative() ist iOS-only — Fallback auf den Boolean.
+    // permissionNative() nicht verfügbar — Fallback auf den Boolean.
     try {
       permissionState = (await OneSignal.Notifications.hasPermission()) ? 'granted' : 'default';
     } catch (e2) {
@@ -79,6 +126,9 @@ export function initNative() {
 
   initPromise = (async () => {
     const { default: OneSignal } = await import(SDK_PATH);
+    // Android: Kanal VOR dem Init, denn mit dem Init entsteht das Abo und
+    // die erste Erinnerung kann Minuten später kommen.
+    await ensureAndroidChannel();
     await OneSignal.initialize(ONESIGNAL_APP_ID);
 
     // Standort hart aus. Die App braucht ihn nirgends. Seit Version 1.0.1
@@ -107,6 +157,17 @@ export function initNative() {
       refreshPermissionState(OneSignal).catch(() => {});
     });
 
+    // Nur Diagnose: Abo-ID und Opt-in-Status im Log (Gerätetest, Logcat /
+    // Xcode-Konsole). Keine Verarbeitung.
+    try {
+      OneSignal.User.pushSubscription.addEventListener('change', (event) => {
+        const jetzt = event && event.current;
+        console.log('[Push] Abo geändert:', jetzt && jetzt.id, 'optedIn:', jetzt && jetzt.optedIn);
+      });
+    } catch (e) {
+      // Diagnose darf den Init nie stören
+    }
+
     // Kein click-Listener: V1 öffnet nur die App, kein Deep-Link-Routing.
 
     await refreshPermissionState(OneSignal);
@@ -121,8 +182,10 @@ export function initNative() {
 }
 
 /**
- * Zeigt den Apple-System-Dialog. Nur nach Zustimmung im Soft-Ask aufrufen.
- * `false` = kein automatischer Redirect in die iOS-Einstellungen (V1).
+ * Zeigt den System-Dialog (Apple bzw. Android 13+ „Zulassen?"). Nur nach
+ * Zustimmung im Soft-Ask aufrufen. `false` = kein automatischer Sprung in
+ * die System-Einstellungen (V1). Android vor 13 hat keinen Dialog: Die
+ * Erlaubnis gilt als erteilt, requestPermission() liefert sofort true.
  */
 export async function requestNativePermission() {
   try {
@@ -164,6 +227,11 @@ export async function syncNativeTags(tags) {
   try {
     const OneSignal = await initPromise;
     if (!OneSignal) return;
+
+    // Android: Kanal zum (ggf. gerade gewechselten) Ton anlegen, BEVOR der
+    // Tag mit der Ton-Kennung rausgeht — sonst zielt der Server auf einen
+    // Kanal, den es noch nicht gibt.
+    await ensureAndroidChannel();
 
     const toSet = {};
     const toRemove = [];

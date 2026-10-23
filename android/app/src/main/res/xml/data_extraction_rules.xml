@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12+ (API 31): Cloud-Backup und Geräte-zu-Gerät-Übertragung.
+     Gleiche Regel wie backup_rules.xml — OneSignal-Identität bleibt
+     gerätegebunden, alles andere wird mitgenommen. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="sharedpref" path="OneSignal.xml" />
+        <exclude domain="sharedpref" path="GTPlayerPurchases.xml" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="OneSignal.xml" />
+        <exclude domain="sharedpref" path="GTPlayerPurchases.xml" />
+    </device-transfer>
+</data-extraction-rules>

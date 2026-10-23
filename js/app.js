@@ -318,7 +318,7 @@ function applyNativeStatusBarStyle(color) {
 }
 
 // ============================================================
-// Nativer App-Rahmen (iOS) — Persistenz, Lifecycle, Statusbar-Start
+// Nativer App-Rahmen (iOS/Android) — Persistenz, Lifecycle, Statusbar-Start
 // ============================================================
 // Läuft nur hinter isNative() und ist fire-and-forget: Kein nativer
 // Aufruf darf den App-Start blockieren oder den Web-Pfad berühren.

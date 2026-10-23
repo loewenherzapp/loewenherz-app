@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Hintergrundebene des Adaptive Icons: Petrol wie der Rand des Designer-Icons -->
+    <color name="ic_launcher_background">#39828B</color>
+</resources>

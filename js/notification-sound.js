@@ -1,8 +1,8 @@
 // ============================================================
-// Löwenherz — Benachrichtigungston (Auswahl nur in der iOS-App)
+// Löwenherz — Benachrichtigungston (Auswahl nur in der nativen App)
 // ============================================================
 //
-// Der Ton steckt nicht im Gerät, sondern im Push-Payload: Der Server
+// iOS: Der Ton steckt nicht im Gerät, sondern im Push-Payload: Der Server
 // (api/send-notifications.js) schreibt den Löwenherz-Standardton in die
 // normalen Sammel-Sendungen — Web-Empfänger ignorieren das ios_sound-Feld,
 // deshalb braucht der Standard KEINEN Tag. Nur wer abweicht (anderer Ton
@@ -13,18 +13,25 @@
 // müssen exakt übereinstimmen — eine Abweichung bricht nur den
 // betroffenen Ton, aber lautlos.
 //
-// Web/Android können den Ton nicht steuern (Web-Push hat kein Ton-API,
-// Android verwaltet ihn im System) — dort zeigt settings.js statt der
-// Auswahl einen Hinweistext. Dieses Modul selbst ist plattformneutral;
-// den isNative()-Zweig zieht der Aufrufer.
+// Android-App: Dort hängt der Ton am Benachrichtigungskanal, dessen ID die
+// Kennung trägt („lh-ton-2"); der Server schickt existing_android_channel_id
+// mit derselben Kennung. Kanal-Pflege: ensureAndroidChannel() in
+// js/push-native.js, Ton-Dateien in android/app/src/main/res/raw/.
+//
+// Web (PWA, alte TWA) kann den Ton nicht steuern (Web-Push hat kein
+// Ton-API) — dort zeigt settings.js statt der Auswahl einen Hinweistext.
+// Dieses Modul selbst ist plattformneutral; den isNative()-Zweig zieht
+// der Aufrufer.
 // ============================================================
+
+import { isAndroid } from './platform.js';
 
 const STORAGE_KEY = 'loewenherz_sound';
 
 export const DEFAULT_SOUND = 'ton-4';
 
 // preview: Pfad für das Vorhören in den Einstellungen (liegt über die
-// assets-Allowlist von build-ios.mjs auch im nativen Bundle). Der
+// assets-Allowlist von build-www.mjs auch im nativen Bundle). Der
 // iOS-Systemton hat bewusst keine Vorschau — Apple gibt Dritt-Apps
 // keinen Zugriff auf die Systemton-Dateien.
 //
@@ -39,7 +46,7 @@ export const SOUND_OPTIONS = [
   { id: 'ton-1',  label: 'Räuspern',       preview: 'assets/sounds/lh-ton-1.mp3' },
   { id: 'ton-2',  label: 'Aufatmen',       preview: 'assets/sounds/lh-ton-2.mp3' },
   { id: 'ton-3',  label: 'Nachhall',       preview: 'assets/sounds/lh-ton-3.mp3' },
-  { id: 'system', label: 'iOS-Standardton', preview: null }
+  { id: 'system', label: isAndroid() ? 'Android-Standardton' : 'iOS-Standardton', preview: null }
 ];
 
 /** Gewählter Ton, gegen die bekannten ids validiert — ein kaputter

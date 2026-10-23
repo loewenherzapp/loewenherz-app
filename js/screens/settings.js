@@ -7,7 +7,7 @@ import { esc } from '../escape.js';
 import { PRIVACY_URL } from '../config.js';
 import { saveProfile, clearAllData, migrateToV2 } from '../db.js';
 import { openCrisis } from '../components/crisis-modal.js';
-import { isNative } from '../platform.js';
+import { isNative, isAndroid } from '../platform.js';
 import { syncOneSignalTags, roundTo15Min, ensureOneSignalLoaded, getPermissionState, requestPushPermission, ensureRoll, revokePush, optInPush } from '../push.js';
 import { openTimePicker, renderTimeButton, setTimeButtonValue } from '../components/time-picker.js';
 import { openSoundPicker } from '../components/sound-picker.js';
@@ -25,6 +25,9 @@ import { hapticsEnabled, setHapticsEnabled } from '../haptics.js';
  * falsch und half genau den Nutzern nicht, die ihn brauchten.
  */
 function pushBlockedHintText() {
+  if (isAndroid()) {
+    return 'Benachrichtigungen sind für Löwenherz ausgeschaltet. So erlaubst du sie wieder: Android-Einstellungen → Apps → Löwenherz → Benachrichtigungen.';
+  }
   if (isNative()) {
     return 'Mitteilungen sind für Löwenherz ausgeschaltet. So erlaubst du sie wieder: iOS-Einstellungen → Löwenherz → Mitteilungen.';
   }
@@ -35,9 +38,9 @@ function pushBlockedHintText() {
 }
 
 /**
- * Hinweis zum Benachrichtigungston außerhalb der iOS-App. Eine echte
- * Auswahl gibt es nur nativ — der Ton steckt im Push-Payload und nur die
- * iOS-App bringt eigene Ton-Dateien mit. Im Web bestimmt das System:
+ * Hinweis zum Benachrichtigungston außerhalb der nativen App. Eine echte
+ * Auswahl gibt es nur nativ — nur die iOS- und die Android-App bringen
+ * eigene Ton-Dateien mit. Im Web bestimmt das System:
  * Android-Nutzer können dort selbst wechseln (der Weg variiert je
  * Hersteller, deshalb bewusst vage), iOS-Web-Push hat einen fest
  * vorgegebenen Ton, am Desktop entscheidet Browser/Betriebssystem.
@@ -176,7 +179,7 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
                Wer im System-Dialog abgelehnt hat, würde sonst nie erfahren,
                dass (und wie) es einen Weg zurück gibt. -->
           <!-- Nativ gibt es einen direkten Ausweg statt nur einer Anleitung:
-               Sprung in die iOS-Einstellungen der App (im Web unmöglich). -->
+               Sprung in die System-Einstellungen der App (im Web unmöglich). -->
           <div class="push-blocked-hint${getPermissionState() === 'denied' ? '' : ' hidden'}" id="push-blocked-hint">${pushBlockedHintText()}${isNative() ? '<button type="button" class="btn-secondary" id="push-open-settings" style="margin-top:12px;">Einstellungen öffnen</button>' : ''}</div>
 
           <div id="push-sub-settings" class="${!pushEnabled ? 'push-settings-disabled' : ''}">
@@ -415,12 +418,20 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
     });
   }
 
-  // ---- Nativ: Sprung in die iOS-Einstellungen bei blockiertem Push ----
-  // 'app-settings:' ist der Wert von UIApplication.openSettingsURLString —
-  // öffnet direkt die Einstellungsseite DIESER App.
+  // ---- Nativ: Sprung in die System-Einstellungen bei blockiertem Push ----
+  // iOS: 'app-settings:' ist der Wert von UIApplication.openSettingsURLString —
+  // öffnet direkt die Einstellungsseite DIESER App. Android: eigenes Plugin
+  // (ErinnerungskanalPlugin.java) mit der Benachrichtigungsseite der App —
+  // AppLauncher kennt dafür keine URL.
   const openSettingsBtn = document.getElementById('push-open-settings');
   if (openSettingsBtn) {
     openSettingsBtn.addEventListener('click', () => {
+      if (isAndroid()) {
+        nativePlugin('Erinnerungskanal')
+          .then((kanal) => kanal && kanal.einstellungenOeffnen())
+          .catch(() => {});
+        return;
+      }
       nativePlugin('AppLauncher')
         .then((launcher) => launcher && launcher.openUrl({ url: 'app-settings:' }))
         .catch(() => {});
@@ -434,8 +445,9 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
   }
 
   // ---- Nativ: Version + Build aus der App-Binary statt der Web-Konstante ----
-  // Eine Quelle pro Plattform: nativ MARKETING_VERSION/Build aus Xcode via
-  // @capacitor/app, im Web bleibt t.version aus de.js stehen.
+  // Eine Quelle pro Plattform: nativ MARKETING_VERSION/Build aus Xcode bzw.
+  // versionName/versionCode aus Gradle via @capacitor/app, im Web bleibt
+  // t.version aus de.js stehen.
   if (isNative()) {
     nativePlugin('App')
       .then((app) => app && app.getInfo())
@@ -684,7 +696,7 @@ const LEGAL_CONTENT = {
   `,
   datenschutz: `
     <h2>Datenschutzerklärung</h2>
-    <p class="legal-meta">Stand: August 2026 · Online: <a href="${PRIVACY_URL}" target="_blank" rel="noopener noreferrer">app.angstdoc.de/datenschutz</a></p>
+    <p class="legal-meta">Stand: Oktober 2026 · Online: <a href="${PRIVACY_URL}" target="_blank" rel="noopener noreferrer">app.angstdoc.de/datenschutz</a></p>
 
     <h3>1. Verantwortlicher</h3>
     <p>Der AngstDoc und Kollegen S.R.L.<br>
@@ -707,7 +719,8 @@ const LEGAL_CONTENT = {
       <li><strong>App-Einstellungen:</strong> Push-Schalter, Reminder-Zeiten</li>
       <li><strong>E-Mail-Adresse:</strong> Falls du sie eingetragen hast, zur Anzeige in den Einstellungen</li>
     </ul>
-    <p><strong>Wichtig — kein Cloud-Backup:</strong> Wenn du die App deinstallierst, deine Browserdaten löschst oder dein Gerät verlierst, sind diese Daten unwiderruflich weg. Du kannst sie jederzeit über den Export-Button in den Einstellungen als JSON-Datei sichern und später wieder importieren.</p>
+    <p><strong>Wichtig — kein Cloud-Backup durch uns:</strong> Wir betreiben keinen Server, auf dem deine Inhalte liegen. Wenn du die App deinstallierst, in der Web-Version deine Browserdaten löschst oder dein Gerät verlierst, sind diese Daten weg. Du kannst sie jederzeit über den Export-Button in den Einstellungen als JSON-Datei sichern und später wieder importieren.</p>
+    <p><strong>Geräte-Sicherung durch dein Betriebssystem:</strong> In den Apps für iOS und Android können deine App-Daten in die Sicherung deines Geräts einfließen (iCloud-Backup bei Apple, Google-Backup bei Android), sofern du diese Funktion auf deinem Gerät eingeschaltet hast. Diese Sicherung richtet dein Betriebssystem ein, nicht wir: Sie läuft über dein Apple- bzw. Google-Konto nach deren Datenschutzbestimmungen, und du steuerst sie in den Einstellungen deines Geräts.</p>
     <p>Rechtsgrundlage: Vertragserfüllung (Art. 6 Abs. 1 lit. b DSGVO). Das Speichern und Auslesen auf deinem Gerät ist für die Bereitstellung der App zwingend erforderlich (§ 25 Abs. 2 Nr. 2 TDDDG).</p>
 
     <h3>4. E-Mail-Impulse (Newsletter) über Brevo</h3>
@@ -730,26 +743,27 @@ const LEGAL_CONTENT = {
 
     <h3>7. Push-Benachrichtigungen (OneSignal)</h3>
     <p>Für tägliche Erinnerungen (Morgenintention, Abendreflexion, SMALL-Reminder) nutzen wir den Push-Dienst von OneSignal Inc., 2194 Esperanca Avenue, Santa Clara, CA 95054, USA.</p>
-    <p><strong>OneSignal wird erst aktiv, wenn du Push-Benachrichtigungen einschaltest.</strong> Vor deiner Einwilligung fließen keine Daten an OneSignal — im Browser wie in der iOS-App. Schaltest du Push nie ein, wird das OneSignal-SDK nie gestartet.</p>
+    <p><strong>OneSignal wird erst aktiv, wenn du Push-Benachrichtigungen einschaltest.</strong> Vor deiner Einwilligung fließen keine Daten an OneSignal — im Browser wie in den Apps für iOS und Android. Schaltest du Push nie ein, wird das OneSignal-SDK nie gestartet.</p>
     <p>Nach deiner Aktivierung werden in beiden Fällen übertragen:</p>
     <ul>
       <li>Eine technische Push-Subscription-ID sowie der Push-Token deines Geräts bzw. Browsers (kein Klarname, keine E-Mail)</li>
-      <li>Deine gewünschten Erinnerungszeiten in UTC-Format, gebündelt in einem einzigen Merkmal namens "sched" — es enthält die Zeit für Morgenkompass und Abendreflexion sowie die SMALL-Zeiten des Tages (Beispiel: "v1;m=0500;e=1830;s=0530,0930"). In der iOS-App steht darin zusätzlich die Kennung deines Benachrichtigungstons, falls du vom Standardton abweichst (z.B. "t=ton-2")</li>
+      <li>Deine gewünschten Erinnerungszeiten in UTC-Format, gebündelt in einem einzigen Merkmal namens "sched" — es enthält die Zeit für Morgenkompass und Abendreflexion sowie die SMALL-Zeiten des Tages (Beispiel: "v1;m=0500;e=1830;s=0530,0930"). In den Apps für iOS und Android steht darin zusätzlich die Kennung deines Benachrichtigungstons, falls du vom Standardton abweichst (z.B. "t=ton-2")</li>
       <li>Deine IP-Adresse beim Verbindungsaufbau (OneSignal speichert die IP-Adressen von Nutzerinnen und Nutzern aus der EU nach eigenen Angaben nicht)</li>
     </ul>
     <p><strong>Nur im Browser:</strong> Das OneSignal-SDK wird von cdn.onesignal.com nachgeladen. Dabei werden zusätzlich technische Verbindungsdaten wie der Browsertyp übermittelt.</p>
-    <p><strong>Nur in der iOS-App:</strong> Dort ist das SDK Teil der App, es wird also nichts nachgeladen. Dafür erhebt das mobile SDK nach der Aktivierung automatisch zusätzliche Gerätedaten: Gerätemodell, Betriebssystem-Version, App-Version und App-Kennung, Sprache, Zeitzone, Land, Mobilfunkanbieter, den Status deiner Benachrichtigungs-Berechtigung sowie Nutzungsstatistiken (Zeitpunkt der ersten und letzten Sitzung, Anzahl der Sitzungen, Gesamtnutzungsdauer). <strong>Standortdaten (GPS) werden nicht erhoben</strong>, und deine Inhalte aus der App werden nicht übertragen.</p>
+    <p><strong>Nur in den Apps (iOS und Android):</strong> Dort ist das SDK Teil der App, es wird also nichts nachgeladen. Dafür erhebt das mobile SDK nach der Aktivierung automatisch zusätzliche Gerätedaten: Gerätemodell, Betriebssystem-Version, App-Version und App-Kennung, Sprache, Zeitzone, Land, Mobilfunkanbieter, den Status deiner Benachrichtigungs-Berechtigung sowie Nutzungsstatistiken (Zeitpunkt der ersten und letzten Sitzung, Anzahl der Sitzungen, Gesamtnutzungsdauer). <strong>Standortdaten (GPS) werden nicht erhoben</strong>, und deine Inhalte aus der App werden nicht übertragen.</p>
     <p><strong>Apple als Zwischenstation (nur iOS-App):</strong> Die Zustellung läuft technisch über den Apple Push Notification service (APNs) der Apple Inc. Dein Gerät erhält dafür von Apple einen Push-Token, den wir an OneSignal weitergeben. Apple erhält damit auch den Zeitpunkt und den Text der Benachrichtigung — das sind allgemeine Erinnerungstexte ohne jeden Bezug zu deinen Reflexionen.</p>
+    <p><strong>Google als Zwischenstation (nur Android-App):</strong> Die Zustellung läuft technisch über Firebase Cloud Messaging (FCM) der Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Irland (Mutterkonzern Google LLC, USA). Dein Gerät erhält dafür von Google einen Push-Token, den wir an OneSignal weitergeben. Google erhält damit auch den Zeitpunkt und den Text der Benachrichtigung — dieselben allgemeinen Erinnerungstexte ohne Bezug zu deinen Reflexionen. Soweit Google Daten in den USA verarbeitet, stützt sich die Übermittlung auf das EU-US Data Privacy Framework und EU-Standardvertragsklauseln.</p>
     <p>OneSignal verarbeitet Daten in den USA. Die Übermittlung erfolgt auf Basis von EU-Standardvertragsklauseln.</p>
     <p><strong>Deine E-Mail-Adresse wird nicht an OneSignal übertragen.</strong> Sie liegt ausschließlich bei Brevo (siehe Abschnitt 4). Push und E-Mail-Impulse sind zwei getrennte Dienste, die nicht miteinander verknüpft werden.</p>
     <p>Rechtsgrundlage: Einwilligung (Art. 6 Abs. 1 lit. a DSGVO). Du kannst die Einwilligung jederzeit widerrufen — entweder über den Push-Schalter in den Einstellungen oder über die Benachrichtigungs-Einstellungen deines Geräts bzw. Browsers. Beim Widerruf werden alle Tags bei OneSignal gelöscht.</p>
     <p>Mehr Informationen: <a href="https://onesignal.com/privacy_policy" target="_blank" rel="noopener noreferrer">onesignal.com/privacy_policy</a></p>
 
     <h3>8. Cookies und lokale Speicher</h3>
-    <p>Diese App verwendet keine Cookies. Zur Speicherung deiner Daten nutzen wir IndexedDB und LocalStorage — beides lokale Browser-Speicher, die ausschließlich auf deinem Gerät verbleiben. Es findet keine Übertragung dieser Daten an unsere Server oder Dritte statt.</p>
+    <p>Diese App verwendet keine Cookies. Zur Speicherung deiner Daten nutzen wir IndexedDB und LocalStorage — beides lokale Speicher im Browser bzw. in der App, die ausschließlich auf deinem Gerät verbleiben. Es findet keine Übertragung dieser Daten an unsere Server oder Dritte statt.</p>
 
     <h3>9. Keine Weitergabe an Dritte</h3>
-    <p>Deine Inhalte (Reflexionen, SMALL-Punkte, Profildaten) werden nicht an Dritte weitergegeben, verkauft oder für Werbezwecke genutzt. Die einzigen Drittanbieter, die Daten verarbeiten, sind Vercel (Hosting/Analytics) sowie — jeweils nach deiner Einwilligung — OneSignal (Push), Apple (technische Push-Zustellung in der iOS-App) und Brevo (E-Mail-Impulse).</p>
+    <p>Deine Inhalte (Reflexionen, SMALL-Punkte, Profildaten) werden nicht an Dritte weitergegeben, verkauft oder für Werbezwecke genutzt. Die einzigen Drittanbieter, die Daten verarbeiten, sind Vercel (Hosting/Analytics) sowie — jeweils nach deiner Einwilligung — OneSignal (Push), Apple (technische Push-Zustellung in der iOS-App), Google (technische Push-Zustellung in der Android-App) und Brevo (E-Mail-Impulse). Eine Sicherung deines Geräts über iCloud oder Google-Backup richtest du selbst ein (siehe Abschnitt 3).</p>
 
     <h3>10. Deine Rechte</h3>
     <p>Du hast das Recht auf Auskunft, Berichtigung, Löschung und Einschränkung der Verarbeitung deiner Daten sowie das Recht auf Datenübertragbarkeit und Widerspruch. Erteilte Einwilligungen kannst du jederzeit mit Wirkung für die Zukunft widerrufen (Art. 7 Abs. 3 DSGVO) — für E-Mail-Impulse über den Abmeldelink in jeder Mail oder per Nachricht an uns.</p>

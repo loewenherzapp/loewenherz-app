@@ -1,5 +1,5 @@
 // ============================================================
-// Sound Picker — Auswahl des Benachrichtigungstons (nur iOS-App)
+// Sound Picker — Auswahl des Benachrichtigungstons (nur native App)
 // ============================================================
 //
 // Gleiches Chassis wie der Time-Picker (Overlay + Sheet von unten),
@@ -13,6 +13,7 @@
 // ============================================================
 
 import { SOUND_OPTIONS, getSound, setSound } from '../notification-sound.js';
+import { isNative } from '../platform.js';
 
 // Nur ein Sheet gleichzeitig — gleicher Riegel wie im Time-Picker.
 let activeOverlay = null;
@@ -90,7 +91,7 @@ export function openSoundPicker(onChange) {
 
     const opt = e.target.closest('.sound-picker-opt');
     if (opt) {
-      if (navigator.vibrate) navigator.vibrate(50);
+      if (!isNative() && navigator.vibrate) navigator.vibrate(50);   // nativ: Haptics-Plugin
       overlay.querySelectorAll('.is-selected').forEach(el => el.classList.remove('is-selected'));
       opt.classList.add('is-selected');
       const id = opt.dataset.id;

@@ -1,15 +1,19 @@
 {
   "name": "loewenherz-app",
   "private": true,
-  "description": "L\u00f6wenherz PWA \u2014 Web ohne Build-Step; package.json existiert nur f\u00fcr das Capacitor-iOS-Fundament",
+  "description": "Löwenherz PWA — Web ohne Build-Step; package.json existiert nur für das Capacitor-Fundament (iOS + Android)",
   "scripts": {
-    "build:ios": "node scripts/build-ios.mjs && cap sync ios",
+    "build:www": "node scripts/build-www.mjs",
+    "build:ios": "node scripts/build-www.mjs && cap sync ios",
+    "build:android": "node scripts/build-www.mjs && cap sync android",
+    "release:android": "node scripts/release-android.mjs",
     "test:schedule": "node scripts/test-schedule.mjs",
     "test:send": "node scripts/test-send.mjs",
     "test:api": "node scripts/test-api.mjs",
     "test:db": "node scripts/test-db.mjs"
   },
   "dependencies": {
+    "@capacitor/android": "^8.5.0",
     "@capacitor/app": "^8.1.1",
     "@capacitor/app-launcher": "^8.0.1",
     "@capacitor/browser": "^8.0.4",

@@ -1,6 +1,7 @@
 # Nur die Web-App wird deployt — Capacitor/Node-Fundament bleibt draußen.
 # Details: docs/ios-capacitor-notes.md
 ios/
+android/
 www/
 node_modules/
 scripts/

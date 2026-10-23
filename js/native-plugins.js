@@ -3,7 +3,7 @@
 // ============================================================
 //
 // Die App hat keinen Bundler. Statt für jedes offizielle Plugin dessen
-// JS-Dist zu vendorn (wie bei OneSignal nötig, siehe build-ios.mjs),
+// JS-Dist zu vendorn (wie bei OneSignal nötig, siehe build-www.mjs),
 // nutzt dieser Weg registerPlugin() aus dem bereits gevendorten
 // @capacitor/core: Die offiziellen Plugin-Pakete sind dünne
 // registerPlugin-Wrapper — nativ ist der direkte Proxy funktionsgleich.

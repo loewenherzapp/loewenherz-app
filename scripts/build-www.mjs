@@ -1,6 +1,9 @@
 // ============================================================
-// Löwenherz — iOS-Bundle-Build (Capacitor webDir)
+// Löwenherz — Web-Bundle für die nativen Apps (Capacitor webDir)
 // Kopiert die Client-App nach www/ (Allowlist, kein Build-Step).
+// Gemeinsame Quelle für iOS UND Android: `cap sync ios` / `cap sync android`
+// kopieren www/ anschließend in das jeweilige native Projekt (bis
+// Oktober 2026 hieß diese Datei build-ios.mjs).
 // Bewusst NICHT im Bundle: sw.js + OneSignalSDKWorker.js (nativ
 // gibt es keinen Service Worker — fehlende Datei schlägt laut
 // fehl statt einen Geister-SW zu installieren), api/, docs/,
@@ -23,7 +26,7 @@ const VENDOR_DIR = join(WEB_DIR, 'js', 'vendor');
 const ALLOWLIST = ['index.html', 'manifest.json', 'css', 'js', 'content', 'assets'];
 
 // Dateien, die im fertigen Bundle NIE auftauchen dürfen.
-const FORBIDDEN = ['sw.js', 'OneSignalSDKWorker.js', 'api', 'ios', '.well-known', 'install.html'];
+const FORBIDDEN = ['sw.js', 'OneSignalSDKWorker.js', 'api', 'ios', 'android', '.well-known', 'install.html'];
 
 async function exists(path) {
   try { await stat(path); return true; } catch { return false; }
@@ -41,7 +44,7 @@ async function countFiles(dir) {
 // 1) Quellen prüfen — fehlt etwas (z. B. nach Umbenennung), laut abbrechen.
 for (const entry of ALLOWLIST) {
   if (!(await exists(join(ROOT, entry)))) {
-    console.error(`[build-ios] FEHLER: Quelle fehlt: ${entry}`);
+    console.error(`[build-www] FEHLER: Quelle fehlt: ${entry}`);
     process.exit(1);
   }
 }
@@ -76,7 +79,7 @@ const BARE_IMPORT = 'from "@capacitor/core"';
 
 for (const src of [CAPACITOR_CORE_SRC, ONESIGNAL_SRC]) {
   if (!(await exists(src))) {
-    console.error(`[build-ios] FEHLER: Vendor-Quelle fehlt: ${src}\n            → npm install ausführen.`);
+    console.error(`[build-www] FEHLER: Vendor-Quelle fehlt: ${src}\n            → npm install ausführen.`);
     process.exit(1);
   }
 }
@@ -86,7 +89,7 @@ await mkdir(VENDOR_DIR, { recursive: true });
 // @capacitor/core: unverändert übernehmen (keine Bare-Imports).
 const capacitorCore = await readFile(CAPACITOR_CORE_SRC, 'utf8');
 if (capacitorCore.includes('from "@')) {
-  console.error('[build-ios] FEHLER: @capacitor/core hat unerwartete Bare-Imports — Vendor-Schritt anpassen.');
+  console.error('[build-www] FEHLER: @capacitor/core hat unerwartete Bare-Imports — Vendor-Schritt anpassen.');
   process.exit(1);
 }
 await writeFile(join(VENDOR_DIR, 'capacitor-core.js'), capacitorCore);
@@ -97,7 +100,7 @@ await writeFile(join(VENDOR_DIR, 'capacitor-core.js'), capacitorCore);
 const oneSignal = await readFile(ONESIGNAL_SRC, 'utf8');
 const occurrences = oneSignal.split(BARE_IMPORT).length - 1;
 if (occurrences !== 1) {
-  console.error(`[build-ios] FEHLER: ${BARE_IMPORT} kommt ${occurrences}× im OneSignal-Dist vor (erwartet: 1).`);
+  console.error(`[build-www] FEHLER: ${BARE_IMPORT} kommt ${occurrences}× im OneSignal-Dist vor (erwartet: 1).`);
   process.exit(1);
 }
 await writeFile(
@@ -107,21 +110,21 @@ await writeFile(
 
 // 5) Bundle-Asserts.
 if (!(await exists(join(WEB_DIR, 'index.html')))) {
-  console.error('[build-ios] FEHLER: www/index.html fehlt nach dem Kopieren.');
+  console.error('[build-www] FEHLER: www/index.html fehlt nach dem Kopieren.');
   process.exit(1);
 }
 for (const entry of FORBIDDEN) {
   if (await exists(join(WEB_DIR, entry))) {
-    console.error(`[build-ios] FEHLER: ${entry} darf nicht im Bundle liegen.`);
+    console.error(`[build-www] FEHLER: ${entry} darf nicht im Bundle liegen.`);
     process.exit(1);
   }
 }
 // Kein unaufgelöster Bare-Import im Bundle — der WKWebView kann ihn nicht laden.
 for (const file of ['capacitor-core.js', 'onesignal.js']) {
   if ((await readFile(join(VENDOR_DIR, file), 'utf8')).includes('from "@')) {
-    console.error(`[build-ios] FEHLER: js/vendor/${file} enthält noch einen Bare-Import.`);
+    console.error(`[build-www] FEHLER: js/vendor/${file} enthält noch einen Bare-Import.`);
     process.exit(1);
   }
 }
 
-console.log(`[build-ios] OK — ${await countFiles(WEB_DIR)} Dateien in www/ (inkl. js/vendor/)`);
+console.log(`[build-www] OK — ${await countFiles(WEB_DIR)} Dateien in www/ (inkl. js/vendor/)`);

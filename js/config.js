@@ -5,8 +5,9 @@
 import { isNative } from './platform.js';
 
 // Basis-URL für API-Aufrufe: Im Web origin-relativ (''), in der nativen
-// Capacitor-App absolut — capacitor://localhost hat kein Backend.
-// CORS für capacitor://localhost ist in api/subscribe.js freigeschaltet.
+// Capacitor-App absolut — capacitor://localhost (iOS) bzw. https://localhost
+// (Android) haben kein Backend. CORS für beide Origins ist in
+// api/subscribe.js freigeschaltet.
 export const API_BASE = isNative() ? 'https://app.angstdoc.de' : '';
 
 // OneSignal-App-ID — EINE App für alle Plattformen.

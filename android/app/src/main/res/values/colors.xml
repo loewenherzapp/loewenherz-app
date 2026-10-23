@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Farben der App (css/styles.css): Creme = Seitenhintergrund, Petrol = Icon/Splash -->
+    <color name="loewenherz_creme">#F7EAD8</color>
+    <color name="loewenherz_petrol">#39828B</color>
+    <color name="colorPrimary">#39828B</color>
+    <color name="colorPrimaryDark">#39828B</color>
+    <color name="colorAccent">#39828B</color>
+</resources>

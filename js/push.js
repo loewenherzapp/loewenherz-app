@@ -154,11 +154,27 @@ export function pushIsActive() {
 // braucht das SDK direkt (sonst keine Tag-Syncs, keine Subscription-Pflege).
 (function autoLoadForExistingUsers() {
   try {
-    if (pushIsActive()) ensureOneSignalLoaded();
+    if (pushIsActive()) ensureOneSignalLoaded().then(nachholenNativeErlaubnis).catch(() => {});
   } catch (e) {
     // Silent — kein Push-Fail darf App-Start blockieren
   }
 })();
+
+// Nativ nach einem Backup-Import (Android: Umzug aus der TWA, Oktober 2026):
+// Die Zusage steckt im Backup (push_asked + push_enabled), die System-
+// Erlaubnis für die NEUE App wurde aber nie abgefragt — der Soft-Ask kommt
+// wegen push_asked nicht mehr, und in den Einstellungen stünde „an", ohne
+// dass je etwas ankäme. Deshalb einmal beim Start den System-Dialog
+// nachholen; verweigert, bleibt es bei 'denied' und dem Hinweis dort.
+// Im Web ohne Wirkung (nativePush bleibt null).
+function nachholenNativeErlaubnis() {
+  if (!isNative() || !nativePush) return;
+  if (nativePush.getNativePermissionState() !== 'default') return;
+  console.log('[Push] Zusage vorhanden, System-Erlaubnis fehlt — Dialog nachholen');
+  nativePush.requestNativePermission()
+    .then((erteilt) => { if (erteilt) syncTagsToOneSignal(); })
+    .catch(() => {});
+}
 
 // --- Zeitzonen-Drift: Tags neu schreiben, wenn sich der UTC-Offset ändert ---
 //

@@ -10,7 +10,8 @@
 const ALLOWED_ORIGINS = [
   'https://app.angstdoc.de',
   'https://loewenherz-app.vercel.app',
-  'capacitor://localhost',
+  'capacitor://localhost',   // iOS-App (WKWebView)
+  'https://localhost',       // Android-App (Capacitor-WebView, androidScheme https)
   'http://localhost'
 ];
 

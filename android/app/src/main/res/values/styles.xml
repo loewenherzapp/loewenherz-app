@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+    </style>
+
+    <!-- Light statt DayNight: Die App hat feste Farben (Creme, Reflexion dunkel),
+         ein System-Dunkelmodus darf das Fenster hinter der WebView nicht
+         schwarz färben. windowBackground = Creme, damit der Streifen hinter
+         der Statusleiste (ältere WebViews ohne Safe-Area-Durchreichung) zur
+         App passt. -->
+    <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:background">@null</item>
+        <item name="android:windowBackground">@color/loewenherz_creme</item>
+    </style>
+
+    <!-- Systemsplash (Android 12+): Launcher-Icon auf Petrol — nahtlos zum
+         Splash des SplashScreen-Plugins (drawable/splash.png, ebenfalls Petrol).
+         Entscheidung 23.09.2026, docs/play-store-launch-notes.md. -->
+    <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
+        <item name="android:background">@drawable/splash</item>
+        <item name="windowSplashScreenBackground">@color/loewenherz_petrol</item>
+    </style>
+</resources>

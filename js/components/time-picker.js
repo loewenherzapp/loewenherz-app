@@ -16,6 +16,7 @@
 // ============================================================
 
 import { roundTo15Min } from '../push.js';
+import { isNative } from '../platform.js';
 
 const MINUTES = ['00', '15', '30', '45'];
 const FALLBACK = '12:00';
@@ -125,7 +126,7 @@ export function openTimePicker(title, value, onSelect) {
     }
 
     if (e.target.closest('.time-picker-apply')) {
-      if (navigator.vibrate) navigator.vibrate(50);
+      if (!isNative() && navigator.vibrate) navigator.vibrate(50);   // nativ: Haptics-Plugin
       const picked = `${selH}:${selM}`;
       close();
       onSelect(picked);

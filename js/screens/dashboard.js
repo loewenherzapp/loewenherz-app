@@ -12,6 +12,7 @@ import { showDayDetail } from './history.js';
 import { checkMilestones } from '../milestones.js';
 import { checkPushSoftAsk } from '../push.js';
 import { hapticSelection } from '../haptics.js';
+import { isNative } from '../platform.js';
 import { getDashboardQuatschiText, getTapFeedback, showTapToast } from '../quatschi.js';
 
 const MORNING_NUDGE_TEXTS = [
@@ -187,10 +188,10 @@ export async function renderDashboard(container, profile, { animate = true } = {
       const qs = TEXTS.ui.quickSelect[letter];
       openSheet(qs.title, qs.options, async (opt) => {
         try {
-          // Haptic feedback — subtle 15ms vibration on tap (Android/Web).
-          // navigator.vibrate existiert auf iOS nicht — dort übernimmt die
-          // native Haptik-Stelle 2/3 darunter (dezentester Selection-Tick).
-          if (navigator.vibrate) navigator.vibrate(15);
+          // Haptic feedback — subtle 15ms vibration on tap (Web/TWA).
+          // In der nativen App übernimmt die Haptik-Stelle 2/3 darunter
+          // (dezentester Selection-Tick, mit Schalter in den Einstellungen).
+          if (!isNative() && navigator.vibrate) navigator.vibrate(15);
           hapticSelection();
 
           const now = new Date();
