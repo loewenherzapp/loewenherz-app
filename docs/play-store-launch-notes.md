@@ -271,7 +271,10 @@ Android-Entwickler* im Menü des Entwicklerkontos (nicht auf App-Ebene).
 
 ## Offene Punkte vor Launch
 
-- [ ] **Dankes-Mail an die Tester** (Patrick, 20.10.2026): Test abgeschlossen; Dank — das Feedback
+- [x] **Info an die Tester zum Update und zur Datensicherung verschickt** (laut Patrick, Stand
+      24.10.2026). Das Update auf 1.1.0 kommt per automatischer Play-Aktualisierung in den
+      folgenden Tagen; wer automatische Updates ausgeschaltet hat, muss selbst „Aktualisieren“.
+- [ ] **Dankes-Mail an die Tester** (Patrick, 20.10.2026; Update-/Backup-Teil siehe oben erledigt): Test abgeschlossen; Dank — das Feedback
       war sehr wertvoll, dadurch konnten schon einige Bugs behoben werden; Frage nach weiterem
       Feedback; Hinweis, dass vor dem Android-Update ein Backup exportiert und danach wieder
       eingelesen werden kann (Einstellungen → Backup). Wenige Tester, etwa die Hälfte Freunde und
