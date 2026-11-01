@@ -1909,6 +1909,8 @@ a:active { opacity: 0.7; }
   margin-bottom: 16px;
 }
 .history-mood .mood-title { margin-bottom: 0; }
+/* Unter ~340 px passen Titel und Umschalter nicht nebeneinander */
+.history-mood .history-week-header-row { flex-wrap: wrap; gap: 8px; }
 
 .mood-range {
   display: flex;
