@@ -10,7 +10,9 @@
     "test:schedule": "node scripts/test-schedule.mjs",
     "test:send": "node scripts/test-send.mjs",
     "test:api": "node scripts/test-api.mjs",
-    "test:db": "node scripts/test-db.mjs"
+    "test:db": "node scripts/test-db.mjs",
+    "test:sprecher": "node scripts/test-sprecher.mjs",
+    "test:verlauf": "node scripts/test-verlauf.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.0",

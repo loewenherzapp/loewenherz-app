@@ -71,6 +71,7 @@ Beispiel: `app-angstdoc-placeholder/` → dort `vercel deploy` → eigenes Verce
 
 ### Zusammenspiel
 - Quatschi redet, Gundula handelt. In der App: Quatschi = kursiv/Serif, Gundula = regular/Sans.
+- **Etikett folgt dem Satz** (Heute + Wochenkommentar im Verlauf, seit 01.11.2026): Die zuerst genannte Figur bestimmt Etikett und Schrift (`sprecherVon()` in `js/quatschi.js`). „Radio Bullshit" zählt als Quatschi, Sätze ohne Figur laufen als „Impuls" (Serif aufrecht). Neue Sprüche deshalb mit der gemeinten Figur zuerst schreiben. Regressionstest: `npm run test:sprecher`.
 - Varianten vorstellen, Patrick entscheidet. Texte nie direkt einbauen.
 
 ## Code-Konventionen

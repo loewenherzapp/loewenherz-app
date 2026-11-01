@@ -323,6 +323,11 @@ export const TEXTS = {
   ui: {
     tabs: { today: "Heute", reflection: "Reflexion", history: "Verlauf" },
 
+    // Etikett über einem Spruch (Heute + Wochenkommentar im Verlauf). Welches
+    // gilt, entscheidet sprecherVon() in js/quatschi.js: die zuerst genannte
+    // Figur, sonst Impuls. Großschreibung macht das CSS.
+    speaker: { quatschi: "Quatschi", gundula: "Gundula", impuls: "Impuls" },
+
     // Erscheint, wenn die App ihre gespeicherten Daten während der Nutzung
     // nicht mehr findet (Datenräumung durch das System, Löschen in einem
     // zweiten Tab, Lesefehler). Bewusst ruhig und ohne Schuldzuweisung —
@@ -436,7 +441,19 @@ export const TEXTS = {
       weeksAgo3: "Vor 3 Wochen",
       weekLabel: "KW {n}",
       balance: "Balance",
-      noData: "Noch keine Daten."
+      noData: "Noch keine Daten.",
+      // Stimmungskurve (js/components/mood-chart.js)
+      mood: {
+        title: "Dein Auf und Ab",
+        range4w: "4 Wochen",
+        range3m: "3 Monate",
+        legendDots: "Abendreflexion",
+        legendLine: "Trend",
+        legendBars: "SMALL-Punkte",
+        today: "heute",
+        empty: "Ein paar Abendreflexionen mehr, dann zeigt sich hier dein Auf und Ab.",
+        aria: "Dein Auf und Ab der letzten {zeitraum}"
+      }
     },
     settings: {
       title: "Einstellungen",

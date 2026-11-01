@@ -227,8 +227,28 @@ function dismissToast(toast) {
   setTimeout(() => { if (toast.parentNode) toast.remove(); }, 300);
 }
 
+// ---- Wer spricht? (Etikett über dem Spruch) ----
+
+/**
+ * Ordnet einen Spruch der Figur zu, die darin zuerst vorkommt: 'quatschi',
+ * 'gundula' oder 'impuls' (keine Figur). Beide Figuren sprechen laut
+ * Charakter-Guide auch in der 3. Person, ein Satz über Gundula ist also ein
+ * Gundula-Satz. Radio Bullshit ist Quatschis Lieblingssender (Buch, Modul 4).
+ * Bis Oktober 2026 stand fest „QUATSCHI“ über jedem Spruch, auch über
+ * „Gundula macht Gundula-Sachen“ (Tester-Rückmeldung 30.10.2026).
+ * Immer auf der Vorlage aufrufen, vor dem Einsetzen von {name}.
+ */
+export function sprecherVon(text) {
+  const q = text.search(/Quatschi|Radio Bullshit/);
+  const g = text.indexOf('Gundula');
+  if (q === -1 && g === -1) return 'impuls';
+  if (g === -1 || (q !== -1 && q < g)) return 'quatschi';
+  return 'gundula';
+}
+
 // ---- Dashboard Quatschi-Text (Wasserfall-Priorität) ----
 
+/** Liefert { text, sprecher } — sprecher siehe sprecherVon(). */
 export async function getDashboardQuatschiText(userName) {
   const hour = new Date().getHours();
   const daysSinceLastPoint = await getDaysSinceLastSMALLPoint();
@@ -268,8 +288,9 @@ export async function getDashboardQuatschiText(userName) {
     text = randomNotRecentlyShown(combined, 'quatschi_recent');
   }
 
-  // {name}-Ersetzung IMMER als letzten Schritt
-  return text.replace(/\{name\}/g, userName);
+  // {name}-Ersetzung IMMER als letzten Schritt — nach der Zuordnung, damit
+  // ein Vorname wie „Gundula“ das Etikett nicht kippt
+  return { text: text.replace(/\{name\}/g, userName), sprecher: sprecherVon(text) };
 }
 
 // ---- Abendreflexion — Abschluss-Kommentar ----

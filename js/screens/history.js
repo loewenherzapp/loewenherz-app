@@ -10,6 +10,8 @@ import { esc } from '../escape.js';
 import { getPointsByDate, getPointsByDateRange, getReflectionByDate, getReflectionsByDateRange } from '../db.js';
 import { formatDate, getMonday, renderWeekCircles } from '../components/week-dots.js';
 import { buildFeed, milestoneDisplayNames, milestoneIcons, milestoneTexts } from '../weekly-cards.js';
+import { sprecherVon } from '../quatschi.js';
+import { renderMoodChart } from '../components/mood-chart.js';
 
 
 const MOOD_MAP = {};
@@ -394,11 +396,18 @@ export async function renderHistory(container, profile) {
   if (thisWeekSummary) {
     html += `<div class="history-week-summary">${thisWeekSummary}</div>`;
   }
-  html += `<div class="history-quatschi">`;
-  html += `<span class="history-quatschi-tag">— QUATSCHI</span>`;
+  // Zuschreibung nur, wenn eine Figur spricht — „— IMPULS“ wäre als Urheber falsch
+  const kommentarSprecher = sprecherVon(quatschiComment);
+  html += `<div class="history-quatschi speaker-${kommentarSprecher}">`;
+  if (kommentarSprecher !== 'impuls') {
+    html += `<span class="history-quatschi-tag">— ${TEXTS.ui.speaker[kommentarSprecher]}</span>`;
+  }
   html += `<span class="history-quatschi-text">${quatschiComment}</span>`;
   html += `</div>`;
   html += `</div>`;
+
+  // === Dein Auf und Ab (Stimmungskurve) — entfernt sich selbst ohne Abendreflexionen ===
+  html += `<div class="history-week history-mood" id="history-mood"></div>`;
 
   // === Feed ===
   html += `<div class="feed-container" id="feed-container">`;
@@ -471,6 +480,21 @@ export async function renderHistory(container, profile) {
   const currentDotsEl = document.getElementById('hw-current-dots');
   if (currentDotsEl) {
     renderWeekCircles(currentDotsEl, thisWeekPoints, thisWeekReflections, (dateStr) => showDayDetail(dateStr));
+  }
+
+  // --- Stimmungskurve (scheitert sie, bleibt der restliche Verlauf bedienbar) ---
+  const moodEl = document.getElementById('history-mood');
+  if (moodEl) {
+    try {
+      renderMoodChart(moodEl, {
+        reflections: allTimeReflections,
+        points: allTimePoints,
+        onDayTap: (dateStr) => showDayDetail(dateStr)
+      });
+    } catch (e) {
+      console.error('Stimmungskurve:', e);
+      moodEl.remove();
+    }
   }
 
   // --- Month collapse handlers ---

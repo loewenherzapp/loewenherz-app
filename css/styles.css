@@ -648,6 +648,16 @@ a:active { opacity: 0.7; }
   line-height: 1.4;
 }
 
+/* Etikett folgt dem Satz (sprecherVon in js/quatschi.js): Quatschi bleibt
+   Serif kursiv, Gundula spricht Sans regular, Impulse Serif aufrecht */
+.speaker-gundula .quatschi-text {
+  font-family: var(--font-sans);
+  font-style: normal;
+  font-size: 19px;
+  line-height: 1.45;
+}
+.speaker-impuls .quatschi-text { font-style: normal; }
+
 .quatschi-divider {
   width: 100%;
   height: 1px;
@@ -1885,6 +1895,85 @@ a:active { opacity: 0.7; }
   font-size: 15px;
   font-style: italic;
   color: var(--ink-teal);
+}
+.speaker-gundula .history-quatschi-text {
+  font-family: var(--font-sans);
+  font-style: normal;
+  font-size: 14px;
+}
+.speaker-impuls .history-quatschi-text { font-style: normal; }
+
+/* === Dein Auf und Ab (Stimmungskurve, js/components/mood-chart.js) === */
+.history-mood {
+  padding: 18px 16px 14px;
+  margin-bottom: 16px;
+}
+.history-mood .mood-title { margin-bottom: 0; }
+
+.mood-range {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 999px;
+  background: var(--bg-inset);
+}
+.mood-range-btn {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  border-radius: 999px;
+  padding: 0 11px;
+  min-height: 30px;
+  cursor: pointer;
+}
+.mood-range-btn.active {
+  color: var(--ink-teal);
+  background: var(--bg-paper);
+  box-shadow: 0 1px 3px rgba(120, 100, 70, 0.12);
+}
+
+.mood-plot { margin-top: 6px; }
+.mood-svg { display: block; width: 100%; height: auto; overflow: visible; }
+.mood-grid { stroke: var(--divider); stroke-width: 1; }
+.mood-emoji { font-size: 12px; text-anchor: middle; dominant-baseline: central; }
+.mood-bar { fill: var(--ink-teal); opacity: 0.22; }
+.mood-line {
+  fill: none;
+  stroke: var(--ink-teal);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.9;
+}
+.mood-dot { fill: var(--ink-teal); opacity: 0.45; }
+.mood-date { font-family: var(--font-sans); font-size: 10px; fill: var(--text-secondary); }
+
+.mood-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 14px;
+  margin-top: 8px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+.mood-legend-item { display: inline-flex; align-items: center; gap: 6px; }
+.mood-key { display: inline-block; flex-shrink: 0; background: var(--ink-teal); }
+.mood-key-dot { width: 7px; height: 7px; border-radius: 50%; opacity: 0.45; }
+.mood-key-line { width: 14px; height: 2px; border-radius: 1px; opacity: 0.9; }
+.mood-key-bar { width: 4px; height: 10px; border-radius: 1px; opacity: 0.22; }
+
+.mood-empty {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  line-height: 1.45;
+  color: var(--ink-teal);
+  text-align: center;
+  padding: 16px 8px 8px;
 }
 
 /* === Vorwochen (kompakte Cards) === */

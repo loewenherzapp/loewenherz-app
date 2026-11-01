@@ -13,7 +13,7 @@ import { checkMilestones } from '../milestones.js';
 import { checkPushSoftAsk } from '../push.js';
 import { hapticSelection } from '../haptics.js';
 import { isNative } from '../platform.js';
-import { getDashboardQuatschiText, getTapFeedback, showTapToast } from '../quatschi.js';
+import { getDashboardQuatschiText, getTapFeedback, showTapToast, sprecherVon } from '../quatschi.js';
 
 const MORNING_NUDGE_TEXTS = [
   "Quatschi fragt, ob du heute einen Plan hast.",
@@ -107,9 +107,14 @@ export async function renderDashboard(container, profile, { animate = true } = {
   const morningDone = morningDoneData ? JSON.parse(morningDoneData).completed : false;
   const showMorningNudge = morningWindow && !morningDone;
 
-  const quatschi = showMorningNudge
-    ? MORNING_NUDGE_TEXTS[Math.floor(Math.random() * MORNING_NUDGE_TEXTS.length)]
-    : await getDashboardQuatschiText(name);
+  // Etikett folgt dem Satz: Quatschi, Gundula oder Impuls (sprecherVon)
+  let quatschi, sprecher;
+  if (showMorningNudge) {
+    quatschi = MORNING_NUDGE_TEXTS[Math.floor(Math.random() * MORNING_NUDGE_TEXTS.length)];
+    sprecher = sprecherVon(quatschi);
+  } else {
+    ({ text: quatschi, sprecher } = await getDashboardQuatschiText(name));
+  }
 
   const quatschiTextHtml = showMorningNudge
     ? `<div class="quatschi-nudge" id="quatschi-nudge"><span class="quatschi-text">${esc(quatschi)}</span><span class="quatschi-nudge-arrow">\u2192</span></div>`
@@ -117,8 +122,8 @@ export async function renderDashboard(container, profile, { animate = true } = {
 
   container.innerHTML = `
     <div class="dashboard-screen">
-      <div class="quatschi-hero">
-        <div class="quatschi-tag">QUATSCHI</div>
+      <div class="quatschi-hero speaker-${sprecher}">
+        <div class="quatschi-tag">${TEXTS.ui.speaker[sprecher]}</div>
         ${quatschiTextHtml}
         <div class="quatschi-divider"></div>
       </div>
