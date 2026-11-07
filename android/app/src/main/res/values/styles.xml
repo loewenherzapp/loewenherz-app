@@ -21,11 +21,12 @@
         <item name="android:windowBackground">@color/loewenherz_creme</item>
     </style>
 
-    <!-- Systemsplash (Android 12+): Launcher-Icon auf Petrol — nahtlos zum
-         Splash des SplashScreen-Plugins (drawable/splash.png, ebenfalls Petrol).
-         Entscheidung 23.09.2026, docs/play-store-launch-notes.md. -->
+    <!-- Systemsplash (Android 12+): rundes Logo (Adaptive Icon) auf Creme —
+         nahtlos zum Splash des SplashScreen-Plugins (drawable/splash.png:
+         Creme, Logo 160 dp). Seit dem neuen Logo (07.11.2026) Creme statt
+         Petrol, wie iOS; docs/play-store-launch-notes.md. -->
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
         <item name="android:background">@drawable/splash</item>
-        <item name="windowSplashScreenBackground">@color/loewenherz_petrol</item>
+        <item name="windowSplashScreenBackground">@color/loewenherz_creme</item>
     </style>
 </resources>

@@ -28,7 +28,7 @@ export function renderLanding(container, onContinue) {
 
     container.innerHTML = `
       <div class="landing-screen">
-        <img src="assets/icons/icon-192.png" alt="Löwenherz" class="landing-lion" width="96" height="96">
+        <img src="assets/icons/logo-288.png" alt="Löwenherz" class="landing-lion" width="96" height="96">
         <h1 class="landing-title">${t.title}</h1>
         <p class="landing-subtitle">${showAndroid ? t.subtitle : t.appStoreSubtitle}</p>
         <div class="landing-steps">

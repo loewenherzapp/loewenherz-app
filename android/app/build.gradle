@@ -10,9 +10,10 @@ android {
         // Play-Historie: 1–4 waren die TWA-Bauten (Bubblewrap), 5 der erste
         // Capacitor-Bau (hochgeladen, nie eingereicht), 6 = 5 + neuer
         // Newsletter-Einwilligungstext, 7 = Tester-Feedback (Etikett folgt
-        // dem Satz, Stimmungskurve im Verlauf). versionName folgt der iOS-Zählung.
-        versionCode 7
-        versionName "1.1.1"
+        // dem Satz, Stimmungskurve im Verlauf), 8 = neues Logo (Icon, Splash
+        // Creme) und erster Produktions-Release. versionName folgt der iOS-Zählung.
+        versionCode 8
+        versionName "1.1.2"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

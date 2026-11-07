@@ -2,7 +2,7 @@
 // Löwenherz PWA — Service Worker (Cache-First)
 // ============================================================
 
-const CACHE_NAME = 'loewenherz-v132';
+const CACHE_NAME = 'loewenherz-v133';
 
 const URLS_TO_CACHE = [
   './',
@@ -46,6 +46,7 @@ const URLS_TO_CACHE = [
   './assets/icons/icon-180.png',
   './assets/icons/icon-192.png',
   './assets/icons/icon-512.png',
+  './assets/icons/logo-288.png',
   './assets/gundula/gundula-entspannt-112.png',
   './assets/gundula/gundula-ruhig-112.png',
   './assets/gundula/gundula-wachsam-112.png',

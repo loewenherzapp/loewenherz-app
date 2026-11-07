@@ -91,7 +91,10 @@ Play verlangt eine aktuelle Ziel-API (jährliche Deadline, aktuell **31.08.2026*
 
 ## Maskable-Icon — provisorisch
 
-`assets/icons/icon-512-maskable.png` ist eine **provisorische** Variante (bestehendes
+**Erledigt am 07.11.2026:** Alle Icons stammen jetzt aus dem neuen runden Logo
+(Abschnitt [Neues Logo](#neues-logo-07112026)). Der Rest dieses Abschnitts ist Historie.
+
+`assets/icons/icon-512-maskable.png` war eine **provisorische** Variante (bestehendes
 512er-Icon auf ~80 % skaliert, zentriert auf App-Hintergrundfarbe als Safe Zone).
 Das **finale Icon kommt vom Designer** (Vektor-Handoff läuft) und ersetzt dann diese
 Datei — der Manifest-Eintrag (`purpose: "maskable"`) bleibt unverändert.
@@ -165,6 +168,10 @@ Passwörter über `BUBBLEWRAP_KEYSTORE_PASSWORD` / `BUBBLEWRAP_KEY_PASSWORD`.
   App delegiert.
 
 ### Designentscheidung Splash: Android Petrol, iOS Creme (entschieden 23.09.2026)
+
+**Überholt am 07.11.2026:** Mit dem neuen runden Logo ist der Android-Splash wieder
+Creme (Logo 160 dp mittig, Systemsplash ebenfalls Creme), siehe
+[Neues Logo](#neues-logo-07112026). Die Begründung unten galt für das Petrol-Icon.
 
 In v2 steht `backgroundColor` auf `#f7ead8` (Creme). Weil das Icon einen vollflächigen
 Petrol-Hintergrund mitbringt, zeigt der Startbildschirm ein hartkantiges Petrol-Quadrat
@@ -366,8 +373,8 @@ Nach jeder Web-Änderung, die nativ landen soll: `npm run build:android` genügt
 | Zurück-Taste | `js/back-nav.js` bleibt die Logik (Schutz-Eintrag im Verlauf). Neu: Listener auf `App.backButton` — Verlauf vorhanden → `history.back()`, sonst `minimizeApp()`. Ohne den Listener bliebe die App im Startzustand bei der Zurück-Taste einfach stehen. |
 | Blockierter Push | Button „Einstellungen öffnen" springt über `ErinnerungskanalPlugin.einstellungenOeffnen()` in die Benachrichtigungsseite der App (iOS: `app-settings:` via AppLauncher). |
 | Haptik | Haptics-Plugin + Schalter wie iOS; die `navigator.vibrate()`-Aufrufe (Dashboard, Sheets, Picker) sind in der nativen App abgeschaltet — sonst vibriert jeder Tap doppelt. |
-| Icon | Adaptive Icon: Vordergrund `mipmap-*/ic_launcher_foreground.png`, Hintergrund `@color/ic_launcher_background` = Petrol. Legacy/Round-Icons für Android 7. **Benachrichtigungs-Symbol `ic_stat_onesignal_default` = weiße Löwen-Silhouette MIT Alphakanal** (das v2–v4-Problem „gefülltes Quadrat"), Akzentfarbe Petrol (`onesignal_notification_accent_color`), großes Bild `ic_onesignal_large_icon_default`. Alle Bitmaps erzeugt `swift scripts/android-assets.swift` aus `scripts/android-assets/icon-1254.png` — nie von Hand nachmalen. |
-| Splash | Petrol (Entscheidung 23.09.2026): Systemsplash ab Android 12 (`windowSplashScreenBackground`) und Plugin-Splash (`drawable*/splash.png`, `androidScaleType: CENTER_CROP`) beide Petrol mit Löwe 120dp mittig — gehen nahtlos ineinander über. iOS bleibt Creme. |
+| Icon | Adaptive Icon: Vordergrund `mipmap-*/ic_launcher_foreground.png` (seit 07.11.2026 randlos gemalter Hintergrund + Löwe, Logo auf 2/3 — der sichtbare 72-dp-Kreis zeigt genau das runde Logo), Hintergrund `@color/ic_launcher_background` = Creme als Rückfall. Legacy/Round-Icons für Android 7. **Benachrichtigungs-Symbol `ic_stat_onesignal_default` = weiße Löwen-Silhouette MIT Alphakanal** (das v2–v4-Problem „gefülltes Quadrat"), Akzentfarbe Petrol (`onesignal_notification_accent_color`), großes Bild `ic_onesignal_large_icon_default`. Alle Bitmaps erzeugt `node scripts/logo-assets.mjs` aus `scripts/logo/loewenherz-logo-rund.svg` — nie von Hand nachmalen (bis 07.11.2026: `scripts/android-assets.swift` aus dem Petrol-Icon, gelöscht). |
+| Splash | Seit 07.11.2026 Creme (vorher Petrol, Entscheidung 23.09.2026): Systemsplash ab Android 12 (`windowSplashScreenBackground` = `loewenherz_creme`, zeigt das Adaptive Icon als 160-dp-Kreis) und Plugin-Splash (`drawable*/splash.png`, `androidScaleType: CENTER_CROP`, rundes Logo 160 dp mittig) gehen nahtlos ineinander über. iOS ist ebenfalls Creme. |
 | Statusleiste | Capacitor 8 ist edge-to-edge. Mit WebView ≥ 140 reicht Capacitor die Safe-Area-Insets an `env(safe-area-inset-*)` durch (wie iOS, dunkle Reflexion bis unter die Statusleiste). Ältere WebViews bekommen ein Padding; der Streifen dahinter ist `windowBackground` = Creme (`styles.xml`). |
 | Theme | `Theme.AppCompat.Light` statt DayNight — die App hat feste Farben, der System-Dunkelmodus darf das Fenster nicht schwarz färben. Hochformat erzwungen (`screenOrientation`). |
 | Origin | Die WebView läuft unter `https://localhost` (Capacitor-Default `androidScheme`); in `api/subscribe.js` als CORS-Origin freigeschaltet (iOS: `capacitor://localhost`). |
@@ -497,3 +504,28 @@ Handy deinstalliert werden (Play signiert mit einem anderen Schlüssel).
   iOS. Steht so nicht in der Datenschutzerklärung („kein Cloud-Backup").
 - Play Console nach dem Upload: App-Signatur-Seite muss weiterhin den Upload-Key zeigen;
   Gerätekatalog-Verluste prüfen (minSdk bleibt 24).
+
+## Neues Logo (07.11.2026)
+
+Viktoria Sabo hat ein neues Hauptlogo geliefert, passend zum Buchumschlag: rund,
+gemalter Pfirsich-Creme-Hintergrund, goldener Löwe (Verlauf `#bb7b3a`–`#e4ac62`).
+Vektorquelle: `scripts/logo/loewenherz-logo-rund.svg` (Illustrator-Export; Hintergrund
+ist ein eingebettetes JPEG, der Löwe sind drei Vektorpfade, das Gesicht ist Aussparung).
+
+**Alle Bitmaps erzeugt `node scripts/logo-assets.mjs [--store <ordner>]`** (Chrome
+headless mit eigenem Profil, sips für Größenprüfung und Alpha-Entfernung). Drei Formen:
+
+| Form | Wo | Warum |
+|---|---|---|
+| rund (Ecken transparent) | `icon-192/512.png` (Manifest „any", Favicon, Web-Push-Bild), `logo-288.png` (Logo auf Landing, E-Mail-Gate, `install.html`), rundes Launcher-Icon, Benachrichtigungsbild, Splash | Originallogo; auf Creme-Seiten mit runder Schattenkante |
+| quadrat (randlos, Logo auf 85 %) | `icon-180.png` (apple-touch), `icon-512-maskable.png`, iOS-App-Icon 1024, Play-Store-Icon, Launcher-Icon Android 7 | Stores und Systeme runden selbst ab; ein Kreis im abgerundeten Quadrat sähe doppelt aus. Der Löwe liegt in der 80-%-Schutzzone von maskable |
+| vordergrund (randlos, Logo auf 2/3) | `mipmap-*/ic_launcher_foreground.png` | Der sichtbare 72-dp-Kreis des Adaptive Icons zeigt genau das runde Logo |
+
+Hintergrund und Löwe werden immer gemeinsam skaliert, sonst verrutscht der helle Fleck
+im Hintergrund, der im Logo hinter dem Gesicht liegt. Fürs Play-Titelbild deshalb ein
+oberer Ausschnitt des Hintergrunds ohne diesen Fleck.
+
+Store-Grafiken (nicht im Repo): `/Users/Katana/Buch/Löwenherz - Store-Grafiken (Logo 11-2026)/`
+(`play-icon-512.png`, `play-feature-1024x500.png`). Android-Paket 8 (1.1.2) trägt das neue
+Icon und ist der erste Produktions-Release. iOS bekommt das Icon mit dem nächsten Build.
+

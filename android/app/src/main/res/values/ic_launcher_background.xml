@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Hintergrundebene des Adaptive Icons: Petrol wie der Rand des Designer-Icons -->
-    <color name="ic_launcher_background">#39828B</color>
+    <!-- Hintergrundebene des Adaptive Icons. Der Vordergrund (scripts/logo-assets.mjs)
+         ist randlos gemalter Hintergrund + Löwe, deckt die Ebene also ganz ab;
+         Creme nur als Rückfall. -->
+    <color name="ic_launcher_background">#F7EAD8</color>
 </resources>
