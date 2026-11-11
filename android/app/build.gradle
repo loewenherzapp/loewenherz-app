@@ -11,9 +11,10 @@ android {
         // Capacitor-Bau (hochgeladen, nie eingereicht), 6 = 5 + neuer
         // Newsletter-Einwilligungstext, 7 = Tester-Feedback (Etikett folgt
         // dem Satz, Stimmungskurve im Verlauf), 8 = neues Logo (Icon, Splash
-        // Creme) und erster Produktions-Release. versionName folgt der iOS-Zählung.
-        versionCode 8
-        versionName "1.1.2"
+        // Creme) und erster Produktions-Release, 9 = R8 (Code verkleinert und
+        // verschleiert, Mapping-Datei). versionName folgt der iOS-Zählung.
+        versionCode 9
+        versionName "1.1.3"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -37,8 +38,14 @@ android {
     }
     buildTypes {
         release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            // R8 seit versionCode 9: verkleinert, optimiert und verschleiert den
+            // Java/Kotlin-Code. Play verlangt das bis Feb. 2027 („DEX-Codeoptimierung
+            // unter dem Grenzwert – Verschleierung 1 %"). Keep-Regeln für Capacitor,
+            // OneSignal und WorkManager bringen die Bibliotheken selbst mit, die
+            // eigenen stehen in proguard-rules.pro. Die Mapping-Datei legt
+            // scripts/release-android.mjs neben AAB und APK ab.
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             if (System.getenv("LH_KEYSTORE_FILE")) {
                 signingConfig signingConfigs.release
             }

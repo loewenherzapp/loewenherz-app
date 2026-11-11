@@ -18,6 +18,11 @@
 //     im Merged Manifest.
 //   - Nach dem Bau wird der Zertifikats-Fingerabdruck geprüft: Weicht er vom
 //     Upload-Key ab, lehnt Play das Paket ab (und assetlinks.json passt nicht).
+//   - R8 (seit versionCode 9): Die Mapping-Datei steckt im Bundle und wird
+//     zusätzlich neben AAB und APK abgelegt (zum Hochladen, falls die Play
+//     Console sie nicht selbst übernimmt). Fehlt sie im Bundle oder weicht
+//     sie ab, bricht das Skript ab — dann lief R8 nicht, und Play meldet
+//     wieder „Verschleierung 1 %".
 //
 // Pfade außerhalb des Repos (Patricks Mac) sind Defaults und per Umgebung
 // überschreibbar:
@@ -130,14 +135,25 @@ for (const verboten of ['com.google.android.gms.permission.AD_ID', 'ACCESS_FINE_
 }
 const permissions = [...manifest.matchAll(/uses-permission android:name="([^"]+)"/g)].map((m) => m[1]);
 
-// 8) Ablegen
+// 8) R8-Mapping: Das Bundle trägt seine Mapping-Datei in BUNDLE-METADATA.
+//    Fehlt sie dort, lief R8 nicht; weicht sie von mapping.txt ab, stammt
+//    die Datei aus einem älteren Bau und würde Absturzberichte falsch übersetzen.
+const mapping = join(ANDROID, 'app', 'build', 'outputs', 'mapping', 'release', 'mapping.txt');
+if (!existsSync(mapping)) fail(`Mapping-Datei fehlt: ${mapping} — ist minifyEnabled in android/app/build.gradle noch an?`);
+const imBundle = spawnSync('unzip', ['-p', aab, 'BUNDLE-METADATA/com.android.tools.build.obfuscation/proguard.map'], { maxBuffer: 1 << 30 });
+if (imBundle.status !== 0 || !imBundle.stdout.length) fail('Bundle enthält keine Mapping-Datei — R8 lief nicht');
+if (!imBundle.stdout.equals(readFileSync(mapping))) fail('mapping.txt passt nicht zum Bundle (Rest eines älteren Baus?)');
+
+// 9) Ablegen
 mkdirSync(OUT_DIR, { recursive: true });
 copyFileSync(aab, join(OUT_DIR, `Löwenherz-v${versionCode}.aab`));
 copyFileSync(apk, join(OUT_DIR, `Löwenherz-v${versionCode}.apk`));
+copyFileSync(mapping, join(OUT_DIR, `Löwenherz-v${versionCode}-mapping.txt`));
 writeFileSync(join(OUT_DIR, 'build-info.txt'), [
   `Löwenherz Android ${versionName} (versionCode ${versionCode}) — Capacitor-Bau`,
   `Gebaut: ${new Date().toISOString()}`,
   `Signiert mit Upload-Key SHA-256 ${UPLOAD_KEY_SHA256}`,
+  `R8 an — Mapping-Datei: Löwenherz-v${versionCode}-mapping.txt (steckt auch im Bundle)`,
   `Berechtigungen: ${permissions.join(', ')}`,
   ''
 ].join('\n'));
@@ -145,4 +161,5 @@ writeFileSync(join(OUT_DIR, 'build-info.txt'), [
 console.log(`\n[release-android] OK — ${versionName} (${versionCode})`);
 console.log(`  ${join(OUT_DIR, `Löwenherz-v${versionCode}.aab`)}`);
 console.log(`  ${join(OUT_DIR, `Löwenherz-v${versionCode}.apk`)}`);
+console.log(`  ${join(OUT_DIR, `Löwenherz-v${versionCode}-mapping.txt`)}`);
 console.log(`  Berechtigungen: ${permissions.join(', ')}`);

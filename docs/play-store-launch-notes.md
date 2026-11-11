@@ -358,7 +358,9 @@ Ablage: `/Users/Katana/Buch/Löwenherz - Google Play package v5 (versionCode 5)/
 
 Das Skript bricht laut ab, wenn der Fingerabdruck nicht der Upload-Key ist oder das Merged
 Manifest `AD_ID` bzw. eine Standort-Berechtigung enthält (Play-Deklarationen „keine Werbe-ID",
-kein Standort).
+kein Standort). Seit versionCode 9 auch, wenn R8 nicht lief oder `mapping.txt` nicht zum Bundle
+passt; die Mapping-Datei liegt als `Löwenherz-v<N>-mapping.txt` neben AAB und APK (Abschnitt
+„R8 ab Paket 9“).
 
 Nach jeder Web-Änderung, die nativ landen soll: `npm run build:android` genügt für den Emulator
 (`./gradlew assembleDebug` in `android/`), fürs Play-Paket immer `npm run release:android`.
@@ -528,4 +530,115 @@ oberer Ausschnitt des Hintergrunds ohne diesen Fleck.
 Store-Grafiken (nicht im Repo): `/Users/Katana/Buch/Löwenherz - Store-Grafiken (Logo 11-2026)/`
 (`play-icon-512.png`, `play-feature-1024x500.png`). Android-Paket 8 (1.1.2) trägt das neue
 Icon und ist der erste Produktions-Release. iOS bekommt das Icon mit dem nächsten Build.
+
+## R8 ab Paket 9 (1.1.3, 11.11.2026)
+
+**Anlass.** Die Play Console meldete zum Produktions-Release 8: „Die DEX-Codeoptimierung liegt
+unter unserem Grenzwert – Verschleierung (1 %)“. Liegt eine Kategorie unter 25 %, kann das
+Sichtbarkeit und Veröffentlichung kosten; Frist Feb. 2027. Dazu warnte jeder Release, dass keine
+Offenlegungsdatei (Mapping) vorliegt. Ursache: `minifyEnabled false`, der Java/Kotlin-Code ging
+unverkleinert und unverschleiert ins Paket.
+
+**Umsetzung.**
+
+- `android/app/build.gradle`: `minifyEnabled true` mit `proguard-android-optimize.txt` (vorher
+  `proguard-android.txt`, das Optimierungen abschaltet). R8 läuft im Full-Modus (AGP-Standard).
+- Keep-Regeln bringen fast alle Bibliotheken selbst mit (Consumer-Regeln, nach jedem Bau in
+  `android/app/build/outputs/mapping/release/configuration.txt`): Capacitor hält jede
+  `Plugin`-Unterklasse samt Name und Methoden (die Bridge lädt Plugins per Klassenname aus
+  `capacitor.plugins.json` und ruft `@PluginMethod` per Reflexion auf), OneSignal 5.9.8 hält
+  Module (`Class.forName`), Konstruktoren der Reflexions-DI, Model-Getter, Enum-Namen und
+  Worker; dazu WorkManager, Room, Firebase, Coroutines. Der AGP-Standard hält die
+  `@JavascriptInterface`-Methoden (Capacitor-Bridge, SystemBars, OneSignal-In-App).
+- Eigene Regeln in `android/app/proguard-rules.pro`: `ErinnerungskanalPlugin` (die WebView ruft
+  `setzen`/`einstellungenOeffnen` per Namen) und `SourceFile,LineNumberTable` für lesbare
+  Absturzberichte.
+- Im Bau geprüft (`seeds.txt`): alle 10 Plugin-Klassen aus `capacitor.plugins.json`,
+  `ErinnerungskanalPlugin` mit beiden Methoden, `MainActivity`, die Capacitor-Kernplugins,
+  `MessageHandler.postMessage`, OneSignals Module und `WorkDatabase_Impl` bleiben erhalten. Die
+  OneSignal-Worker behalten ihre Klassennamen. Das ist fürs Update wichtig, denn WorkManager
+  speichert die Namen geplanter Jobs in seiner Datenbank.
+- `scripts/release-android.mjs` legt `Löwenherz-v9-mapping.txt` neben AAB und APK und bricht ab,
+  wenn das Bundle keine Mapping-Datei trägt (R8 lief nicht) oder sie von `mapping.txt` abweicht.
+- versionName 1.1.3 setzt die Android-Reihe fort (1.1.0 → 1.1.1 → 1.1.2); iOS steht bei 1.0.3.
+
+**Ergebnis.** R8 schreibt seine Kennzahlen ins Bundle (`BUNDLE-METADATA/com.android.tools/r8.json`):
+verschleiert 88 %, optimiert 84 %, verkleinert 88 % (Grenzwert 25 %). DEX-Code 13,9 → 2,7 MB,
+APK 8,5 → 4,7 MB, Bundle 8,2 → 6,3 MB. Berechtigungen identisch mit Paket 8. Paket 9 enthält
+außerdem den Web-Stand von `8e8c36d` (Google-Play-Knopf auf der Landing, die es nur im Browser
+gibt, nicht in der App).
+
+**Mapping-Datei.** Sie steckt im Bundle
+(`BUNDLE-METADATA/com.android.tools.build.obfuscation/proguard.map`), Play übernimmt sie in der
+Regel beim Upload. Steht die Warnung „keine Offenlegungsdatei“ danach trotzdem noch da, im
+App-Bundle-Explorer bei Version 9 die Datei `Löwenherz-v9-mapping.txt` hochladen. Eine
+Mapping-Datei passt nur zu ihrem eigenen Bau, nie die eines anderen Pakets verwenden.
+Stichprobe: Ein echter Stacktrace aus dem Emulator ließ sich mit `retrace` (cmdline-tools)
+vollständig zurückübersetzen, mit Klassen, Dateien und Zeilen.
+
+**Bewusst ohne `shrinkResources`.** Ein Probebau sparte nur ~0,37 MB, entfernte aber die sechs
+Benachrichtigungstöne `res/raw/lh_ton_*`: Ihre Namen stehen nur im JavaScript
+(`js/push-native.js`), und der Ressourcen-Schrumpfer sieht dort nicht hin. Der Kanal fiele dann
+stillschweigend auf den Systemton zurück. Falls es je nötig wird: `res/raw/keep.xml` mit
+`tools:keep="@raw/lh_ton_*"` anlegen und danach im APK prüfen
+(`aapt2 dump resources <apk> | grep raw/lh_ton`).
+
+**Randlose Anzeige (Edge-to-Edge-Empfehlungen).** Statische Suche im DEX-Code nach den APIs, die
+Android 15 eingestellt hat (`Window.set/getStatusBarColor`, `setNavigationBarColor`,
+`layoutInDisplayCutoutMode`), so wie Play prüft:
+
+- Paket 8 (ohne R8): Treffer in androidx.activity (`EdgeToEdgeApi23/26/28/29/30`, dort auch die
+  Cutout-Parameter), `androidx.core.view.WindowCompat.enableEdgeToEdge`,
+  `androidx.core.splashscreen.SplashScreen$Impl31` und Capacitors StatusBar-Plugin. Die
+  androidx-Stellen hat die App nie benutzt, sie lagen nur ungekürzt im Paket.
+- Paket 9 (R8): Der ungenutzte androidx-Code ist weg, damit auch alle Cutout-Parameter. Übrig
+  bleiben `core-splashscreen` (setzt beim Ausblenden des Systemsplash ab Android 12 die
+  Leistenfarben aus dem Theme) und `com.capacitorjs.plugins.statusbar.StatusBar` (liest und setzt
+  die Farbe der Statusleiste). Beide sind schon die neuesten Versionen (`core-splashscreen`
+  1.2.0; StatusBar 8.0.4 hat denselben Android-Code wie das installierte 8.0.3). Unter Android
+  15+ ignoriert das System diese Setter, die Aufrufe bleiben dort wirkungslos.
+- Ganz weg wären sie nur, wenn Android statt des StatusBar-Plugins Capacitors eingebautes
+  `SystemBars` nutzte. Das ändert aber das Aussehen auf Android 7–14 (Statusleiste nicht mehr
+  durchsichtig, sondern Petrol aus dem Theme) und lässt sich hier nicht auf alten
+  Android-Versionen testen, deshalb nicht umgesetzt. Dasselbe gilt für die Empfehlung „Randlose
+  Anzeige wird möglicherweise nicht für alle Nutzer angezeigt“, falls sie die zweite ist: Ihr
+  Rezept `EdgeToEdge.enable()` holt genau den androidx-Code mit den eingestellten APIs zurück und
+  verändert ebenfalls Android ≤ 14. Beides sind Empfehlungen, keine Sperren. **Nach dem Upload
+  von Paket 9 in der Console nachsehen, welche Hinweise noch stehen.**
+
+**Gerätetest Paket 9** (Emulator `lh35`, Android 15, Release-APK mit Upload-Key, 11.11.2026):
+
+| Prüfung | Ergebnis |
+|---|---|
+| Update 8 → 9 über die installierte App | Daten vollständig: Verlauf zeilengleich (170 Punkte, 50 Reflexionen, alle Wochen und Meilensteine), Einstellungen (Name, Zeiten, Ton) unverändert, auch die kurz vor dem Update in Paket 8 angelegten Punkte und der Morgenkompass |
+| Kaltstart, Splash | ~0,5 s; Systemsplash (rundes Logo auf Creme) → Plugin-Splash → „Heute“ |
+| SMALL-Punkte, Morgenkompass, Abendreflexion | gespeichert, Zähler und Verlauf aktualisiert (Abendreflexion mit Zeitzone Asia/Tokyo, weil erst ab 18 Uhr) |
+| Verlauf, Stimmungskurve | „Dein Auf und Ab“ mit dem heutigen Punkt, Umschalter 4 Wochen / 3 Monate |
+| Statusleiste, Tastatur | helle Symbole in der dunklen Reflexion (`StatusBar.setStyle`), WebView schrumpft mit der Tastatur |
+| Backup-Export | Teilen-Menü mit `loewenherz-backup-<Datum>.json`, Abbrechen ohne Fehlermeldung |
+| Backup-Import | Android-Dateiauswahl → Rückfrage → Daten ersetzt (89 Punkte aus dem Test-Backup) |
+| Zurück-Taste | schließt Auswahlliste und Einstellungen, Verlauf → Heute, auf „Heute“ geht die App in den Hintergrund (läuft weiter) |
+| Version in den Einstellungen | „1.1.3 (9)“ aus dem nativen App-Plugin |
+| Mitteilungen | Schalter → Android-Dialog → erlaubt → Kanal `lh-ton-4` mit Ton `raw/lh_ton_4`, einziger Kanal der App |
+| Push über den echten Server | Morgenkompass auf 09:45 gestellt → Cron → FCM-Zustellung 09:45:15 → Mitteilung auf `lh-ton-4` mit Löwen-Silhouette, großem Logo und Petrol-Akzent; Antippen öffnet die App |
+| Tonwechsel | „Radau“ gewählt → `lh-ton-5` mit `raw/lh_ton_5` angelegt, `lh-ton-4` gelöscht |
+| Push im Tiefschlaf | Bildschirm aus, `dumpsys battery unplug` + `deviceidle force-idle` (deep IDLE) → SMALL-Erinnerung 10:00: FCM-Zustellung 10:00:32, Mitteilung in derselben Sekunde, Gerät weiter IDLE, und schon auf dem neuen Kanal `lh-ton-5` (Ton-Tag kam beim Server an) |
+| Push bei offener App | Morgenkompass 10:15, App im Vordergrund: FCM-Zustellung 10:15:15, keine Mitteilung angezeigt (`foregroundWillDisplay` → `preventDefault`, Ereignisweg Native → JavaScript → Native intakt) |
+| Mitteilungen blockiert | Hinweis mit „Einstellungen öffnen“ → `ErinnerungskanalPlugin.einstellungenOeffnen()` → Android-Mitteilungsseite von Löwenherz |
+| Neuinstallation, Onboarding | Name → Erinnerungsfenster → E-Mail-Schritt („Erstmal ohne“) → „Heute“ mit ⓘ-Hinweis; erster SMALL-Punkt → Push-Rückfrage → „Ja, erinner mich“ → Android-Dialog → Kanal `lh-ton-4` |
+| Weitere Plugins | Browser (Custom Tab `buch.angstdoc.de`), Haptics (Vibration im Systemverlauf), Keyboard, SplashScreen |
+| Test-Suiten | `test:schedule`, `test:send`, `test:api`, `test:db`, `test:sprecher`, `test:verlauf` grün |
+| Log | keine Abstürze, keine `ClassNotFound`/`NoSuchMethod` durch R8. Erwartet und harmlos: OneSignal meldet das fehlende Standort-Modul (`LocationModule`, `Location.setShared`), weil es absichtlich nicht im Paket ist |
+
+**Merker für künftige Tests.** Das Release-APK lässt keine WebView-Fernsteuerung zu (kein CDP).
+Bedient wird über `adb shell uiautomator dump` (die WebView liefert ihre Texte als
+Accessibility-Knoten, Koordinaten aus `bounds`) und `adb shell input`. Push lässt sich ohne
+REST-Schlüssel prüfen: Erinnerungszeit in der App auf den nächsten 15-Minuten-Takt stellen, App
+in den Hintergrund schicken, der echte Cron liefert aus. Wann FCM zugestellt hat, steht auf die
+Millisekunde in `adb shell dumpsys activity broadcasts history` (Eintrag
+`c2dm.intent.RECEIVE … pkg=de.angstdoc.loewenherz`), auch wenn keine Mitteilung erscheint.
+Vorsicht beim Auslesen: Die Zeile `enqueueClockTime` steht einige Zeilen unter der
+Intent-Zeile, `grep -A2` erwischt leicht die Zeit des Nachbareintrags. Die Abendreflexion gibt
+es erst ab 18 Uhr: Zeitzone per `adb shell service call alarm 3 s16 Asia/Tokyo` (vorher
+`settings put global auto_time_zone 0`) und danach zurückstellen.
 
