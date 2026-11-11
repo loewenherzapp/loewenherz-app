@@ -30,3 +30,7 @@ export const PRIVACY_URL = 'https://app.angstdoc.de/datenschutz';
 // Löwenherz im Apple App Store (iOS 1.0 live seit September 2026).
 // Ohne ?l=… — sonst erzwingt Apple die Sprache der Store-Seite.
 export const APP_STORE_URL = 'https://apps.apple.com/de/app/id6806331837';
+
+// Löwenherz bei Google Play (Android öffentlich seit 09.11.2026).
+// Ohne &hl=… — Google zeigt die Seite dann in der Sprache des Geräts.
+export const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=de.angstdoc.loewenherz';

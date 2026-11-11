@@ -466,18 +466,7 @@ a:active { opacity: 0.7; }
 .landing-subtitle { color: var(--text-secondary); margin-bottom: 32px; line-height: 1.6; }
 
 .landing-steps { text-align: left; margin: 0 auto; max-width: 300px; }
-.landing-step { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 20px; }
-.step-number {
-  background: var(--gold);
-  color: #fff;
-  width: 28px; height: 28px;
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 700; font-size: 13px; flex-shrink: 0;
-}
-.step-text { padding-top: 3px; line-height: 1.5; }
-
-/* App-Store-Link im Look des Primär-Buttons (ist ein <a>, kein <button>). */
+/* Store-Links (App Store, Google Play) im Look des Primär-Buttons (sind <a>, keine <button>). */
 .landing-appstore { display: flex; align-items: center; justify-content: center; max-width: 300px; margin: 0 auto; text-decoration: none; }
 
 /* Abstand vorher inline in app.js gesetzt — gehört hierher, seit der

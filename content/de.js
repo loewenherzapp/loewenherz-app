@@ -550,15 +550,13 @@ export const TEXTS = {
     },
     landing: {
       title: "Löwenherz installieren",
-      subtitle: "Damit alles funktioniert, füge Löwenherz zu deinem Homescreen hinzu:",
       appStoreSubtitle: "Für dein iPhone gibt es Löwenherz im App Store:",
       appStoreButton: "Im App Store laden",
+      playStoreSubtitle: "Für dein Android-Handy gibt es Löwenherz bei Google Play:",
+      playStoreButton: "Bei Google Play laden",
       androidToggle: "Ich nutze Android →",
-      iosToggle: "← iOS",
-      continueAnyway: "Trotzdem fortfahren →",
-      androidStep1: "Tippe auf das Menü (⋮) oben rechts",
-      androidStep2: "Wähle ›Zum Startbildschirm hinzufügen‹",
-      androidStep3: "Tippe ›Hinzufügen‹"
+      iosToggle: "Ich nutze ein iPhone →",
+      continueAnyway: "Trotzdem fortfahren →"
     }
   }
 };
