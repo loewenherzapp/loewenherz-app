@@ -3,10 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>Löwenherz</title>
-  <meta name="description" content="Die Begleit-App zum Buch. Morgenkompass, Abendreflexion und SMALL-Reminder — in 30 Sekunden installiert.">
+  <meta name="description" content="Die Begleit-App zum Buch. Morgenkompass, Abendreflexion und SMALL-Reminder — kostenlos im App Store und bei Google Play.">
   <link rel="icon" type="image/png" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" href="/assets/icons/icon-180.png">
   <style>
@@ -74,7 +72,14 @@
       margin-bottom: 28px;
     }
 
-    .install-btn {
+    /* Store-Knöpfe: Links (<a>) im Look des früheren Installieren-Knopfs */
+    .store-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .store-btn {
       display: block;
       width: 100%;
       padding: 16px 24px;
@@ -82,22 +87,47 @@
       color: #fff;
       font-size: 17px;
       font-weight: 600;
-      border: none;
+      text-align: center;
+      text-decoration: none;
+      border: 2px solid #39828b;
       border-radius: 12px;
-      cursor: pointer;
       transition: background 0.2s, transform 0.1s;
       -webkit-tap-highlight-color: transparent;
     }
 
-    .install-btn:active {
+    .store-btn:active {
       transform: scale(0.98);
       background: #27676f;
+      border-color: #27676f;
+    }
+
+    /* Der Store der anderen Plattform: sichtbar, aber zurückgenommen */
+    .store-btn.secondary {
+      background: transparent;
+      color: #39828b;
+    }
+
+    .store-btn.secondary:active {
+      background: rgba(57, 130, 139, 0.08);
+      color: #27676f;
     }
 
     .hero-meta {
       font-size: 13px;
       color: #8c7d65;
       margin-top: 12px;
+    }
+
+    .browser-hint {
+      font-size: 14px;
+      color: #8c7d65;
+      margin-top: 20px;
+    }
+
+    .browser-hint a {
+      color: #39828b;
+      font-weight: 600;
+      text-decoration: none;
     }
 
     /* === FEATURES === */
@@ -136,206 +166,6 @@
       font-size: 15px;
       color: #8c7d65;
       line-height: 1.5;
-    }
-
-    /* === INSTALL GUIDE === */
-    .install-guide {
-      padding: 40px 0;
-    }
-
-    .guide-section {
-      display: none;
-    }
-
-    .guide-section.active {
-      display: block;
-    }
-
-    .guide-bg {
-      background: rgba(200, 168, 78, 0.06);
-      border-radius: 20px;
-      padding: 32px 24px;
-      margin: 0 -24px;
-    }
-
-    .guide-title {
-      font-size: 20px;
-      font-weight: 700;
-      text-align: center;
-      margin-bottom: 24px;
-    }
-
-    .step-card {
-      background: #fff;
-      border-radius: 16px;
-      padding: 20px;
-      margin-bottom: 16px;
-      box-shadow: 0 2px 12px rgba(120, 100, 70, 0.08);
-      display: flex;
-      align-items: flex-start;
-      gap: 16px;
-    }
-
-    .step-card:last-child {
-      margin-bottom: 0;
-    }
-
-    .step-number {
-      width: 40px;
-      height: 40px;
-      min-width: 40px;
-      background: #39828b;
-      color: #fff;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      font-weight: 700;
-    }
-
-    .step-content {
-      flex: 1;
-    }
-
-    .step-content .step-icon {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 32px;
-      height: 32px;
-      margin-bottom: 6px;
-    }
-
-    .step-content .step-icon svg {
-      width: 28px;
-      height: 28px;
-    }
-
-    .step-content .step-text {
-      font-size: 15px;
-      font-weight: 600;
-      line-height: 1.4;
-    }
-
-    .step-content .step-hint {
-      font-size: 13px;
-      color: #8c7d65;
-      margin-top: 2px;
-    }
-
-    .step-alt-hint {
-      font-size: 13px;
-      font-style: italic;
-      color: #8c7d65;
-      text-align: center;
-      margin: -4px 0 16px;
-      padding: 0 8px;
-    }
-
-    .guide-done {
-      text-align: center;
-      margin-top: 24px;
-      font-size: 15px;
-      color: #39828b;
-      font-weight: 600;
-    }
-
-    /* Installed state */
-    .installed-state {
-      text-align: center;
-      padding: 40px 0;
-    }
-
-    .installed-check {
-      width: 64px;
-      height: 64px;
-      background: #39828b;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 16px;
-    }
-
-    .installed-check svg {
-      width: 32px;
-      height: 32px;
-      stroke: #fff;
-      fill: none;
-      stroke-width: 3;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
-
-    .installed-state h2 {
-      font-size: 22px;
-      font-weight: 700;
-      margin-bottom: 16px;
-    }
-
-    .open-btn {
-      display: inline-block;
-      padding: 14px 40px;
-      background: #39828b;
-      color: #fff;
-      font-size: 16px;
-      font-weight: 600;
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      text-decoration: none;
-      transition: background 0.2s;
-    }
-
-    .open-btn:active {
-      background: #27676f;
-    }
-
-    /* Desktop QR */
-    .desktop-hint {
-      text-align: center;
-    }
-
-    .desktop-hint p {
-      color: #8c7d65;
-      font-size: 15px;
-      margin-bottom: 20px;
-    }
-
-    .qr-placeholder {
-      width: 200px;
-      height: 200px;
-      margin: 0 auto 16px;
-      background: #f0f0ee;
-      border: 2px dashed #ccc;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #999;
-      font-size: 14px;
-    }
-
-    .desktop-hint .qr-caption {
-      font-size: 14px;
-      color: #8c7d65;
-    }
-
-    /* Fallback */
-    .fallback-guide {
-      text-align: center;
-    }
-
-    .fallback-guide p {
-      font-size: 15px;
-      color: #8c7d65;
-      line-height: 1.6;
-    }
-
-    .fallback-guide p + p {
-      margin-top: 12px;
-      font-size: 13px;
     }
 
     /* === FAQ === */
@@ -445,14 +275,6 @@
         display: block;
       }
     }
-
-    /* Loading state */
-    .guide-loading {
-      text-align: center;
-      padding: 20px 0;
-      color: #8c7d65;
-      font-size: 14px;
-    }
   </style>
 </head>
 <body>
@@ -465,8 +287,12 @@
       </div>
       <h1>Löwenherz</h1>
       <p class="subtitle">Die Begleit-App zum Buch.</p>
-      <button class="install-btn" id="installBtn">App installieren</button>
-      <p class="hero-meta">Kostenlos · Kein App Store · 30 Sekunden</p>
+      <div class="store-buttons" id="storeButtons">
+        <a class="store-btn" id="appStoreBtn" href="https://apps.apple.com/de/app/id6806331837">Im App Store laden</a>
+        <a class="store-btn" id="playStoreBtn" href="https://play.google.com/store/apps/details?id=de.angstdoc.loewenherz">Bei Google Play laden</a>
+      </div>
+      <p class="hero-meta">Kostenlos · Ohne Werbung · Ohne Abo</p>
+      <p class="browser-hint">Lieber ohne Store? <a href="https://app.angstdoc.de/">Löwenherz im Browser nutzen</a></p>
     </div>
   </section>
 
@@ -493,159 +319,6 @@
     </div>
   </section>
 
-  <!-- INSTALL GUIDE -->
-  <section class="install-guide" id="installGuide">
-    <div class="container">
-
-      <!-- Loading -->
-      <div class="guide-section active" id="guideLoading">
-        <div class="guide-loading"></div>
-      </div>
-
-      <!-- INSTALLED -->
-      <div class="guide-section" id="guideInstalled">
-        <div class="installed-state">
-          <div class="installed-check">
-            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-          </div>
-          <h2>Löwenherz ist installiert!</h2>
-          <a href="https://app.angstdoc.de/" class="open-btn">App öffnen</a>
-        </div>
-      </div>
-
-      <!-- iOS (universell — alle Browser) -->
-      <div class="guide-section" id="guideIOS">
-        <div class="guide-bg">
-          <h2 class="guide-title">So installierst du Löwenherz:</h2>
-
-          <div class="step-card">
-            <div class="step-number">1</div>
-            <div class="step-content">
-              <div class="step-icon">
-                <!-- Drei Punkte horizontal -->
-                <svg viewBox="0 0 28 28" fill="#5C5040">
-                  <circle cx="7" cy="14" r="2"/>
-                  <circle cx="14" cy="14" r="2"/>
-                  <circle cx="21" cy="14" r="2"/>
-                </svg>
-              </div>
-              <div class="step-text">Tippe auf ⋯ und dann auf „Teilen"</div>
-              <div class="step-hint">Die drei Punkte findest du unten rechts in der Browser-Leiste.</div>
-            </div>
-          </div>
-          <p class="step-alt-hint">Siehst du direkt ein ⬆️-Symbol in deiner Leiste? Dann tippe dort — das ist der Teilen-Button.</p>
-
-          <div class="step-card">
-            <div class="step-number">2</div>
-            <div class="step-content">
-              <div class="step-icon">
-                <svg viewBox="0 0 28 28" fill="none" stroke="#5C5040" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M14 6v16"/>
-                  <path d="M8 16l6 6 6-6"/>
-                </svg>
-              </div>
-              <div class="step-text">Scrolle zu „Zum Home-Bildschirm"</div>
-              <div class="step-hint">Im Teilen-Menü nach unten wischen.</div>
-            </div>
-          </div>
-
-          <div class="step-card">
-            <div class="step-number">3</div>
-            <div class="step-content">
-              <div class="step-icon">
-                <svg viewBox="0 0 28 28" fill="none" stroke="#5C5040" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="4" y="4" width="20" height="20" rx="3"/>
-                  <path d="M14 10v8"/>
-                  <path d="M10 14h8"/>
-                </svg>
-              </div>
-              <div class="step-text">Tippe auf „Hinzufügen"</div>
-              <div class="step-hint">Fertig — Löwenherz liegt jetzt auf deinem Home-Bildschirm.</div>
-            </div>
-          </div>
-
-          <p class="guide-done">Fertig! Löwenherz findest du jetzt auf deinem Home-Bildschirm.</p>
-        </div>
-      </div>
-
-      <!-- ANDROID (manual) -->
-      <div class="guide-section" id="guideAndroid">
-        <div class="guide-bg">
-          <h2 class="guide-title">So installierst du Löwenherz:</h2>
-
-          <div class="step-card">
-            <div class="step-number">1</div>
-            <div class="step-content">
-              <div class="step-icon">
-                <!-- Three dots menu -->
-                <svg viewBox="0 0 28 28" fill="#5C5040">
-                  <circle cx="14" cy="7" r="2.5"/>
-                  <circle cx="14" cy="14" r="2.5"/>
-                  <circle cx="14" cy="21" r="2.5"/>
-                </svg>
-              </div>
-              <div class="step-text">Tippe auf das Menü</div>
-              <div class="step-hint">Die drei Punkte (⋮) oben rechts</div>
-            </div>
-          </div>
-
-          <div class="step-card">
-            <div class="step-number">2</div>
-            <div class="step-content">
-              <div class="step-icon">
-                <svg viewBox="0 0 28 28" fill="none" stroke="#5C5040" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M14 4v14"/>
-                  <path d="M8 12l6 6 6-6"/>
-                  <path d="M4 22h20"/>
-                </svg>
-              </div>
-              <div class="step-text">Tippe auf „App installieren"</div>
-              <div class="step-hint">Oder „Zum Startbildschirm hinzufügen"</div>
-            </div>
-          </div>
-
-          <div class="step-card">
-            <div class="step-number">3</div>
-            <div class="step-content">
-              <div class="step-icon">
-                <svg viewBox="0 0 28 28" fill="none" stroke="#5C5040" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="20 8 11 18 7 14"/>
-                </svg>
-              </div>
-              <div class="step-text">Bestätige mit „Installieren"</div>
-            </div>
-          </div>
-
-          <p class="guide-done">Fertig! Löwenherz findest du jetzt auf deinem Startbildschirm.</p>
-        </div>
-      </div>
-
-      <!-- DESKTOP -->
-      <div class="guide-section" id="guideDesktop">
-        <div class="guide-bg">
-          <div class="desktop-hint">
-            <h2 class="guide-title">Löwenherz ist für dein Handy gemacht.</h2>
-            <p>Scanne den QR-Code mit deinem Handy — die Installation dauert 30 Sekunden.</p>
-            <img src="/assets/qr-install.png" alt="QR-Code für Löwenherz" width="200" height="200" style="border-radius: 12px;">
-            <p class="qr-caption">https://app.angstdoc.de/install.html</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- FALLBACK -->
-      <div class="guide-section" id="guideFallback">
-        <div class="guide-bg">
-          <h2 class="guide-title">Fast geschafft!</h2>
-          <div class="fallback-guide">
-            <p>Öffne das Menü deines Browsers (meistens drei Punkte oder drei Striche oben rechts) und suche nach „Zum Startbildschirm hinzufügen" oder „App installieren".</p>
-            <p>Falls das nicht klappt — du kannst Löwenherz auch einfach als Lesezeichen speichern und direkt im Browser nutzen.</p>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </section>
-
   <!-- FAQ -->
   <section class="faq" id="faqSection">
     <div class="container">
@@ -667,7 +340,7 @@
           <span class="faq-chevron">▸</span>
         </button>
         <div class="faq-answer">
-          <div class="faq-answer-inner">Nein. Die App wird direkt aus dem Browser installiert und braucht nur wenige Kilobyte.</div>
+          <div class="faq-answer-inner">Nein. Die App braucht weniger als 10 MB.</div>
         </div>
       </div>
 
@@ -700,101 +373,21 @@
 
   <script>
     (function() {
-      // --- Device Detection & Install Logic ---
-      let deferredPrompt = null;
-      let promptResolved = false;
-
-      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
-      const ua = navigator.userAgent || '';
-      const isIOS = /iPhone|iPad|iPod/.test(ua);
-      const isAndroid = /Android/.test(ua);
-      const installBtn = document.getElementById('installBtn');
-
-      // Listen for beforeinstallprompt (Chrome/Edge/Samsung on Android & Desktop)
-      window.addEventListener('beforeinstallprompt', function(e) {
-        e.preventDefault();
-        deferredPrompt = e;
-        promptResolved = true;
-
-        // Update button to trigger native prompt
-        installBtn.textContent = 'App installieren';
-        installBtn.onclick = function() {
-          if (deferredPrompt) {
-            deferredPrompt.prompt();
-            deferredPrompt.userChoice.then(function() {
-              deferredPrompt = null;
-            });
-          }
-        };
-      });
-
-      // After 3 seconds, show the correct guide
-      setTimeout(function() {
-        showGuide();
-      }, 3000);
-
-      // Also try to show immediately for obvious cases
-      if (isStandalone) {
-        showGuide();
-      }
-
-      function showGuide() {
-        // Hide loading
-        document.getElementById('guideLoading').classList.remove('active');
-
-        if (isStandalone) {
-          // Already installed
-          show('guideInstalled');
-          installBtn.textContent = 'App öffnen';
-          installBtn.onclick = function() {
-            window.location.href = 'https://app.angstdoc.de/';
-          };
-          document.querySelector('.hero-meta').style.display = 'none';
-          // Hide FAQ since app is installed
-          document.getElementById('faqSection').style.display = 'none';
-          return;
-        }
-
-        if (isIOS) {
-          show('guideIOS');
-          installBtn.onclick = function() {
-            document.getElementById('guideIOS').scrollIntoView({ behavior: 'smooth' });
-          };
-          return;
-        }
-
-        if (deferredPrompt) {
-          // Android/Desktop with native prompt — no guide needed, button already set up
-          // But show a subtle hint below
-          return;
-        }
-
-        if (isAndroid) {
-          show('guideAndroid');
-          installBtn.onclick = function() {
-            document.getElementById('guideAndroid').scrollIntoView({ behavior: 'smooth' });
-          };
-          return;
-        }
-
-        // Desktop (no touch, wide viewport)
-        if (window.innerWidth >= 768 && !('ontouchstart' in window)) {
-          show('guideDesktop');
-          installBtn.onclick = function() {
-            document.getElementById('guideDesktop').scrollIntoView({ behavior: 'smooth' });
-          };
-          return;
-        }
-
-        // Fallback
-        show('guideFallback');
-        installBtn.onclick = function() {
-          document.getElementById('guideFallback').scrollIntoView({ behavior: 'smooth' });
-        };
-      }
-
-      function show(id) {
-        document.getElementById(id).classList.add('active');
+      // --- Passenden Store zuerst ---
+      // Seit dem Play-Start (09.11.2026) gibt es Löwenherz in beiden Stores;
+      // die frühere Anleitung „Zum Home-Bildschirm" entfällt. iPhone sieht den
+      // App Store zuerst, Android Google Play, der jeweils andere Knopf bleibt
+      // zurückgenommen darunter (falls die Erkennung danebenliegt). Computer
+      // und Unbekanntes sehen beide gleichrangig, dazu den QR-Code. Ohne
+      // JavaScript stehen einfach beide Knöpfe da.
+      var ua = navigator.userAgent || '';
+      var appStoreBtn = document.getElementById('appStoreBtn');
+      var playStoreBtn = document.getElementById('playStoreBtn');
+      if (/Android/i.test(ua)) {
+        appStoreBtn.parentNode.insertBefore(playStoreBtn, appStoreBtn);
+        appStoreBtn.classList.add('secondary');
+      } else if (/iPhone|iPad|iPod/.test(ua)) {
+        playStoreBtn.classList.add('secondary');
       }
 
       // --- FAQ Accordion ---
