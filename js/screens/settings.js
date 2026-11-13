@@ -366,6 +366,10 @@ export async function renderSettings(container, profile, onBack, onDataDeleted) 
             pushMainToggle.checked = false;
             localStorage.setItem('loewenherz_push_enabled', 'false');
             updatePushSubState();
+            // Blockiert: Den Weg zurück gleich beim ersten Tipp zeigen. Nativ
+            // steht der Status erst nach dem Laden des Push-Moduls fest, also
+            // nach diesem Aufruf; beim Aufbau des Screens galt noch 'default'.
+            if (state === 'denied') pushBlockedHint.classList.remove('hidden');
           }
         });
       }
