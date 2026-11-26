@@ -198,6 +198,7 @@ async function init() {
 }
 
 function hideAll() {
+  document.body.classList.remove('landing-active');
   document.getElementById('landing-container').classList.add('hidden');
   document.getElementById('onboarding-container').classList.add('hidden');
   document.getElementById('email-gate-container').classList.add('hidden');
@@ -209,7 +210,13 @@ function showLanding() {
   hideAll();
   const container = document.getElementById('landing-container');
   container.classList.remove('hidden');
-  renderLanding(container, () => showOnboarding());
+  // Die Landing nutzt die ganze Breite, die App-Spalte nicht (styles.css).
+  document.body.classList.add('landing-active');
+  renderLanding(container, () => {
+    // Der Weg in den Browser steht weit unten auf der Seite.
+    window.scrollTo(0, 0);
+    showOnboarding();
+  });
 }
 
 function showOnboarding() {

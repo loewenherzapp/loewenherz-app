@@ -2,29 +2,30 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<script>
-// Wenn der User /install.html aufruft aber der Service Worker
-// stattdessen index.html serviert, Cache löschen und frisch laden
-if ((location.pathname === '/install.html' || location.pathname === '/install')
-    && !location.search.includes('_=')) {
-  if ('caches' in window) {
-    caches.keys().then(function(n) { n.forEach(function(k) {
-      caches.open(k).then(function(c) { c.delete('/install.html'); });
-    }); });
-  }
-  if (navigator.serviceWorker) {
-    navigator.serviceWorker.getRegistration().then(function(r) { if (r) r.update(); });
-  }
-  location.replace('/install.html?_=' + Date.now());
-}
-</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#f7ead8" id="theme-color-meta">
-<meta name="description" content="Löwenherz — Dein SMALL-Begleiter. Mentale Gesundheit im Alltag.">
+<meta name="description" content="Die App zum Buch von Dr. med. Patrick Eberle, dem AngstDoc: Morgenkompass, SMALL-Reminder und Abendreflexion. Kostenlos für iPhone und Android.">
 
-<title>Löwenherz</title>
+<title>Löwenherz – Die App zum Buch | iPhone und Android</title>
+
+<!-- Für neue Besucher im Browser ist diese Seite die Landing (js/screens/landing.js).
+     Vorschau beim Teilen des Links: -->
+<link rel="canonical" href="https://app.angstdoc.de/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Löwenherz">
+<meta property="og:locale" content="de_DE">
+<meta property="og:url" content="https://app.angstdoc.de/">
+<meta property="og:title" content="Löwenherz – Die App zum Buch">
+<meta property="og:description" content="Morgenkompass, SMALL-Reminder und Abendreflexion: die Begleit-App zum Buch von Dr. med. Patrick Eberle. Kostenlos im App Store und bei Google Play.">
+<meta property="og:image" content="https://app.angstdoc.de/landing/og-loewenherz.jpg">
+<meta property="og:image:width" content="1024">
+<meta property="og:image:height" content="500">
+<meta name="twitter:card" content="summary_large_image">
+<!-- Safari auf dem iPhone zeigt damit oben den Hinweis auf die App
+     („Laden“ bzw. „Öffnen“, wenn sie schon installiert ist). -->
+<meta name="apple-itunes-app" content="app-id=6806331837">
 
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/icon-180.png">

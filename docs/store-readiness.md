@@ -28,6 +28,12 @@ In der TWA (Standalone) erscheint die Install-Anleitung also nie. Es gibt kein
 Handler liegt in der separaten Seite `install.html`, die außerhalb der App-Shell
 läuft und nicht gecacht wird.
 
+> Stand 26.11.2026: `install.html` gibt es nicht mehr. Die Adresse leitet auf die
+> Startseite weiter, dort steht die Landing-Seite mit beiden Stores
+> (siehe `docs/landing-page.md`). Den einzigen `beforeinstallprompt`-Handler hat
+> jetzt die Landing: Sie unterdrückt Chromes eigenes Installationsangebot,
+> solange die Store-Knöpfe zu sehen sind.
+
 > Ergänzung B1: Die `android-app://`-Referrer-Erkennung aus dem Prompt ist hier nicht
 > nötig, weil die TWA über `display-mode: standalone` zuverlässig erkannt wird. Die
 > bestehende Logik deckt den Fall ab.

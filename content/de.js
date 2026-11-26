@@ -548,15 +548,107 @@ export const TEXTS = {
       decline: "Nein danke",
       successClose: "Alles klar →"
     },
+    // Seite für neue Besucher im Browser (app.angstdoc.de, dorthin führt der
+    // QR-Code im Buch). Fast jeder Satz stammt aus dem Buch (App-Seiten in
+    // Modul 7 und nach dem Nachwort, Zusammenfassung Modul 8) oder aus dem
+    // Store-Text. Wer dort etwas ändert, zieht es hier nach.
     landing: {
-      title: "Löwenherz installieren",
-      appStoreSubtitle: "Für dein iPhone gibt es Löwenherz im App Store:",
+      brand: "Löwenherz",
+      tagline: "Die App zum Buch",
+      claimLead: "Das Buch hat dir gezeigt, was geht.",
+      claimAccent: "Die App sorgt dafür, dass du’s tust.",
+      intro: "Die Löwenherz-App bildet deine drei Ankerpunkte ab: Morgenritual, SMALL-Reminder, Abendreflexion.",
       appStoreButton: "Im App Store laden",
-      playStoreSubtitle: "Für dein Android-Handy gibt es Löwenherz bei Google Play:",
       playStoreButton: "Bei Google Play laden",
-      androidToggle: "Ich nutze Android →",
-      iosToggle: "Ich nutze ein iPhone →",
-      continueAnyway: "Trotzdem fortfahren →"
+      meta: "Kostenlos · Ohne Werbung · Ohne Abo",
+      qrAlt: "QR-Code zu app.angstdoc.de",
+      qrHint: "Am Computer? Scanne den Code mit deinem Handy.",
+
+      dayLabel: "Dein Tag mit Löwenherz",
+      dayTitle: "Drei Ankerpunkte, kein Programm.",
+      dayLead: "An guten Tagen alle drei. An schlechten reicht einer. Alles über null ist Gewinn.",
+      screensLabel: "Einblicke in die App",
+      screens: [
+        {
+          img: "landing/screen-morgen.webp",
+          alt: "Löwenherz-App: Reflexion mit Morgenkompass und Abendreflexion",
+          when: "Morgens",
+          title: "Morgenkompass",
+          text: "Starte den Tag mit einer Intention — bevor der Autopilot übernimmt."
+        },
+        {
+          img: "landing/screen-heute.webp",
+          alt: "Löwenherz-App: Startseite mit SMALL-Punkten, Quatschi und Gundula",
+          when: "Tagsüber",
+          title: "SMALL-Reminder",
+          text: "Kurze Impulse zwischendurch, damit Quatschi nicht allein moderiert."
+        },
+        {
+          img: "landing/screen-abend.webp",
+          alt: "Löwenherz-App: Abendreflexion mit der Frage, wie der Tag war",
+          when: "Abends",
+          title: "Abendreflexion",
+          text: "Zwei Minuten, die den Tag abschließen — statt ihn mit ins Bett zu nehmen."
+        },
+        {
+          img: "landing/screen-verlauf.webp",
+          alt: "Löwenherz-App: Verlauf mit der Kurve „Dein Auf und Ab“",
+          when: "Mit der Zeit",
+          title: "Dein Verlauf",
+          text: "Dein Auf und Ab über Wochen: Abendstimmung und SMALL-Punkte auf einen Blick."
+        }
+      ],
+
+      castLabel: "Mit dabei",
+      castTitle: "Und ja, es darf Spaß machen.",
+      quatschiAlt: "Quatschi steht mit einem Megafon auf einer Kiste",
+      quatschiName: "Quatschi",
+      quatschiQuote: "„Noch eine App. Als ob du die länger als drei Tage benutzt.“",
+      quatschiText: "Dein innerer Kommentator, der es gut meint und maßlos übertreibt. Die App findet er übrigens überflüssig. Gutes Zeichen.",
+      gundulaName: "Gundula",
+      gundulaLine: "Gundula sonnt sich",
+      gundulaText: "Die alte Schildkröte, die dir mit einem Augenzwinkern zeigt, wie entspannt es in dir gerade wirklich aussieht.",
+
+      authorAlt: "Dr. med. Patrick Eberle",
+      authorTitle: "Entwickelt von Dr. med. Patrick Eberle, dem AngstDoc.",
+      authorText: "Arzt & Spezialist für Angststörungen",
+      privacyTitle: "Deine Daten bleiben bei dir.",
+      privacyText: "Alles liegt lokal auf deinem Gerät: keine Anmeldung, kein Konto, kein Tracking.",
+
+      bookAlt: "Das Buch „Löwenherz“ von Dr. med. Patrick Eberle",
+      bookLabel: "Das Buch zur App",
+      bookTitle: "Jeder hat Angst. Nur keine Bedienungsanleitung. Bis jetzt.",
+      bookText: "Du kennst „Löwenherz“ noch nicht? Im Buch lernst du SMALL, Quatschi und Gundula kennen. Die App hilft dir danach, dranzubleiben.",
+      bookLink: "Zum Buch",
+
+      faqTitle: "Häufige Fragen",
+      faq: [
+        {
+          q: "Ist das kostenlos?",
+          a: "Ja, komplett. Die App ist die Begleiterin zum Buch — ohne Werbung, ohne Abo."
+        },
+        {
+          q: "Brauche ich das Buch dafür?",
+          a: "Nutzen kannst du die App auch ohne Buch, einiges darin ist selbsterklärend. Manche Funktionen werden aber erst mit dem Buch so richtig verständlich: Dort lernst du SMALL kennen."
+        },
+        {
+          q: "Auf welchen Handys läuft die App?",
+          a: "Auf dem iPhone ab iOS 15 und auf Android-Handys ab Android 7."
+        },
+        {
+          q: "Geht es auch ohne App Store oder Google Play?",
+          a: "Ja. Löwenherz läuft auch direkt im Browser, auf dem Handy und am Computer.",
+          browser: true
+        }
+      ],
+      browserLink: "Löwenherz im Browser nutzen",
+
+      endTitle: "Einfach anfangen.",
+      endText: "Kostenlos. Kein Programm, kein Zwang.",
+      browserHint: "Lieber ohne Store?",
+      footerLine: "Löwenherz · Die Begleit-App zum Buch von Dr. med. Patrick Eberle — Der AngstDoc",
+      disclaimer: "Die App ist ein Selbsthilfe-Werkzeug, kein Ersatz für Diagnose oder Behandlung.",
+      footerSite: "angstdoc.de"
     }
   }
 };
