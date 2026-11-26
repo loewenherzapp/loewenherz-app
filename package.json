@@ -12,7 +12,8 @@
     "test:api": "node scripts/test-api.mjs",
     "test:db": "node scripts/test-db.mjs",
     "test:sprecher": "node scripts/test-sprecher.mjs",
-    "test:verlauf": "node scripts/test-verlauf.mjs"
+    "test:verlauf": "node scripts/test-verlauf.mjs",
+    "test:landing": "node scripts/test-landing.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.0",

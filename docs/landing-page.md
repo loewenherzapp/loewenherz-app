@@ -64,7 +64,16 @@ jeder Änderung mit einem QR-Leser prüfen.
 
 ## Prüfen
 
-Neue Besucher: Landing in voller Breite, beide Store-Knöpfe oben ohne Scrollen
-sichtbar (auch bei 320 × 568), kein waagerechtes Scrollen, Fragen klappen auf,
-Impressum und Datenschutz öffnen, „Löwenherz im Browser nutzen“ führt ins
-Onboarding. Wer schon ein Profil hat, sieht direkt die App.
+```bash
+npm run test:landing
+```
+
+Der Test öffnet die Seite in Chrome ohne Fenster, in vier Größen (320 × 568,
+375 × 667, 768 × 1024, 1280 × 800), und prüft: beide Stores oben und am Schluss
+mit den Adressen aus `js/config.js`, App Store zuerst, beide Knöpfe gleich groß
+und ohne Scrollen sichtbar, kein waagerechtes Scrollen, alle Bilder laden,
+Fragen klappen auf, Impressum und Datenschutz öffnen, „Löwenherz im Browser
+nutzen“ führt ins Onboarding.
+
+Nicht im Test: Wer schon ein Profil hat, sieht direkt die App (von Hand
+geprüft am 26.11.2026). Der QR-Code wird nicht ausgelesen.
