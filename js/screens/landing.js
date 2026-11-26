@@ -8,6 +8,10 @@
 // App Store zuerst und beide gleich groß — so verlangen es die
 // Marken-Richtlinien von Apple und Google.
 //
+// Oben stehen die offiziellen Badges (unveränderte Dateien von Apple und
+// Google, Regeln in docs/landing-page.md). Apple erlaubt sein Badge nur
+// einmal pro Seite, deshalb stehen am Schluss Text-Knöpfe.
+//
 // In den nativen Apps und in der installierten Web-App erscheint diese
 // Seite nie (siehe isStandalone() in app.js). Die Bilder liegen deshalb
 // in /landing und nicht in /assets: So landen sie nicht im App-Bundle.
@@ -68,7 +72,14 @@ export function renderLanding(container, onContinue) {
           </h1>
           <p class="landing-claim">${t.claimLead} <em>${t.claimAccent}</em></p>
           <p class="landing-intro">${t.intro}</p>
-          <div class="landing-stores">${storeButtons}</div>
+          <div class="landing-badges">
+            <a class="landing-badge" href="${APP_STORE_URL}">
+              <img src="landing/badge-app-store-de.svg" alt="${t.appStoreBadgeAlt}" width="120" height="40">
+            </a>
+            <a class="landing-badge landing-badge-play" href="${PLAY_STORE_URL}">
+              <img src="landing/badge-google-play-de.png" alt="${t.playStoreBadgeAlt}" width="646" height="250">
+            </a>
+          </div>
           <p class="landing-meta">${t.meta}</p>
           <div class="landing-qr">
             <img src="landing/qr-app.svg" alt="${t.qrAlt}" width="96" height="96" loading="lazy">
@@ -170,6 +181,7 @@ export function renderLanding(container, onContinue) {
               <button type="button" class="landing-link" data-legal="datenschutz">${ts.datenschutz}</button>
               <a class="landing-link" href="${SITE_URL}" target="_blank" rel="noopener">${t.footerSite}</a>
             </p>
+            <p class="landing-footer-marks">${t.trademarks}</p>
           </div>
         </div>
       </footer>

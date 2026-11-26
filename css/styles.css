@@ -491,7 +491,20 @@ body.landing-active #app { max-width: none; }
 .landing-claim em { font-style: italic; color: var(--ink-teal); }
 .landing-intro { max-width: 30em; margin: 0 auto 24px; text-wrap: pretty; }
 
-/* Store-Links: immer beide, App Store zuerst, gleich groß. */
+/* Offizielle Store-Badges im Kopf: App Store zuerst, beide gleich hoch,
+   dazwischen mindestens ein Viertel der Höhe frei, nichts verändert
+   (Regeln von Apple und Google). Apple verlangt mindestens 40px Höhe. */
+.landing-badges { --landing-badge-h: 44px; display: flex; align-items: center; justify-content: center; gap: calc(var(--landing-badge-h) * 0.32); }
+/* Innenabstand vergrößert nur die Tippfläche. */
+.landing-badge { display: block; padding: 4px 0; line-height: 0; transition: transform var(--transition-fast); }
+.landing-badge:active { transform: scale(0.98); opacity: 1; }
+.landing-badge img { display: block; width: auto; height: var(--landing-badge-h); }
+/* Googles Datei (646 x 250) hat oben und unten je 29 Pixel leeren Rand, das
+   Logo selbst ist 192 hoch. Höhe und Ränder so, dass das sichtbare Logo
+   genau so hoch ist wie das von Apple. */
+.landing-badge-play img { height: calc(var(--landing-badge-h) * 250 / 192); margin: calc(var(--landing-badge-h) * -29 / 192) 0; }
+
+/* Text-Knöpfe am Schluss: immer beide, App Store zuerst, gleich groß. */
 .landing-stores { display: flex; flex-direction: column; gap: 10px; max-width: 320px; margin: 0 auto; }
 .landing-store {
   display: flex; align-items: center; justify-content: center;
@@ -502,7 +515,7 @@ body.landing-active #app { max-width: none; }
   transition: transform var(--transition-fast);
 }
 .landing-store:active { transform: scale(0.98); opacity: 1; }
-.landing-meta { margin-top: 14px; font-size: 13px; color: var(--landing-soft); }
+.landing-meta { margin-top: 16px; font-size: 13px; color: var(--landing-soft); }
 
 /* QR-Code nur am Computer: Dort hilft kein Store-Link, das Handy schon. */
 .landing-qr { display: none; }
@@ -625,8 +638,16 @@ body.landing-active #app { max-width: none; }
 .landing-footer p + p { margin-top: 6px; }
 .landing-footer-links { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0 22px; }
 .landing-footer .landing-link { font-size: 13px; font-weight: 500; }
+.landing-footer .landing-footer-marks { max-width: 62em; margin: 8px auto 0; font-size: 11.5px; line-height: 1.5; opacity: 0.75; }
+
+/* Sehr schmale Handys (320px): Mindesthöhe von Apple, sonst passen die
+   beiden Badges nicht nebeneinander. */
+@media (max-width: 349px) {
+  .landing-badges { --landing-badge-h: 40px; }
+}
 
 @media (min-width: 560px) {
+  .landing-badges { --landing-badge-h: 52px; }
   .landing-stores { flex-direction: row; justify-content: center; max-width: none; }
   .landing-store { min-width: 232px; }
 }

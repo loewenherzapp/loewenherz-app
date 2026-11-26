@@ -558,6 +558,9 @@ export const TEXTS = {
       claimLead: "Das Buch hat dir gezeigt, was geht.",
       claimAccent: "Die App sorgt dafür, dass du’s tust.",
       intro: "Die Löwenherz-App bildet deine drei Ankerpunkte ab: Morgenritual, SMALL-Reminder, Abendreflexion.",
+      // Oben stehen die offiziellen Badges (Bilder), am Schluss Text-Knöpfe.
+      appStoreBadgeAlt: "Laden im App Store",
+      playStoreBadgeAlt: "Jetzt bei Google Play",
       appStoreButton: "Im App Store laden",
       playStoreButton: "Bei Google Play laden",
       meta: "Kostenlos · Ohne Werbung · Ohne Abo",
@@ -633,7 +636,9 @@ export const TEXTS = {
         },
         {
           q: "Auf welchen Handys läuft die App?",
-          a: "Auf dem iPhone ab iOS 15 und auf Android-Handys ab Android 7."
+          // Ohne „iOS“: Apples Regeln zum Badge verlangen Gerätenamen.
+          // Die App braucht iOS 15, das läuft ab dem iPhone 6s.
+          a: "Auf iPhones ab dem iPhone 6s und auf Android-Handys ab Android 7."
         },
         {
           q: "Geht es auch ohne App Store oder Google Play?",
@@ -648,6 +653,8 @@ export const TEXTS = {
       browserHint: "Lieber ohne Store?",
       footerLine: "Löwenherz · Die Begleit-App zum Buch von Dr. med. Patrick Eberle — Der AngstDoc",
       disclaimer: "Die App ist ein Selbsthilfe-Werkzeug, kein Ersatz für Diagnose oder Behandlung.",
+      // Pflicht, solange die Badges von Apple und Google auf der Seite stehen.
+      trademarks: "Apple, das Apple Logo und iPhone sind Marken der Apple Inc., die in den USA und weiteren Ländern eingetragen sind. App Store ist eine Dienstleistungsmarke der Apple Inc. Android, Google Play und das Google Play-Logo sind Marken von Google LLC.",
       footerSite: "angstdoc.de"
     }
   }

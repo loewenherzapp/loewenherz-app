@@ -24,12 +24,28 @@ Seiten auseinanderlaufen.
 ## Regeln
 
 - **Beide Stores stehen immer nebeneinander**, ohne Geräte-Erkennung und ohne
-  Umschalter. App Store zuerst, beide Knöpfe gleich groß. Das verlangen die
-  Marken-Richtlinien (Apple: App-Store-Badge zuerst; Google: Play-Badge nicht
-  kleiner als andere). Gilt auch, falls später die offiziellen Badges kommen:
-  dann Mindesthöhe 40 px, ein Viertel der Höhe als Freiraum, nichts verändern,
-  Markenhinweise von Apple und Google in den Fußbereich, App-Store-Badge nur
-  einmal pro Seite.
+  Umschalter. App Store zuerst, beide gleich groß.
+- **Oben stehen die offiziellen Badges** (seit 26.11.2026, von Patrick
+  freigegeben). Die Dateien sind unverändert:
+  - `landing/badge-app-store-de.svg` von
+    `toolbox.marketingtools.apple.com/api/v2/badges/download-on-the-app-store/black/de-de`
+  - `landing/badge-google-play-de.png` von
+    `play.google.com/intl/de/badges/static/images/badges/de_badge_web_generic.png`
+
+  Dafür gelten die Marken-Regeln von Apple (Marketing Resources and Identity
+  Guidelines) und Google (Partner Marketing Hub, „Lockups, icons, & badges“):
+  - Apple-Badge zuerst, mindestens 40 px hoch, **nur einmal pro Seite**.
+    Deshalb stehen am Schluss Text-Knöpfe.
+  - Google-Badge nicht kleiner als das von Apple.
+  - Rundherum mindestens ein Viertel der Badge-Höhe frei.
+  - Nichts verändern: nicht umfärben, nicht verzerren, nicht animieren.
+  - Markenhinweise im Fußbereich (`ui.landing.trademarks`). Sie müssen
+    stehen bleiben, solange die Badges auf der Seite sind.
+  - In den Texten der Seite kein „iOS“, sondern Gerätenamen („iPhone 6s“).
+
+  Googles Datei hat oben und unten je 29 von 250 Pixeln leeren Rand. Das CSS
+  gleicht ihn aus (`.landing-badge-play`), damit beide Logos sichtbar gleich
+  hoch sind. Wer die Datei tauscht, misst den Rand neu.
 - **Texte stammen aus dem Buch und dem Store-Eintrag** (App-Seiten in Modul 7
   und nach dem Nachwort, Zusammenfassung Modul 8, Store-Beschreibung). Wer dort
   etwas ändert, zieht es in `ui.landing` nach. Neue Texte legt Patrick fest.
@@ -68,10 +84,11 @@ jeder Änderung mit einem QR-Leser prüfen.
 npm run test:landing
 ```
 
-Der Test öffnet die Seite in Chrome ohne Fenster, in vier Größen (320 × 568,
-375 × 667, 768 × 1024, 1280 × 800), und prüft: beide Stores oben und am Schluss
+Der Test öffnet die Seite in Chrome ohne Fenster, in fünf Größen (320 × 568,
+360 × 640, 375 × 667, 768 × 1024, 1280 × 800), und prüft: beide Stores oben und am Schluss
 mit den Adressen aus `js/config.js`, App Store zuerst, beide Knöpfe gleich groß
-und ohne Scrollen sichtbar, kein waagerechtes Scrollen, alle Bilder laden,
+und ohne Scrollen sichtbar, die Vorgaben für die Badges (Höhe, Abstand,
+unverzerrt, Apple nur einmal, Markenhinweise), kein waagerechtes Scrollen, alle Bilder laden,
 Fragen klappen auf, Impressum und Datenschutz öffnen, „Löwenherz im Browser
 nutzen“ führt ins Onboarding.
 

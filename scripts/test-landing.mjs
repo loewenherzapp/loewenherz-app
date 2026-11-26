@@ -91,24 +91,49 @@ async function pruefe(breite, hoehe) {
       await js("document.documentElement.scrollWidth + ' > ' + innerWidth"));
     check(await js("document.getElementById('app').getBoundingClientRect().width === innerWidth"), 'die Seite nutzt die ganze Breite');
 
-    // 2) Beide Stores, immer, an zwei Stellen — kein Umschalter mehr
-    const gruppen = JSON.parse(await js(`JSON.stringify([...document.querySelectorAll('.landing-stores')].map(g => [...g.querySelectorAll('a')].map(a => {
-      const r = a.getBoundingClientRect(); return { href: a.href, target: a.target, w: Math.round(r.width), h: Math.round(r.height) }; })))`));
-    check(gruppen.length === 2 && gruppen.every((g) => g.length === 2), 'App Store und Google Play stehen oben und am Schluss');
-    for (const [i, g] of gruppen.entries()) {
-      const wo = i === 0 ? 'oben' : 'am Schluss';
-      if (g.length !== 2) continue;
-      check(g[0].href === APP_STORE_URL && g[0].href.includes('id6806331837'), `${wo}: erster Knopf führt in den App Store`, g[0].href);
-      check(g[1].href === PLAY_STORE_URL && g[1].href.includes('id=de.angstdoc.loewenherz'), `${wo}: zweiter Knopf führt zu Google Play`, g[1].href);
-      check(g[0].w === g[1].w && g[0].h === g[1].h && g[0].h >= 44, `${wo}: beide Knöpfe gleich groß und gut tippbar`, JSON.stringify(g.map((a) => `${a.w}x${a.h}`)));
-      check(g.every((a) => a.target === ''), `${wo}: Store-Links öffnen im selben Tab`);
+    // 2) Beide Stores, immer, an zwei Stellen — kein Umschalter mehr.
+    //    Oben die offiziellen Badges, am Schluss Text-Knöpfe.
+    const badges = JSON.parse(await js(`JSON.stringify([...document.querySelectorAll('.landing-hero .landing-badges a')].map(a => {
+      const i = a.querySelector('img'); const r = i.getBoundingClientRect(); const t = a.getBoundingClientRect();
+      return { href: a.href, target: a.target, alt: i.alt, play: a.classList.contains('landing-badge-play'),
+        ok: i.complete && i.naturalWidth > 0, nw: i.naturalWidth, nh: i.naturalHeight,
+        w: r.width, h: r.height, left: r.left, right: r.right, tipp: t.height }; }))`));
+    check(badges.length === 2, 'oben stehen zwei Badges');
+    if (badges.length === 2) {
+      const [apple, play] = badges;
+      check(apple.href === APP_STORE_URL && apple.href.includes('id6806331837') && !apple.play, 'oben: erstes Badge führt in den App Store', apple.href);
+      check(play.href === PLAY_STORE_URL && play.href.includes('id=de.angstdoc.loewenherz') && play.play, 'oben: zweites Badge führt zu Google Play', play.href);
+      check(apple.ok && play.ok && apple.alt && play.alt, 'beide Badges laden und haben einen Text für Vorleseprogramme');
+      // Googles Datei hat oben und unten leeren Rand: sichtbar sind 192 von 250 Pixeln Höhe.
+      const sichtbarPlay = play.h * 192 / 250;
+      check(Math.abs(apple.h - sichtbarPlay) < 0.75, 'beide Badges sind sichtbar gleich hoch', `Apple ${apple.h.toFixed(1)}, Google ${sichtbarPlay.toFixed(1)}`);
+      check(apple.h >= 40, 'Apple-Badge mindestens 40 px hoch (Vorgabe von Apple)', apple.h.toFixed(1));
+      check(play.w >= apple.w, 'Google-Badge nicht kleiner als das von Apple (Vorgabe von Google)');
+      check(play.left - apple.right >= apple.h / 4 - 0.5, 'zwischen den Badges ist mindestens ein Viertel der Höhe frei', (play.left - apple.right).toFixed(1));
+      const verzerrt = (x) => Math.abs(x.w / x.h - x.nw / x.nh) > 0.02;
+      check(!verzerrt(apple) && !verzerrt(play), 'kein Badge ist verzerrt');
+      check(apple.tipp >= 44 && play.tipp >= 44, 'Tippfläche mindestens 44 px hoch', `${apple.tipp} / ${play.tipp}`);
+      check(apple.target === '' && play.target === '', 'oben: Store-Links öffnen im selben Tab');
+    }
+    check(await js("document.querySelectorAll('.landing-page img[src*=\"badge-app-store\"]').length === 1"), 'das App-Store-Badge steht nur einmal auf der Seite (Vorgabe von Apple)');
+    check(await js("/Marken der Apple Inc\\./.test(document.querySelector('.landing-footer').textContent) && /Marken von Google LLC/.test(document.querySelector('.landing-footer').textContent)"),
+      'Markenhinweise von Apple und Google stehen im Fußbereich');
+
+    const knoepfe = JSON.parse(await js(`JSON.stringify([...document.querySelectorAll('.landing-end .landing-stores a')].map(a => {
+      const r = a.getBoundingClientRect(); return { href: a.href, target: a.target, w: Math.round(r.width), h: Math.round(r.height) }; }))`));
+    check(knoepfe.length === 2, 'am Schluss stehen beide Stores noch einmal');
+    if (knoepfe.length === 2) {
+      check(knoepfe[0].href === APP_STORE_URL, 'am Schluss: erster Knopf führt in den App Store', knoepfe[0].href);
+      check(knoepfe[1].href === PLAY_STORE_URL, 'am Schluss: zweiter Knopf führt zu Google Play', knoepfe[1].href);
+      check(knoepfe[0].w === knoepfe[1].w && knoepfe[0].h === knoepfe[1].h && knoepfe[0].h >= 44, 'am Schluss: beide Knöpfe gleich groß und gut tippbar', JSON.stringify(knoepfe.map((a) => `${a.w}x${a.h}`)));
+      check(knoepfe.every((a) => a.target === ''), 'am Schluss: Store-Links öffnen im selben Tab');
     }
     check(await js("!/Ich nutze (Android|ein iPhone)/.test(document.querySelector('.landing-page').textContent)"), 'kein Umschalter „Ich nutze …“ mehr');
 
-    // 3) Die Store-Knöpfe sind ohne Scrollen zu sehen
-    check(await js("[...document.querySelectorAll('.landing-hero .landing-store')].every(a => a.getBoundingClientRect().bottom <= innerHeight)"),
-      'beide Knöpfe sind oben ohne Scrollen sichtbar',
-      await js("Math.round(document.querySelector('.landing-hero .landing-stores').getBoundingClientRect().bottom) + ' von ' + innerHeight"));
+    // 3) Die Badges sind ohne Scrollen zu sehen
+    check(await js("[...document.querySelectorAll('.landing-hero .landing-badge')].every(a => a.getBoundingClientRect().bottom <= innerHeight)"),
+      'beide Badges sind oben ohne Scrollen sichtbar',
+      await js("Math.round(document.querySelector('.landing-hero .landing-badges').getBoundingClientRect().bottom) + ' von ' + innerHeight"));
 
     // 4) Alle Bilder laden (einmal durch die Seite und durch die Screenshot-Reihe)
     await js(`(async () => { const h = document.documentElement.scrollHeight;
@@ -156,8 +181,8 @@ async function pruefe(breite, hoehe) {
   }
 }
 
-// Kleinstes übliches Handy, übliches Handy, Tablet, Computer
-for (const [b, h] of [[320, 568], [375, 667], [768, 1024], [1280, 800]]) await pruefe(b, h);
+// Kleinstes übliches Handy, verbreitetes Android-Format, iPhone, Tablet, Computer
+for (const [b, h] of [[320, 568], [360, 640], [375, 667], [768, 1024], [1280, 800]]) await pruefe(b, h);
 
 server.close();
 console.log(fails ? `\n${fails} FEHLER` : '\nAlle Tests bestanden.');
