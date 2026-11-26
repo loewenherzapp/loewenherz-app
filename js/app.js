@@ -197,8 +197,15 @@ async function init() {
   }
 }
 
+// Hintergrund der Landing oben (css/styles.css, body.landing-active) —
+// die Browserleiste soll dieselbe Farbe tragen.
+const LANDING_FARBE = '#feebde';
+
 function hideAll() {
-  document.body.classList.remove('landing-active');
+  if (document.body.classList.contains('landing-active')) {
+    document.body.classList.remove('landing-active');
+    setThemeColor('#f7ead8');
+  }
   document.getElementById('landing-container').classList.add('hidden');
   document.getElementById('onboarding-container').classList.add('hidden');
   document.getElementById('email-gate-container').classList.add('hidden');
@@ -212,6 +219,7 @@ function showLanding() {
   container.classList.remove('hidden');
   // Die Landing nutzt die ganze Breite, die App-Spalte nicht (styles.css).
   document.body.classList.add('landing-active');
+  setThemeColor(LANDING_FARBE);
   renderLanding(container, () => {
     // Der Weg in den Browser steht weit unten auf der Seite.
     window.scrollTo(0, 0);

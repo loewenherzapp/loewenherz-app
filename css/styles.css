@@ -459,11 +459,23 @@ a:active { opacity: 0.7; }
    Klasse setzt/entfernt app.js (showLanding / hideAll). */
 body.landing-active #app { max-width: none; }
 
+/* Hintergrund in den beiden Pfirsichtönen des runden Logos (helle Kante oben
+   links #feebde, dunklere unten rechts #fddcbe). Auf dem Creme der App
+   (--bg-page, gelblicher) wirkte die Logo-Scheibe wie aufgeklebt. Die App
+   selbst behält ihr Creme. Dieselbe Farbe steht als LANDING_FARBE in app.js
+   (Browserleiste). */
+body.landing-active { background: linear-gradient(180deg, #feebde 0%, #fcdcc2 100%) fixed; }
+
 .landing-page {
   --landing-night: #17262b;   /* = --ref-bg */
   --landing-cream: #f5ead6;   /* = --ref-text */
   --landing-mist:  #a5bcbe;   /* = --ref-secondary */
   --landing-gold:  #d2a55a;   /* = --ref-accent, Löwengold */
+  /* Karten und Schatten im selben Pfirsich-Ton wie der Hintergrund
+     (statt --bg-paper, das gelblicher ist). */
+  --landing-paper:  #fff6ee;
+  --landing-line:   rgba(175, 110, 65, 0.14);
+  --landing-shadow: rgba(175, 105, 60, 0.12);
   /* Kleine Schrift: --text-secondary und --ink-teal haben auf Creme zu wenig
      Kontrast (unter 4,5:1). Diese beiden Töne liegen auf dem ganzen
      Hintergrundverlauf darüber. Große Schrift und Knöpfe behalten die
@@ -483,7 +495,7 @@ body.landing-active #app { max-width: none; }
   text-align: center;
   animation: fadeUp 0.7s ease-out;
 }
-.landing-logo { display: block; width: 72px; height: 72px; margin: 0 auto 10px; border-radius: 50%; box-shadow: 0 6px 18px rgba(120, 100, 70, 0.16); }
+.landing-logo { display: block; width: 72px; height: 72px; margin: 0 auto 10px; border-radius: 50%; box-shadow: 0 8px 22px rgba(195, 120, 70, 0.20); }
 .landing-brand { font-weight: 400; margin-bottom: 22px; }
 .landing-wordmark { display: block; font-family: var(--font-serif); font-size: 32px; line-height: 1.1; color: var(--ink-teal); }
 .landing-tagline { display: block; margin-top: 6px; font-size: 12px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--landing-soft); }
@@ -543,14 +555,14 @@ body.landing-active #app { max-width: none; }
 .landing-shots:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .landing-shot { flex: 0 0 min(66vw, 252px); scroll-snap-align: start; }
 /* Schlichter Geräterahmen ohne Merkmale eines bestimmten Handys. */
-.landing-phone { padding: 7px; border-radius: 32px; background: #33291c; box-shadow: 0 16px 34px rgba(90, 65, 30, 0.22), 0 3px 8px rgba(90, 65, 30, 0.14); }
+.landing-phone { padding: 7px; border-radius: 32px; background: #33291c; box-shadow: 0 16px 34px rgba(120, 70, 35, 0.22), 0 3px 8px rgba(120, 70, 35, 0.14); }
 .landing-phone img { display: block; width: 100%; height: auto; border-radius: 25px; }
 .landing-when { margin-top: 20px; font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--landing-teal); }
 .landing-shot-title { margin: 2px 0 4px; font-family: var(--font-serif); font-size: 23px; font-weight: 400; line-height: 1.2; color: var(--text-primary); }
 .landing-shot-text { font-size: 15px; line-height: 1.5; color: var(--landing-soft); }
 
 /* Karten */
-.landing-card { background: var(--bg-paper); border: 1px solid var(--divider); border-radius: 22px; box-shadow: 0 10px 30px rgba(120, 100, 70, 0.08); }
+.landing-card { background: var(--landing-paper); border: 1px solid var(--landing-line); border-radius: 22px; box-shadow: 0 10px 30px var(--landing-shadow); }
 
 /* Quatschi und Gundula. Wie in der App: Quatschi kursiv in Serif, Gundula
    ruhig in Sans. */
@@ -580,7 +592,7 @@ body.landing-active #app { max-width: none; }
 .landing-author-img,
 .landing-trust-icon { flex-shrink: 0; width: 72px; height: 72px; border-radius: 50%; }
 .landing-author-img { object-fit: cover; }
-.landing-trust-icon { display: flex; align-items: center; justify-content: center; background: var(--color-M-bg); color: var(--ink-teal); }
+.landing-trust-icon { display: flex; align-items: center; justify-content: center; background: #fde5d2; color: var(--ink-teal); }
 .landing-trust-title { font-family: var(--font-serif); font-size: 21px; font-weight: 400; line-height: 1.22; color: var(--text-primary); }
 .landing-trust-text { margin-top: 4px; font-size: 15px; line-height: 1.5; color: var(--landing-soft); }
 
@@ -588,8 +600,8 @@ body.landing-active #app { max-width: none; }
 .landing-book {
   display: grid; gap: 8px;
   margin-top: 56px; padding: 0 24px 26px;
-  border: 1px solid rgba(180, 130, 60, 0.16); border-radius: 26px;
-  background: linear-gradient(160deg, #fdebd3 0%, #f3d3ac 100%);
+  border: 1px solid var(--landing-line); border-radius: 26px;
+  background: linear-gradient(160deg, #fff3e9 0%, #f9d2b3 100%);
   text-align: center;
 }
 .landing-book-img { display: block; width: 168px; height: auto; margin: -56px auto 0; }
@@ -607,8 +619,8 @@ body.landing-active #app { max-width: none; }
 /* Häufige Fragen */
 .landing-faq { max-width: 728px; }
 .landing-faq .landing-h2 { margin-bottom: 18px; }
-.landing-faq-item { border-top: 1px solid var(--divider); }
-.landing-faq-item:last-child { border-bottom: 1px solid var(--divider); }
+.landing-faq-item { border-top: 1px solid var(--landing-line); }
+.landing-faq-item:last-child { border-bottom: 1px solid var(--landing-line); }
 .landing-faq-item summary {
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
   min-height: 58px; padding: 14px 0;
@@ -688,7 +700,7 @@ body.landing-active #app { max-width: none; }
   .landing-qr {
     display: inline-flex; align-items: center; gap: 16px;
     margin-top: 28px; padding: 12px 22px 12px 12px;
-    background: var(--bg-paper); border: 1px solid var(--divider); border-radius: 18px;
+    background: var(--landing-paper); border: 1px solid var(--landing-line); border-radius: 18px;
     text-align: left;
   }
   .landing-qr img { display: block; width: 96px; height: 96px; }

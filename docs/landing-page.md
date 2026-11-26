@@ -53,6 +53,13 @@ Seiten auseinanderlaufen.
   ein neuer Tab bliebe als leere Seite zurück.
 - **Geräterahmen der Screenshots bleibt neutral** (kein Merkmal eines bestimmten
   Handys). Apple erlaubt eigene Gerätebilder nur ohne Apple-typische Details.
+- **Hintergrund in den Farben des Logos** (seit 26.11.2026, Patricks Wunsch):
+  Verlauf von `#feebde` nach `#fcdcc2`, das sind die helle und die dunklere
+  Kante der runden Logo-Scheibe. Auf dem gelblicheren Creme der App wirkte die
+  Scheibe wie aufgeklebt. Karten, Linien und Schatten der Seite folgen dem Ton
+  (`--landing-paper`, `--landing-line`, `--landing-shadow`). Die App selbst
+  bleibt bei `--bg-page`. Die Farbe der Browserleiste setzt `app.js`
+  (`LANDING_FARBE`), beide Stellen gehören zusammen.
 - Kleine Schrift nutzt `--landing-soft` und `--landing-teal` statt
   `--text-secondary` und `--ink-teal`: Die App-Farben haben auf Creme weniger
   als 4,5:1 Kontrast.

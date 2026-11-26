@@ -90,6 +90,9 @@ async function pruefe(breite, hoehe) {
     check(await js("document.documentElement.scrollWidth <= innerWidth"), 'kein waagerechtes Scrollen',
       await js("document.documentElement.scrollWidth + ' > ' + innerWidth"));
     check(await js("document.getElementById('app').getBoundingClientRect().width === innerWidth"), 'die Seite nutzt die ganze Breite');
+    // Hintergrund in den Farben des Logos; die Browserleiste trägt dieselbe Farbe
+    check(await js("getComputedStyle(document.body).backgroundImage.includes('rgb(254, 235, 222)') && document.getElementById('theme-color-meta').content === '#feebde'"),
+      'Hintergrund und Browserleiste tragen das Pfirsich des Logos');
 
     // 2) Beide Stores, immer, an zwei Stellen — kein Umschalter mehr.
     //    Oben die offiziellen Badges, am Schluss Text-Knöpfe.
@@ -170,6 +173,8 @@ async function pruefe(breite, hoehe) {
     check(await js("!document.body.classList.contains('landing-active') && document.getElementById('app').getBoundingClientRect().width <= 480"),
       'danach ist die App-Spalte wieder schmal');
     check(await js("window.scrollY === 0"), 'das Onboarding beginnt oben');
+    check(await js("document.getElementById('theme-color-meta').content === '#f7ead8' && !getComputedStyle(document.body).backgroundImage.includes('rgb(254, 235, 222)')"),
+      'die App selbst behält ihr Creme (Hintergrund und Browserleiste)');
 
     const echteFehler = fehler.filter((f) => !/_vercel\/insights|Failed to load resource/.test(f));
     check(echteFehler.length === 0, 'keine Fehler in der Konsole', echteFehler.join(' | '));
